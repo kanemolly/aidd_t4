@@ -145,8 +145,23 @@ def list_resources():
         )
     
     except Exception as e:
-        flash(f'Error loading resources: {str(e)}', 'error')
-        return redirect(url_for('auth.login'))
+        print(f'Error loading resources: {str(e)}')
+        flash(f'Error loading resources', 'error')
+        return render_template(
+            'resources/list.html',
+            resources=[],
+            keyword='',
+            resource_type='',
+            location='',
+            types=[],
+            locations=[],
+            page=1,
+            total_pages=1,
+            total=0,
+            has_prev=False,
+            has_next=False,
+            per_page=12
+        )
 
 
 # ==================== DETAIL ====================

@@ -90,9 +90,8 @@ def _register_main_routes(app):
     def home():
         """Home route - redirects to login or resources."""
         from flask_login import current_user
-        if current_user.is_authenticated:
-            return redirect(url_for('resources.list_resources'))
-        return redirect(url_for('auth.login'))
+        # Just redirect to resources list (will require login if needed)
+        return redirect(url_for('resources.list_resources'))
     
     @app.route('/health')
     def health():
