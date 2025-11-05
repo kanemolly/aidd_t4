@@ -1,0 +1,400 @@
+{% extends "base.html" %}
+
+{% block title %}Login - Campus Resource Hub{% endblock %}
+
+{% block extra_css %}
+    .container {
+        width: 100%;
+        max-width: 400px;
+        margin: 40px auto;
+        padding: 20px;
+    }
+
+    .auth-card-wrapper {
+        width: 100%;
+    }
+
+    .card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(153, 0, 0, 0.1);
+        padding: 40px;
+        animation: slideIn 0.3s ease-out;
+    }
+
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .header {
+        text-align: center;
+        margin-bottom: 30px;
+    }
+
+    .logo {
+        font-size: 32px;
+        margin-bottom: 12px;
+    }
+
+    .header h1 {
+        color: #990000;
+        font-size: 26px;
+        margin-bottom: 6px;
+        font-weight: 600;
+    }
+
+    .header p {
+        color: #666;
+        font-size: 14px;
+    }
+
+    .form-group {
+        margin-bottom: 18px;
+    }
+
+    label {
+        display: block;
+        margin-bottom: 6px;
+        color: #333;
+        font-size: 14px;
+        font-weight: 500;
+    }
+
+    input {
+        width: 100%;
+        padding: 12px 14px;
+        border: 2px solid #E8D4C4;
+        border-radius: 8px;
+        font-size: 14px;
+        background-color: #FFFBF7;
+        color: #333;
+        transition: all 0.3s ease;
+        font-family: inherit;
+    }
+
+    input:focus {
+        outline: none;
+        border-color: #990000;
+        background-color: #FFF;
+        box-shadow: 0 0 0 3px rgba(153, 0, 0, 0.1);
+    }
+
+    input::placeholder {
+        color: #999;
+    }
+
+    .password-group {
+        position: relative;
+    }
+
+    .toggle-password {
+        position: absolute;
+        right: 14px;
+        top: 38px;
+        cursor: pointer;
+        color: #999;
+        font-size: 18px;
+        user-select: none;
+    }
+
+    .toggle-password:hover {
+        color: #990000;
+    }
+
+    .remember-forgot {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        font-size: 14px;
+    }
+
+    .remember-me {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .remember-me input[type="checkbox"] {
+        width: auto;
+        cursor: pointer;
+    }
+
+    .remember-me label {
+        margin: 0;
+        cursor: pointer;
+        font-weight: 400;
+    }
+
+    .forgot-password {
+        color: #990000;
+        text-decoration: none;
+        font-weight: 500;
+        transition: color 0.3s ease;
+    }
+
+    .forgot-password:hover {
+        color: #4B0000;
+        text-decoration: underline;
+    }
+
+    .validation-message {
+        font-size: 13px;
+        margin-top: 4px;
+        display: none;
+        padding: 6px 10px;
+        border-radius: 4px;
+        background-color: #FEE;
+        color: #990000;
+    }
+
+    .validation-message.error {
+        display: block;
+    }
+
+    button {
+        width: 100%;
+        padding: 12px;
+        background-color: #990000;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    button:hover {
+        background-color: #4B0000;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(153, 0, 0, 0.3);
+    }
+
+    button:active {
+        transform: translateY(0);
+    }
+
+    button:disabled {
+        background-color: #CCC;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    .signup-link {
+        text-align: center;
+        margin-top: 20px;
+        font-size: 14px;
+        color: #666;
+    }
+
+    .signup-link a {
+        color: #990000;
+        text-decoration: none;
+        font-weight: 600;
+        transition: color 0.3s ease;
+    }
+
+    .signup-link a:hover {
+        color: #4B0000;
+        text-decoration: underline;
+    }
+
+    .info-text {
+        background-color: #FEF5F0;
+        padding: 12px;
+        border-radius: 6px;
+        font-size: 13px;
+        color: #666;
+        margin-bottom: 20px;
+        border-left: 3px solid #990000;
+    }
+
+    .required {
+        color: #990000;
+        margin-left: 2px;
+    }
+
+    /* Mobile responsive */
+    @media (max-width: 480px) {
+        .card {
+            padding: 30px 20px;
+        }
+
+        .header h1 {
+            font-size: 22px;
+        }
+
+        .logo {
+            font-size: 28px;
+        }
+
+        input {
+            font-size: 16px;
+        }
+
+        button {
+            padding: 14px;
+            font-size: 16px;
+        }
+
+        .remember-forgot {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        .container {
+            min-height: calc(100vh - 60px);
+        }
+    }
+{% endblock %}
+
+{% block content %}
+<div class="auth-card-wrapper">
+    <div class="card">
+        <div class="header">
+            <div class="logo">📚</div>
+            <h1>Login</h1>
+            <p>Campus Resource Hub</p>
+        </div>
+
+        <div class="info-text">
+            Enter your credentials to access your account and manage resources.
+        </div>
+
+        <form id="loginForm" method="POST" novalidate>
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+            
+            <!-- Username -->
+            <div class="form-group">
+                <label for="username">Username <span class="required">*</span></label>
+                <input 
+                    type="text" 
+                    id="username" 
+                    name="username" 
+                    placeholder="Enter your username"
+                    maxlength="50"
+                    required
+                    autocomplete="username"
+                >
+                <div class="validation-message" id="usernameError"></div>
+            </div>
+
+            <!-- Password -->
+            <div class="form-group password-group">
+                <label for="password">Password <span class="required">*</span></label>
+                <input 
+                    type="password" 
+                    id="password" 
+                    name="password" 
+                    placeholder="Enter your password"
+                    maxlength="100"
+                    required
+                    autocomplete="current-password"
+                >
+                <span class="toggle-password" onclick="togglePassword('password')">👁️</span>
+                <div class="validation-message" id="passwordError"></div>
+            </div>
+
+            <!-- Remember & Forgot -->
+            <div class="remember-forgot">
+                <div class="remember-me">
+                    <input 
+                        type="checkbox" 
+                        id="remember" 
+                        name="remember" 
+                    >
+                    <label for="remember">Remember me</label>
+                </div>
+                <a href="#" class="forgot-password" title="Password reset coming soon">Forgot password?</a>
+            </div>
+
+            <!-- Submit Button -->
+            <button type="submit" id="submitBtn">Login</button>
+        </form>
+
+        <div class="signup-link">
+            Don't have an account? <a href="{{ url_for('auth.register') }}">Sign up here</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // CSRF Token
+    function getCsrfToken() {
+        return document.querySelector('[name=csrf_token]').value;
+    }
+
+    // Password visibility toggle
+    function togglePassword(fieldId) {
+        const field = document.getElementById(fieldId);
+        field.type = field.type === 'password' ? 'text' : 'password';
+    }
+
+    // Form validation
+    const form = document.getElementById('loginForm');
+    const username = document.getElementById('username');
+    const password = document.getElementById('password');
+
+    function validateUsername() {
+        const errorDiv = document.getElementById('usernameError');
+        if (username.value.trim().length === 0) {
+            errorDiv.textContent = 'Username is required';
+            errorDiv.classList.add('error');
+            return false;
+        }
+        errorDiv.classList.remove('error');
+        return true;
+    }
+
+    function validatePassword() {
+        const errorDiv = document.getElementById('passwordError');
+        if (password.value.length === 0) {
+            errorDiv.textContent = 'Password is required';
+            errorDiv.classList.add('error');
+            return false;
+        }
+        if (password.value.length < 6) {
+            errorDiv.textContent = 'Password must be at least 6 characters';
+            errorDiv.classList.add('error');
+            return false;
+        }
+        errorDiv.classList.remove('error');
+        return true;
+    }
+
+    // Real-time validation
+    username.addEventListener('blur', validateUsername);
+    password.addEventListener('blur', validatePassword);
+
+    // Form submission
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        // Validate all fields
+        const isUsernameValid = validateUsername();
+        const isPasswordValid = validatePassword();
+
+        if (isUsernameValid && isPasswordValid) {
+            form.submit();
+        }
+    });
+
+    // Prevent double submission
+    const submitBtn = document.getElementById('submitBtn');
+    form.addEventListener('submit', function() {
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Logging in...';
+    });
+</script>
+{% endblock %}

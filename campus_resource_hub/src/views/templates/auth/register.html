@@ -1,0 +1,498 @@
+{% extends "base.html" %}
+
+{% block title %}Register - Campus Resource Hub{% endblock %}
+
+{% block extra_css %}
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #FFF8F0;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 450px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(153, 0, 0, 0.1);
+            padding: 40px;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: #990000;
+            font-size: 28px;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 6px;
+            color: #333;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px 14px;
+            border: 2px solid #E8D4C4;
+            border-radius: 8px;
+            font-size: 14px;
+            background-color: #FFFBF7;
+            color: #333;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #990000;
+            background-color: #FFF;
+            box-shadow: 0 0 0 3px rgba(153, 0, 0, 0.1);
+        }
+
+        input::placeholder {
+            color: #999;
+        }
+
+        .password-group {
+            position: relative;
+        }
+
+        .toggle-password {
+            position: absolute;
+            right: 14px;
+            top: 38px;
+            cursor: pointer;
+            color: #999;
+            font-size: 18px;
+            user-select: none;
+        }
+
+        .toggle-password:hover {
+            color: #990000;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .form-row .form-group {
+            margin-bottom: 0;
+        }
+
+        .role-select, .department {
+            padding: 12px 14px;
+        }
+
+        .validation-message {
+            font-size: 13px;
+            margin-top: 4px;
+            display: none;
+            padding: 6px 10px;
+            border-radius: 4px;
+            background-color: #FEE;
+            color: #990000;
+        }
+
+        .validation-message.error {
+            display: block;
+        }
+
+        .validation-message.success {
+            display: block;
+            background-color: #EFE;
+            color: #090;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #990000;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 8px;
+        }
+
+        button:hover {
+            background-color: #4B0000;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(153, 0, 0, 0.3);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .login-link {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .login-link a {
+            color: #990000;
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.3s ease;
+        }
+
+        .login-link a:hover {
+            color: #4B0000;
+            text-decoration: underline;
+        }
+
+        .alerts {
+            margin-bottom: 20px;
+        }
+
+        .alert {
+            padding: 12px 14px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            font-size: 14px;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .alert.error {
+            background-color: #FEE;
+            color: #990000;
+            border-left: 4px solid #990000;
+        }
+
+        .alert.success {
+            background-color: #EFE;
+            color: #090;
+            border-left: 4px solid #090;
+        }
+
+        .required {
+            color: #990000;
+            margin-left: 2px;
+        }
+
+        @media (max-width: 480px) {
+            .card {
+                padding: 30px 20px;
+            }
+
+            .header h1 {
+                font-size: 24px;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            input, select {
+                font-size: 16px;
+            }
+
+            button {
+                padding: 14px;
+                font-size: 16px;
+            }
+
+            .auth-card-wrapper {
+                width: 100%;
+            }
+
+            .container {
+                min-height: calc(100vh - 60px);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+        }
+
+        .divider {
+            text-align: center;
+            color: #999;
+            margin: 24px 0;
+            font-size: 13px;
+        }
+
+        .info-text {
+            background-color: #FEF5F0;
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 20px;
+            border-left: 3px solid #990000;
+        }
+{% endblock %}
+
+{% block content %}
+<div class="auth-card-wrapper">
+    <div class="card">
+        <div class="header">
+            <h1>Create Account</h1>
+            <p>Join Campus Resource Hub</p>
+        </div>
+
+        <div class="info-text">
+            <strong>First time here?</strong> Create an account to access campus resources and bookings.
+        </div>
+
+        <form id="registerForm" method="POST" novalidate>
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <!-- Username -->
+                <div class="form-group">
+                    <label for="username">Username <span class="required">*</span></label>
+                    <input 
+                        type="text" 
+                        id="username" 
+                        name="username" 
+                        placeholder="Choose a username"
+                        minlength="3"
+                        maxlength="50"
+                        required
+                    >
+                    <div class="validation-message" id="usernameError"></div>
+                </div>
+
+                <!-- Email -->
+                <div class="form-group">
+                    <label for="email">Email Address <span class="required">*</span></label>
+                    <input 
+                        type="email" 
+                        id="email" 
+                        name="email" 
+                        placeholder="you@indiana.edu"
+                        maxlength="120"
+                        required
+                    >
+                    <div class="validation-message" id="emailError"></div>
+                </div>
+
+                <!-- Full Name -->
+                <div class="form-group">
+                    <label for="full_name">Full Name <span class="required">*</span></label>
+                    <input 
+                        type="text" 
+                        id="full_name" 
+                        name="full_name" 
+                        placeholder="John Doe"
+                        maxlength="120"
+                        required
+                    >
+                    <div class="validation-message" id="fullNameError"></div>
+                </div>
+
+                <!-- Role & Department Row -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="role">Role <span class="required">*</span></label>
+                        <select id="role" name="role" class="role-select" required>
+                            <option value="student">Student</option>
+                            <option value="staff">Staff</option>
+                            <option value="faculty">Faculty</option>
+                            <option value="admin">Admin</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="department">Department</label>
+                        <input 
+                            type="text" 
+                            id="department" 
+                            name="department" 
+                            placeholder="e.g., Computer Science"
+                            maxlength="100"
+                            class="department"
+                        >
+                    </div>
+                </div>
+
+                <!-- Password -->
+                <div class="form-group password-group">
+                    <label for="password">Password <span class="required">*</span></label>
+                    <input 
+                        type="password" 
+                        id="password" 
+                        name="password" 
+                        placeholder="Min. 6 characters"
+                        minlength="6"
+                        maxlength="100"
+                        required
+                    >
+                    <span class="toggle-password" onclick="togglePassword('password')">👁️</span>
+                    <div class="validation-message" id="passwordError"></div>
+                </div>
+
+                <!-- Confirm Password -->
+                <div class="form-group password-group">
+                    <label for="confirm_password">Confirm Password <span class="required">*</span></label>
+                    <input 
+                        type="password" 
+                        id="confirm_password" 
+                        name="confirm_password" 
+                        placeholder="Re-enter password"
+                        minlength="6"
+                        maxlength="100"
+                        required
+                    >
+                    <span class="toggle-password" onclick="togglePassword('confirm_password')">👁️</span>
+                    <div class="validation-message" id="confirmPasswordError"></div>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" id="submitBtn">Create Account</button>
+            </form>
+
+            <div class="login-link">
+                Already have an account? <a href="{{ url_for('auth.login') }}">Login here</a>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+    <script>
+        // Password visibility toggle
+        function togglePassword(fieldId) {
+            const field = document.getElementById(fieldId);
+            field.type = field.type === 'password' ? 'text' : 'password';
+        }
+
+        // Form validation
+        const form = document.getElementById('registerForm');
+        const username = document.getElementById('username');
+        const email = document.getElementById('email');
+        const fullName = document.getElementById('full_name');
+        const password = document.getElementById('password');
+        const confirmPassword = document.getElementById('confirm_password');
+
+        function validateUsername() {
+            const errorDiv = document.getElementById('usernameError');
+            if (username.value.length < 3) {
+                errorDiv.textContent = 'Username must be at least 3 characters';
+                errorDiv.classList.add('error');
+                return false;
+            }
+            errorDiv.classList.remove('error');
+            return true;
+        }
+
+        function validateEmail() {
+            const errorDiv = document.getElementById('emailError');
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email.value)) {
+                errorDiv.textContent = 'Please enter a valid email address';
+                errorDiv.classList.add('error');
+                return false;
+            }
+            errorDiv.classList.remove('error');
+            return true;
+        }
+
+        function validateFullName() {
+            const errorDiv = document.getElementById('fullNameError');
+            if (fullName.value.trim().length === 0) {
+                errorDiv.textContent = 'Full name is required';
+                errorDiv.classList.add('error');
+                return false;
+            }
+            errorDiv.classList.remove('error');
+            return true;
+        }
+
+        function validatePassword() {
+            const errorDiv = document.getElementById('passwordError');
+            if (password.value.length < 6) {
+                errorDiv.textContent = 'Password must be at least 6 characters';
+                errorDiv.classList.add('error');
+                return false;
+            }
+            errorDiv.classList.remove('error');
+            return true;
+        }
+
+        function validatePasswordMatch() {
+            const errorDiv = document.getElementById('confirmPasswordError');
+            if (password.value !== confirmPassword.value) {
+                errorDiv.textContent = 'Passwords do not match';
+                errorDiv.classList.add('error');
+                return false;
+            }
+            errorDiv.classList.remove('error');
+            return true;
+        }
+
+        // Real-time validation
+        username.addEventListener('blur', validateUsername);
+        email.addEventListener('blur', validateEmail);
+        fullName.addEventListener('blur', validateFullName);
+        password.addEventListener('blur', validatePassword);
+        confirmPassword.addEventListener('blur', validatePasswordMatch);
+
+        // Form submission
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            // Validate all fields
+            const isUsernameValid = validateUsername();
+            const isEmailValid = validateEmail();
+            const isFullNameValid = validateFullName();
+            const isPasswordValid = validatePassword();
+            const isPasswordMatchValid = validatePasswordMatch();
+
+            if (isUsernameValid && isEmailValid && isFullNameValid && isPasswordValid && isPasswordMatchValid) {
+                form.submit();
+            }
+        });
+
+        // Auto-validate on input change
+        confirmPassword.addEventListener('input', function() {
+            if (confirmPassword.value) {
+                validatePasswordMatch();
+            }
+        });
+    </script>
+{% endblock %}

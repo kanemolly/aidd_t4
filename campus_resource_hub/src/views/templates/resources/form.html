@@ -1,0 +1,640 @@
+{% extends "base.html" %}
+
+{% block title %}{% if action == 'Edit' %}Edit{% else %}Create{% endif %} Resource - Campus Resource Hub{% endblock %}
+
+{% block extra_css %}
+        .form-container {
+            max-width: 700px;
+            margin: 40px auto;
+        }
+
+        .form-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .form-header {
+            background: linear-gradient(135deg, #990000 0%, #7a0000 100%);
+            color: white;
+            padding: 30px;
+        }
+
+        .form-header h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 700;
+        }
+
+        .form-header p {
+            margin: 10px 0 0 0;
+            opacity: 0.9;
+            font-size: 14px;
+        }
+
+        .form-body {
+            padding: 40px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .required::after {
+            content: " *";
+            color: #990000;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            font-family: inherit;
+            transition: all 0.3s ease;
+            box-sizing: border-box;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #990000;
+            box-shadow: 0 0 0 3px rgba(153, 0, 0, 0.1);
+        }
+
+        .form-group textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .form-group.checkbox {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 0;
+        }
+
+        .form-group.checkbox input {
+            width: auto;
+            margin: 0;
+            cursor: pointer;
+        }
+
+        .form-group.checkbox label {
+            margin-bottom: 0;
+            cursor: pointer;
+            flex: 1;
+        }
+
+        .form-hint {
+            font-size: 13px;
+            color: #999;
+            margin-top: 6px;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .grid-2 .form-group {
+            margin-bottom: 0;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+
+        .btn-submit,
+        .btn-cancel {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-size: 15px;
+        }
+
+        .btn-submit {
+            background-color: #990000;
+            color: white;
+        }
+
+        .btn-submit:hover {
+            background-color: #7a0000;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(153, 0, 0, 0.3);
+        }
+
+        .btn-cancel {
+            background-color: #f0f0f0;
+            color: #333;
+        }
+
+        .btn-cancel:hover {
+            background-color: #e0e0e0;
+        }
+
+        .alert {
+            padding: 12px 16px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .alert.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .alert.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .validation-error {
+            font-size: 13px;
+            color: #dc3545;
+            margin-top: 4px;
+            display: none;
+        }
+
+        .validation-error.show {
+            display: block;
+        }
+
+        .form-group input.is-invalid,
+        .form-group textarea.is-invalid,
+        .form-group select.is-invalid {
+            border-color: #dc3545;
+            background-color: #fff5f5;
+        }
+
+        .resource-type-info {
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 6px;
+            border-left: 4px solid #990000;
+            margin-bottom: 20px;
+            font-size: 13px;
+            color: #666;
+            line-height: 1.6;
+        }
+
+        /* Image Upload Styles */
+        .image-upload-container {
+            position: relative;
+        }
+
+        .image-upload-label {
+            display: block;
+            padding: 30px;
+            border: 2px dashed #ddd;
+            border-radius: 6px;
+            text-align: center;
+            cursor: pointer;
+            background-color: #f9f9f9;
+            transition: all 0.3s ease;
+            font-size: 14px;
+            font-weight: 500;
+            color: #666;
+        }
+
+        .image-upload-label:hover {
+            border-color: #990000;
+            background-color: #fff9f9;
+            color: #990000;
+        }
+
+        .upload-text {
+            display: block;
+            margin-top: 8px;
+        }
+
+        .image-preview,
+        .current-image {
+            margin-top: 15px;
+            padding: 15px;
+            background-color: #f5f5f5;
+            border-radius: 6px;
+            text-align: center;
+            position: relative;
+        }
+
+        .image-preview img,
+        .current-image img {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+
+        .remove-image-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            transition: background 0.3s ease;
+        }
+
+        .remove-image-btn:hover {
+            background: #c82333;
+        }
+
+        .form-hint {
+            font-size: 13px;
+            color: #999;
+            margin-top: 6px;
+        }
+
+        @media (max-width: 768px) {
+            .form-container {
+                margin: 20px;
+            }
+
+            .form-header {
+                padding: 20px;
+            }
+
+            .form-header h1 {
+                font-size: 24px;
+            }
+
+            .form-body {
+                padding: 20px;
+            }
+
+            .grid-2 {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+
+            .form-actions {
+                flex-direction: column;
+            }
+
+            .btn-submit,
+            .btn-cancel {
+                width: 100%;
+            }
+        }
+{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <div class="form-card">
+        <div class="form-header">
+            <h1>{% if action == 'Edit' %}Edit Resource{% else %}Create New Resource{% endif %}</h1>
+            <p>{% if action == 'Edit' %}Update the resource details below{% else %}Add a new resource to the campus hub{% endif %}</p>
+        </div>
+
+        <div class="form-body">
+            <!-- Display flash messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                    <div class="alert {{ category }}">
+                        {{ message }}
+                    </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <form id="resourceForm" method="POST" novalidate>
+                <!-- Resource Name -->
+                <div class="form-group">
+                    <label for="name" class="required">Resource Name</label>
+                    <input 
+                        type="text" 
+                        id="name" 
+                        name="name" 
+                        placeholder="e.g., Conference Room A, Projector #5"
+                        value="{{ resource.name if resource else '' }}"
+                        required
+                    >
+                    <div class="validation-error" id="nameError"></div>
+                    <div class="form-hint">3-120 characters</div>
+                </div>
+
+                <!-- Resource Type and Location (Grid) -->
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label for="resource_type" class="required">Resource Type</label>
+                        <select id="resource_type" name="resource_type" required>
+                            <option value="">-- Select Type --</option>
+                            <option value="room" {% if resource and resource.resource_type == 'room' %}selected{% endif %}>Room/Space</option>
+                            <option value="equipment" {% if resource and resource.resource_type == 'equipment' %}selected{% endif %}>Equipment</option>
+                            <option value="service" {% if resource and resource.resource_type == 'service' %}selected{% endif %}>Service</option>
+                            <option value="software" {% if resource and resource.resource_type == 'software' %}selected{% endif %}>Software</option>
+                            <option value="vehicle" {% if resource and resource.resource_type == 'vehicle' %}selected{% endif %}>Vehicle</option>
+                            <option value="other" {% if resource and resource.resource_type == 'other' %}selected{% endif %}>Other</option>
+                        </select>
+                        <div class="validation-error" id="typeError"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="location" class="required">Location</label>
+                        <input 
+                            type="text" 
+                            id="location" 
+                            name="location" 
+                            placeholder="e.g., Building A, Room 101"
+                            value="{{ resource.location if resource else '' }}"
+                            required
+                        >
+                        <div class="validation-error" id="locationError"></div>
+                    </div>
+                </div>
+
+                <!-- Description -->
+                <div class="form-group">
+                    <label for="description" class="required">Description</label>
+                    <textarea 
+                        id="description" 
+                        name="description" 
+                        placeholder="Provide detailed information about this resource..."
+                        required
+                    >{{ resource.description if resource else '' }}</textarea>
+                    <div class="validation-error" id="descriptionError"></div>
+                    <div class="form-hint">10-2000 characters</div>
+                </div>
+
+                <!-- Capacity -->
+                <div class="form-group">
+                    <label for="capacity">Capacity</label>
+                    <input 
+                        type="number" 
+                        id="capacity" 
+                        name="capacity" 
+                        placeholder="e.g., 25 (optional)"
+                        value="{{ resource.capacity if resource and resource.capacity else '' }}"
+                        min="1"
+                    >
+                    <div class="form-hint">Number of people or units. Leave empty if not applicable.</div>
+                </div>
+
+                <!-- Image Upload -->
+                <div class="form-group">
+                    <label for="image">Resource Image (Optional)</label>
+                    <div class="image-upload-container">
+                        <input 
+                            type="file" 
+                            id="image" 
+                            name="image" 
+                            accept="image/*"
+                            style="display: none;"
+                        >
+                        <label for="image" class="image-upload-label">
+                            📷 <span class="upload-text">Click to upload image</span>
+                        </label>
+                        <div id="imagePreview" class="image-preview" style="display: none;">
+                            <img id="previewImg" src="" alt="Preview">
+                            <button type="button" class="remove-image-btn" onclick="removeImage()">✕ Remove</button>
+                        </div>
+                        <div id="currentImage" class="current-image" style="display: none;">
+                            <p class="form-hint">Current image:</p>
+                            <img id="currentImg" src="" alt="Current">
+                        </div>
+                    </div>
+                    <div class="form-hint">Supported formats: JPG, PNG, WebP. Max 5MB.</div>
+                    <div class="validation-error" id="imageError"></div>
+                </div>
+
+                <!-- Availability -->
+                <div class="form-group checkbox">
+                    <input 
+                        type="checkbox" 
+                        id="is_available" 
+                        name="is_available"
+                        {% if not resource or resource.is_available %}checked{% endif %}
+                    >
+                    <label for="is_available">
+                        <strong>Available for Booking</strong>
+                        <div class="form-hint" style="margin-top: 4px;">Check this box if this resource is currently available</div>
+                    </label>
+                </div>
+
+                <!-- Form Actions -->
+                <div class="form-actions">
+                    <button type="submit" class="btn-submit">
+                        {% if action == 'Edit' %}✓ Save Changes{% else %}✓ Create Resource{% endif %}
+                    </button>
+                    <a href="{% if resource %}{{ url_for('resources.detail_resource', resource_id=resource.id) }}{% else %}{{ url_for('resources.list_resources') }}{% endif %}" class="btn-cancel">
+                        Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const form = document.getElementById('resourceForm');
+    const nameInput = document.getElementById('name');
+    const typeSelect = document.getElementById('resource_type');
+    const locationInput = document.getElementById('location');
+    const descriptionInput = document.getElementById('description');
+    const capacityInput = document.getElementById('capacity');
+
+    // Form validation
+    function validateForm() {
+        let isValid = true;
+        clearErrors();
+
+        // Validate name
+        if (!nameInput.value.trim() || nameInput.value.trim().length < 3) {
+            showError('nameError', 'Name must be at least 3 characters');
+            isValid = false;
+        }
+        if (nameInput.value.trim().length > 120) {
+            showError('nameError', 'Name must be 120 characters or less');
+            isValid = false;
+        }
+
+        // Validate type
+        if (!typeSelect.value) {
+            showError('typeError', 'Resource type is required');
+            isValid = false;
+        }
+
+        // Validate location
+        if (!locationInput.value.trim()) {
+            showError('locationError', 'Location is required');
+            isValid = false;
+        }
+
+        // Validate description
+        if (!descriptionInput.value.trim() || descriptionInput.value.trim().length < 10) {
+            showError('descriptionError', 'Description must be at least 10 characters');
+            isValid = false;
+        }
+        if (descriptionInput.value.trim().length > 2000) {
+            showError('descriptionError', 'Description must be 2000 characters or less');
+            isValid = false;
+        }
+
+        // Validate capacity if provided
+        if (capacityInput.value) {
+            if (isNaN(capacityInput.value) || capacityInput.value < 1) {
+                showError('capacityError', 'Capacity must be a positive number');
+                isValid = false;
+            }
+        }
+
+        return isValid;
+    }
+
+    function showError(elementId, message) {
+        const errorEl = document.getElementById(elementId);
+        if (errorEl) {
+            errorEl.textContent = message;
+            errorEl.classList.add('show');
+            
+            // Find the input field and mark it as invalid
+            const inputId = elementId.replace('Error', '');
+            const inputEl = document.getElementById(inputId);
+            if (inputEl) {
+                inputEl.classList.add('is-invalid');
+            }
+        }
+    }
+
+    function clearErrors() {
+        document.querySelectorAll('.validation-error').forEach(el => {
+            el.classList.remove('show');
+            el.textContent = '';
+        });
+        document.querySelectorAll('input, textarea, select').forEach(el => {
+            el.classList.remove('is-invalid');
+        });
+    }
+
+    // Real-time validation
+    nameInput.addEventListener('blur', function() {
+        if (this.value.trim().length < 3) {
+            showError('nameError', 'Name must be at least 3 characters');
+        } else {
+            document.getElementById('nameError').classList.remove('show');
+            this.classList.remove('is-invalid');
+        }
+    });
+
+    descriptionInput.addEventListener('blur', function() {
+        if (this.value.trim().length < 10) {
+            showError('descriptionError', 'Description must be at least 10 characters');
+        } else {
+            document.getElementById('descriptionError').classList.remove('show');
+            this.classList.remove('is-invalid');
+        }
+    });
+
+    // Form submission
+    form.addEventListener('submit', function(e) {
+        if (!validateForm()) {
+            e.preventDefault();
+        }
+    });
+
+    // Image upload handling
+    const imageInput = document.getElementById('image');
+    const imagePreview = document.getElementById('imagePreview');
+    const previewImg = document.getElementById('previewImg');
+    const currentImageDiv = document.getElementById('currentImage');
+
+    imageInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            // Validate file type
+            const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
+            if (!validTypes.includes(file.type)) {
+                showError('imageError', 'Only JPG, PNG, and WebP images are allowed');
+                imageInput.value = '';
+                return;
+            }
+
+            // Validate file size (5MB)
+            if (file.size > 5 * 1024 * 1024) {
+                showError('imageError', 'Image must be smaller than 5MB');
+                imageInput.value = '';
+                return;
+            }
+
+            // Show preview
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                previewImg.src = event.target.result;
+                imagePreview.style.display = 'block';
+                currentImageDiv.style.display = 'none';
+                document.getElementById('imageError').classList.remove('show');
+                document.getElementById('imageError').textContent = '';
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+
+    function removeImage() {
+        imageInput.value = '';
+        imagePreview.style.display = 'none';
+        previewImg.src = '';
+        {% if resource and resource.image_path %}
+        currentImageDiv.style.display = 'block';
+        {% endif %}
+    }
+
+    // Show current image if editing
+    window.addEventListener('load', function() {
+        {% if resource and resource.image_path %}
+        document.getElementById('currentImg').src = '{{ url_for("static", filename="uploads/" + resource.image_path) }}';
+        currentImageDiv.style.display = 'block';
+        {% endif %}
+    });
+</script>
+{% endblock %}
