@@ -59,6 +59,21 @@ instance/
 # Logs
 logs/
 *.log
+app_debug.log
+concierge_debug.log
 
 # OS
 Thumbs.db
+
+# Temporary files
+temp/
+tmp/
+*.tmp
+
+# Uploaded files (keep directory, ignore contents)
+static/uploads/profiles/*
+!static/uploads/profiles/.gitkeep
+
+# Generated reports
+static/reports/*.pdf
+static/reports/*.csv

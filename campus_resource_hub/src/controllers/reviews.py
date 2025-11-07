@@ -3,7 +3,7 @@ Reviews Blueprint - Rating and review functionality for campus resources
 Handles: creating, editing, deleting reviews, and displaying averages
 """
 
-from flask import Blueprint, request, jsonify, redirect, url_for, flash
+from flask import Blueprint, request, jsonify, redirect, url_for, flash, render_template
 from flask_login import login_required, current_user
 from src.models import Resource, Review, Booking
 from src.extensions import db
@@ -21,6 +21,22 @@ bp = Blueprint(
 # Initialize DAL
 review_dal = ReviewDAL()
 resource_dal = ResourceDAL()
+
+
+# ==================== FLAGGED REVIEWS PAGE ====================
+
+@bp.route('/flagged-page', methods=['GET'])
+@login_required
+def flagged_reviews_page():
+    """
+    Display the flagged reviews management page (staff/admin only).
+    """
+    # Check authorization
+    if current_user.role not in ['staff', 'admin']:
+        flash('You do not have permission to access this page.', 'error')
+        return redirect(url_for('resources.list_resources'))
+    
+    return render_template('reviews/flagged_reviews.html')
 
 
 # ==================== CREATE / POST REVIEW ====================
@@ -294,7 +310,7 @@ def update_review(review_id):
 @login_required
 def delete_review(review_id):
     """
-    Delete a review (must be owner or admin).
+    Delete a review (must be owner, staff, or admin).
     
     Returns: JSON response
     """
@@ -304,8 +320,11 @@ def delete_review(review_id):
         if not review:
             return jsonify({'status': 'error', 'message': 'Review not found'}), 404
         
-        # Check authorization
-        if review.reviewer_id != current_user.id and not current_user.is_admin():
+        # Check authorization: owner, staff, or admin can delete
+        is_owner = review.reviewer_id == current_user.id
+        is_staff_or_admin = current_user.role in ['staff', 'admin']
+        
+        if not (is_owner or is_staff_or_admin):
             return jsonify({'status': 'error', 'message': 'Unauthorized'}), 403
         
         # Delete review
@@ -322,4 +341,150 @@ def delete_review(review_id):
             return jsonify({'status': 'error', 'message': f'Error deleting review: {str(e)}'}), 500
     
     except Exception as e:
+        return jsonify({'status': 'error', 'message': f'Server error: {str(e)}'}), 500
+
+
+# ==================== FLAG / REPORT REVIEW ====================
+
+@bp.route('/<int:review_id>/flag', methods=['POST'])
+@login_required
+def flag_review(review_id):
+    """
+    Flag a review for staff/admin attention.
+    Students can flag inappropriate content.
+    
+    POST data:
+    - reason (str): Reason for flagging
+    
+    Returns: JSON response
+    """
+    try:
+        # Get review
+        review = Review.query.get(review_id)
+        if not review:
+            return jsonify({'status': 'error', 'message': 'Review not found'}), 404
+        
+        # Get flag reason
+        data = request.get_json()
+        reason = data.get('reason', 'No reason provided')
+        
+        # Parse existing flagged_by list
+        import json
+        flagged_by_list = []
+        if review.flagged_by:
+            try:
+                flagged_by_list = json.loads(review.flagged_by)
+            except:
+                flagged_by_list = []
+        
+        # Check if user already flagged this review
+        if current_user.id in flagged_by_list:
+            return jsonify({
+                'status': 'error',
+                'message': 'You have already flagged this review'
+            }), 400
+        
+        # Add user to flagged_by list
+        flagged_by_list.append(current_user.id)
+        review.flagged_by = json.dumps(flagged_by_list)
+        
+        # Update flag information
+        review.is_flagged = True
+        review.flag_count = len(flagged_by_list)
+        
+        # Update or append flag reason
+        from datetime import datetime
+        if review.flag_reason:
+            review.flag_reason += f"\n[{current_user.username} - {datetime.utcnow().strftime('%Y-%m-%d %H:%M')}]: {reason}"
+        else:
+            review.flag_reason = f"[{current_user.username} - {datetime.utcnow().strftime('%Y-%m-%d %H:%M')}]: {reason}"
+            review.flagged_at = datetime.utcnow()
+        
+        # Save changes
+        db.session.commit()
+        
+        return jsonify({
+            'status': 'success',
+            'message': 'Review flagged for staff review',
+            'flag_count': review.flag_count
+        }), 200
+    
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'status': 'error', 'message': f'Server error: {str(e)}'}), 500
+
+
+# ==================== GET FLAGGED REVIEWS (STAFF/ADMIN) ====================
+
+@bp.route('/flagged', methods=['GET'])
+@login_required
+def get_flagged_reviews():
+    """
+    Get all flagged reviews (staff/admin only).
+    
+    Returns: JSON list of flagged reviews
+    """
+    try:
+        # Check authorization
+        if current_user.role not in ['staff', 'admin']:
+            return jsonify({'status': 'error', 'message': 'Unauthorized'}), 403
+        
+        # Get all flagged reviews
+        flagged_reviews = Review.query.filter_by(is_flagged=True).order_by(Review.flagged_at.desc()).all()
+        
+        # Convert to dict with additional info
+        reviews_data = []
+        for review in flagged_reviews:
+            review_dict = review.to_dict()
+            review_dict['reviewer_name'] = review.reviewer.username
+            review_dict['resource_name'] = review.resource.name
+            review_dict['flag_reason'] = review.flag_reason
+            reviews_data.append(review_dict)
+        
+        return jsonify({
+            'status': 'success',
+            'reviews': reviews_data,
+            'count': len(reviews_data)
+        }), 200
+    
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': f'Server error: {str(e)}'}), 500
+
+
+# ==================== UNFLAG / DISMISS FLAG ====================
+
+@bp.route('/<int:review_id>/unflag', methods=['POST'])
+@login_required
+def unflag_review(review_id):
+    """
+    Remove flag from a review (staff/admin only).
+    
+    Returns: JSON response
+    """
+    try:
+        # Check authorization
+        if current_user.role not in ['staff', 'admin']:
+            return jsonify({'status': 'error', 'message': 'Unauthorized'}), 403
+        
+        # Get review
+        review = Review.query.get(review_id)
+        if not review:
+            return jsonify({'status': 'error', 'message': 'Review not found'}), 404
+        
+        # Clear flag
+        review.is_flagged = False
+        review.flag_count = 0
+        review.flagged_by = None
+        review.flag_reason = None
+        review.flagged_at = None
+        
+        db.session.commit()
+        
+        return jsonify({
+            'status': 'success',
+            'message': 'Flag removed successfully'
+        }), 200
+    
+    except Exception as e:
+        db.session.rollback()
         return jsonify({'status': 'error', 'message': f'Server error: {str(e)}'}), 500

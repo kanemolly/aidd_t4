@@ -3,1017 +3,775 @@
 {% block title %}{{ resource.name }} - Campus Resource Hub{% endblock %}
 
 {% block extra_css %}
-        /* Page Background - Cream Color */
         body {
-            background-color: #EEEDEB;
+            background-color: #f8f7f5;
         }
 
-        /* Fade-in Animation */
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        .resource-detail-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: var(--space-2xl);
         }
 
-        .fade-in {
-            animation: fadeIn 0.6s ease-out forwards;
-        }
-
-        /* Breadcrumb Navigation */
+        /* Breadcrumb */
         .breadcrumb {
             display: flex;
-            gap: 12px;
-            margin-bottom: 30px;
+            gap: 8px;
+            margin-bottom: var(--space-lg);
             font-size: 14px;
-            flex-wrap: wrap;
-            animation: fadeIn 0.5s ease-out;
+            color: #666;
         }
 
         .breadcrumb a {
-            color: #990000;
+            color: var(--iu-crimson);
             text-decoration: none;
             font-weight: 500;
-            transition: all 0.3s ease;
         }
 
         .breadcrumb a:hover {
-            color: #7a0000;
             text-decoration: underline;
         }
 
-        .breadcrumb span {
-            color: #999;
-            margin: 0 4px;
-        }
-
-        .breadcrumb .active {
-            color: #666;
-            font-weight: 600;
-        }
-
-        /* Detail Container */
-        .detail-container {
+        /* Main Grid: 3-column layout for large screens */
+        .detail-grid {
             display: grid;
-            grid-template-columns: 2fr 1fr;
-            gap: 30px;
-            margin-top: 30px;
-            animation: fadeIn 0.7s ease-out 0.1s forwards;
-            opacity: 0;
+            grid-template-columns: 1fr 1.5fr 1fr;
+            gap: var(--space-2xl);
+            margin-bottom: var(--space-3xl);
         }
 
-        /* Carousel Section */
-        .carousel-container {
+        /* LEFT COLUMN: Image + Quick Details */
+        .left-column {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-xl);
+        }
+
+        .resource-image-section {
             background: white;
-            border-radius: 12px;
+            border-radius: var(--radius-xl);
             overflow: hidden;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            margin-bottom: 30px;
+            box-shadow: var(--shadow-md);
+            aspect-ratio: 4/3;
         }
 
-        .carousel-wrapper {
-            position: relative;
-            width: 100%;
-            padding-bottom: 66.667%;
-            background-color: #f5f5f5;
-            overflow: hidden;
-        }
-
-        .carousel-image {
-            position: absolute;
-            top: 0;
-            left: 0;
+        .resource-image {
             width: 100%;
             height: 100%;
             object-fit: cover;
-            display: none;
-            animation: fadeIn 0.4s ease-in-out;
-        }
-
-        .carousel-image.active {
-            display: block;
-        }
-
-        .carousel-controls {
-            position: absolute;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            gap: 10px;
-            z-index: 10;
-        }
-
-        .carousel-dot {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            background-color: rgba(255, 255, 255, 0.6);
-            cursor: pointer;
-            transition: all 0.3s ease;
-            border: 2px solid rgba(255, 255, 255, 0.8);
-        }
-
-        .carousel-dot.active {
-            background-color: #990000;
-            transform: scale(1.3);
-        }
-
-        .carousel-arrow {
-            position: absolute;
-            top: 50%;
-            transform: translateY(-50%);
-            background-color: rgba(153, 0, 0, 0.8);
-            color: white;
-            border: none;
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            cursor: pointer;
-            font-size: 20px;
+            background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%);
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: all 0.3s ease;
-            z-index: 10;
+            color: #999;
+            font-size: 14px;
         }
 
-        .carousel-arrow:hover {
-            background-color: #7a0000;
-            transform: translateY(-50%) scale(1.1);
-        }
-
-        .carousel-arrow.prev {
-            left: 20px;
-        }
-
-        .carousel-arrow.next {
-            right: 20px;
-        }
-
-        .carousel-arrow:disabled {
-            opacity: 0.4;
-            cursor: not-allowed;
-        }
-
-        /* Main Resource Detail */
-        .resource-detail {
+        /* Quick Details Card */
+        .quick-details {
             background: white;
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            border-radius: var(--radius-xl);
+            padding: var(--space-lg);
+            box-shadow: var(--shadow-md);
         }
 
-        .detail-header {
-            background: linear-gradient(135deg, #990000 0%, #7a0000 100%);
-            color: white;
-            padding: 40px;
-        }
-
-        .detail-type {
-            display: inline-block;
-            background-color: rgba(255, 255, 255, 0.25);
-            color: white;
-            padding: 6px 14px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 700;
-            margin-bottom: 15px;
+        .quick-details h3 {
+            color: var(--iu-crimson);
+            font-size: var(--font-size-sm);
             text-transform: uppercase;
+            font-weight: 700;
+            margin: 0 0 var(--space-md) 0;
             letter-spacing: 0.5px;
         }
 
-        .detail-name {
-            font-size: 36px;
-            font-weight: 700;
-            margin: 15px 0;
-            line-height: 1.2;
-        }
-
-        .detail-rating {
+        .detail-row {
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            gap: 8px;
-            color: #990000;
+            padding: var(--space-sm) 0;
+            border-bottom: 1px solid #eee;
         }
 
-        .rating-stars {
-            font-size: 18px;
-            letter-spacing: 2px;
+        .detail-row:last-child {
+            border-bottom: none;
         }
 
-        .rating-stars .star {
-            color: #ccc;
-        }
-
-        .rating-stars .star.active {
-            color: #990000;
-        }
-
-        .rating-value {
-            font-size: 15px;
+        .detail-label {
             font-weight: 600;
+            color: #666;
+            font-size: 13px;
+            text-transform: uppercase;
         }
 
-        .detail-location {
-            font-size: 16px;
-            opacity: 0.95;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 15px;
+        .detail-value {
+            color: #333;
+            font-weight: 500;
+            font-size: 15px;
         }
 
         .status-badge {
             display: inline-block;
-            padding: 8px 16px;
-            border-radius: 6px;
-            font-weight: 600;
-            font-size: 13px;
-            letter-spacing: 0.3px;
-        }
-
-        .status-badge.available {
-            background-color: rgba(212, 237, 218, 0.9);
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-
-        .status-badge.unavailable {
-            background-color: rgba(248, 215, 218, 0.9);
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-
-        /* Tab Navigation */
-        .tabs-container {
-            border-bottom: 2px solid #f0f0f0;
-            margin-bottom: 30px;
-        }
-
-        .tabs-list {
-            display: flex;
-            gap: 0;
-            list-style: none;
-            margin: 0;
-            padding: 0;
-        }
-
-        .tab-item {
-            flex: 1;
-            text-align: center;
-        }
-
-        .tab-button {
-            background: none;
-            border: none;
-            cursor: pointer;
-            padding: 16px 20px;
-            font-size: 15px;
-            font-weight: 600;
-            color: #666;
-            border-bottom: 3px solid transparent;
-            transition: all 0.3s ease;
-            position: relative;
-        }
-
-        .tab-button:hover {
-            color: #990000;
-            background-color: #f9f9f9;
-        }
-
-        .tab-button.active {
-            color: #990000;
-            border-bottom-color: #990000;
-        }
-
-        .tab-content {
-            display: none;
-        }
-
-        .tab-content.active {
-            display: block;
-            animation: fadeIn 0.3s ease-out;
-        }
-
-        /* Detail Body */
-        .detail-body {
-            padding: 40px;
-        }
-
-        .description-section {
-            margin-bottom: 40px;
-            padding-bottom: 40px;
-            border-bottom: 1px solid #eee;
-        }
-
-        .description-section p {
-            color: #555;
-            font-size: 15px;
-            line-height: 1.8;
-            margin: 0;
-        }
-
-        .section-title {
-            font-size: 18px;
-            font-weight: 700;
-            color: #333;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding-bottom: 12px;
-            border-bottom: 2px solid #f0f0f0;
-        }
-
-        .details-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            margin-bottom: 40px;
-            padding-bottom: 40px;
-            border-bottom: 1px solid #eee;
-        }
-
-        .detail-item {
-            padding: 20px;
-            background-color: #f9f9f9;
-            border-radius: 8px;
-            border-left: 4px solid #990000;
-            transition: all 0.3s ease;
-        }
-
-        .detail-item:hover {
-            background-color: #fff;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-        }
-
-        .detail-item-label {
-            font-size: 11px;
-            font-weight: 700;
-            color: #999;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 8px;
-        }
-
-        .detail-item-value {
-            font-size: 17px;
-            font-weight: 600;
-            color: #333;
-        }
-
-        .detail-item-value.status {
-            color: #990000;
-        }
-
-        .creator-info {
-            background-color: #f9f9f9;
-            padding: 20px;
-            border-radius: 8px;
-            border-left: 4px solid #990000;
-        }
-
-        .creator-label {
-            font-size: 11px;
-            font-weight: 700;
-            color: #999;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 8px;
-        }
-
-        .creator-name {
-            font-size: 16px;
-            font-weight: 700;
-            color: #333;
-        }
-
-        .creator-email {
-            font-size: 14px;
-            color: #666;
-            margin-top: 6px;
-        }
-
-        .timestamps {
+            padding: 4px 12px;
+            border-radius: 20px;
             font-size: 12px;
-            color: #999;
-            margin-top: 12px;
-            padding-top: 12px;
-            border-top: 1px solid #eee;
-        }
-
-        /* Sidebar */
-        .sidebar {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-
-        .action-box {
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
-        }
-
-        .action-box-header {
-            background: linear-gradient(135deg, #990000 0%, #7a0000 100%);
-            color: white;
-            padding: 18px 24px;
-            font-size: 16px;
-            font-weight: 700;
-            text-align: center;
-        }
-
-        .action-box-content {
-            padding: 24px;
-        }
-
-        .btn-primary,
-        .btn-secondary,
-        .btn-danger {
-            width: 100%;
-            padding: 12px 16px;
-            border: none;
-            border-radius: 6px;
             font-weight: 600;
-            font-size: 14px;
+            text-transform: uppercase;
+        }
+
+        .status-available {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .status-unavailable {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        /* Action Buttons */
+        .action-buttons {
+            display: flex;
+            gap: var(--space-md);
+            flex-direction: column;
+        }
+
+        .btn-primary, .btn-secondary {
+            padding: var(--space-md) var(--space-lg);
+            border: none;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            font-size: 15px;
             cursor: pointer;
             transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            text-align: center;
             text-decoration: none;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            margin-bottom: 10px;
+            display: block;
         }
 
         .btn-primary {
-            background-color: #990000;
+            background: linear-gradient(135deg, var(--iu-crimson) 0%, #7a0000 100%);
             color: white;
+            box-shadow: 0 4px 12px rgba(153, 0, 0, 0.2);
         }
 
         .btn-primary:hover {
-            background-color: #7a0000;
-            transform: translateY(-3px);
-            box-shadow: 0 6px 16px rgba(153, 0, 0, 0.3);
-        }
-
-        .btn-primary:active {
-            transform: translateY(-1px);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(153, 0, 0, 0.3);
         }
 
         .btn-secondary {
-            background-color: #f0f0f0;
+            background: #f0f0f0;
             color: #333;
+            border: 1px solid #ddd;
         }
 
         .btn-secondary:hover {
-            background-color: #e0e0e0;
-            transform: translateY(-2px);
+            background: #e8e8e8;
         }
 
-        .btn-danger {
-            background-color: #dc3545;
+        /* RIGHT COLUMN: Main Info */
+        .right-column {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-2xl);
+        }
+
+        .resource-header {
+            padding-bottom: var(--space-lg);
+            border-bottom: 2px solid #eee;
+        }
+
+        .resource-type-tag {
+            display: inline-block;
+            background: linear-gradient(135deg, var(--iu-crimson) 0%, #7a0000 100%);
             color: white;
-        }
-
-        .btn-danger:hover {
-            background-color: #c82333;
-            transform: translateY(-2px);
-        }
-
-        .delete-form {
-            margin-top: 10px;
-            padding-top: 10px;
-            border-top: 1px solid #eee;
-        }
-
-        .info-box {
-            background-color: #f8f9fa;
-            border-left: 4px solid #990000;
-            padding: 16px;
-            border-radius: 6px;
-            margin-bottom: 12px;
-        }
-
-        .info-box p {
-            margin: 0;
-            color: #555;
-            font-size: 14px;
-            line-height: 1.6;
-        }
-
-        .btn-link {
-            color: #990000;
-            text-decoration: none;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
             font-weight: 600;
-            transition: color 0.3s ease;
+            text-transform: uppercase;
+            margin-bottom: var(--space-sm);
         }
 
-        .btn-link:hover {
-            color: #7a0000;
+        .resource-name {
+            font-size: var(--font-size-3xl);
+            font-weight: 700;
+            color: #333;
+            margin: var(--space-md) 0;
+            line-height: 1.2;
+        }
+
+        .resource-location {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #666;
+            font-size: 15px;
+            margin-bottom: var(--space-md);
+        }
+
+        .resource-location svg {
+            width: 18px;
+            height: 18px;
+            flex-shrink: 0;
+        }
+
+        .resource-description {
+            color: #555;
+            font-size: 15px;
+            line-height: 1.6;
+            margin: var(--space-lg) 0;
+        }
+
+        /* Content Sections */
+        .content-section {
+            background: white;
+            border-radius: var(--radius-xl);
+            padding: var(--space-lg);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .section-title {
+            font-size: var(--font-size-xl);
+            font-weight: 700;
+            color: var(--iu-crimson);
+            margin: 0 0 var(--space-lg) 0;
+            padding-bottom: var(--space-md);
+            border-bottom: 2px solid #eee;
+        }
+
+        /* Reviews Section */
+        .reviews-section {
+            background: white;
+            border-radius: var(--radius-xl);
+            padding: var(--space-2xl);
+            box-shadow: var(--shadow-sm);
+            margin-top: var(--space-3xl);
+        }
+
+        .review-form {
+            background: #f9f9f9;
+            border-radius: var(--radius-md);
+            padding: var(--space-lg);
+            margin-bottom: var(--space-xl);
+            border: 1px solid #eee;
+        }
+
+        .form-group {
+            margin-bottom: var(--space-md);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 6px;
+            font-size: 14px;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            padding: var(--space-sm);
+            border: 1px solid #ddd;
+            border-radius: var(--radius-sm);
+            font-size: 14px;
+            font-family: inherit;
+            resize: vertical;
+        }
+
+        .form-group textarea {
+            min-height: 100px;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--iu-crimson);
+            box-shadow: 0 0 0 3px rgba(153, 0, 0, 0.1);
+        }
+
+        .rating-stars {
+            display: flex;
+            gap: 8px;
+            margin: var(--space-sm) 0;
+        }
+
+        .star {
+            font-size: 32px;
+            cursor: pointer;
+            color: #ddd;
+            transition: all 0.2s ease;
+            user-select: none;
+        }
+
+        .star:hover {
+            color: #ffc107;
+            transform: scale(1.1);
+        }
+
+        .btn-submit-review {
+            background: linear-gradient(135deg, var(--iu-crimson) 0%, #7a0000 100%);
+            color: white;
+            padding: var(--space-md) var(--space-lg);
+            border: none;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            font-size: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            align-self: flex-start;
+            margin-top: var(--space-sm);
+        }
+
+        .btn-submit-review:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(153, 0, 0, 0.3);
+        }
+
+        .review-item {
+            padding: var(--space-lg);
+            border-bottom: 1px solid #eee;
+            border-radius: var(--radius-md);
+            margin-bottom: var(--space-md);
+            background: #fafafa;
+            transition: background-color 0.2s ease;
+        }
+
+        .review-item:hover {
+            background-color: #f5f5f5;
+        }
+
+        .review-item:last-child {
+            border-bottom: none;
+        }
+
+        .review-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: var(--space-sm);
+        }
+
+        .review-author {
+            font-weight: 600;
+            color: #333;
+            font-size: 15px;
+        }
+
+        .review-date {
+            font-size: 13px;
+            color: #999;
+        }
+
+        .review-rating {
+            color: #ffc107;
+            font-size: 14px;
+            margin-bottom: var(--space-sm);
+        }
+
+        .review-text {
+            color: #555;
+            line-height: 1.6;
+            font-size: 14px;
+        }
+
+        .no-reviews {
+            padding: var(--space-2xl);
+            text-align: center;
+            color: #999;
+            font-size: 15px;
+            background: #f9f9f9;
+            border-radius: var(--radius-md);
+            border: 1px dashed #ddd;
+        }
+            font-size: 14px;
+            font-family: inherit;
+            resize: vertical;
+        }
+
+        .form-group textarea {
+            min-height: 100px;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--iu-crimson);
+            box-shadow: 0 0 0 3px rgba(153, 0, 0, 0.1);
+        }
+
+        .rating-stars {
+            display: flex;
+            gap: 8px;
+            margin: var(--space-sm) 0;
+        }
+
+        .star {
+            font-size: 32px;
+            cursor: pointer;
+            color: #ddd;
+            transition: all 0.2s ease;
+        }
+
+        .star:hover,
+        .star.active {
+            color: #ffc107;
+            transform: scale(1.1);
+        }
+
+        .btn-submit-review {
+            background: linear-gradient(135deg, var(--iu-crimson) 0%, #7a0000 100%);
+            color: white;
+            padding: var(--space-md) var(--space-lg);
+            border: none;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            font-size: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            align-self: flex-start;
+        }
+
+        .btn-submit-review:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(153, 0, 0, 0.3);
+        }
+
+        .review-item {
+            padding: var(--space-lg) 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .review-item:last-child {
+            border-bottom: none;
+        }
+
+        .review-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: var(--space-sm);
+        }
+
+        .review-author {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .review-date {
+            font-size: 13px;
+            color: #999;
+        }
+
+        .review-rating {
+            color: #ffc107;
+            font-size: 14px;
+            margin-bottom: var(--space-sm);
+        }
+
+        .review-text {
+            color: #555;
+            line-height: 1.6;
+            font-size: 14px;
+        }
+
+        .no-reviews {
+            padding: var(--space-lg);
+            text-align: center;
+            color: #999;
+            font-size: 15px;
+        }
+
+        .login-prompt {
+            background: #f0f0f0;
+            border-left: 4px solid var(--iu-crimson);
+            padding: var(--space-lg);
+            border-radius: var(--radius-sm);
+            margin-bottom: var(--space-lg);
+        }
+
+        .login-prompt p {
+            margin: 0 0 var(--space-sm) 0;
+            color: #555;
+        }
+
+        .login-prompt a {
+            color: var(--iu-crimson);
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .login-prompt a:hover {
             text-decoration: underline;
         }
 
-        /* Responsive Design */
-        @media (max-width: 1024px) {
-            .detail-container {
-                grid-template-columns: 1fr;
-            }
-
-            .detail-header {
-                padding: 30px;
-            }
-
-            .detail-name {
-                font-size: 28px;
-            }
-
-            .sidebar {
-                flex-direction: row;
-                flex-wrap: wrap;
-            }
-
-            .action-box {
-                flex: 1;
-                min-width: 200px;
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .detail-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: var(--space-xl);
             }
         }
 
         @media (max-width: 768px) {
-            .detail-body {
-                padding: 20px;
-            }
-
-            .action-box-content {
-                padding: 20px;
-            }
-
-            .details-grid {
+            .detail-grid {
                 grid-template-columns: 1fr;
+                gap: var(--space-xl);
             }
 
-            .btn-primary,
-            .btn-secondary,
-            .btn-danger {
-                padding: 12px;
+            .resource-name {
+                font-size: var(--font-size-2xl);
+            }
+
+            .action-buttons {
+                flex-direction: column;
             }
         }
 {% endblock %}
 
 {% block content %}
-<div class="container fade-in">
-    <!-- Breadcrumb Navigation -->
-    <nav class="breadcrumb" role="navigation" aria-label="breadcrumb">
-        <a href="{{ url_for('home') }}">🏠 Home</a>
-        <span aria-hidden="true">›</span>
-        <a href="{{ url_for('resources.list_resources') }}">📚 Resources</a>
-        <span aria-hidden="true">›</span>
-        <span class="active" aria-current="page">{{ resource.name }}</span>
-    </nav>
+<div class="resource-detail-container">
+    <!-- Breadcrumb -->
+    <div class="breadcrumb">
+        <a href="{{ url_for('resources.list_resources') }}">Resources</a>
+        <span>/</span>
+        <span class="active">{{ resource.name }}</span>
+    </div>
 
-    <div class="detail-container">
-        <!-- Main Content -->
+    <!-- Main 3-Column Grid -->
+    <div class="detail-grid">
+        <!-- COLUMN 1: Image + Quick Details -->
         <div>
-            <!-- Image Carousel -->
-            <div class="carousel-container">
-                <div class="carousel-wrapper">
-                    <!-- Display uploaded image or fallback image -->
-                    {% if resource.image_path %}
-                    <img src="{{ url_for('static', filename='uploads/' + resource.image_path) }}" 
-                         alt="{{ resource.name }}" 
-                         class="carousel-image active"
-                         id="carousel-image-0"
-                         onerror="this.src=getFallbackImage('{{ resource.resource_type }}')">
-                    {% else %}
-                    <img src="" 
-                         alt="{{ resource.name }}" 
-                         class="carousel-image active"
-                         id="carousel-image-0"
-                         onload="this.style.display='block'"
-                         onerror="handleImageError()">
-                    {% endif %}
-                    
-                    <!-- Navigation Arrows -->
-                    <button class="carousel-arrow prev" id="carousel-prev" aria-label="Previous image" onclick="carouselPrev()">
-                        ‹
-                    </button>
-                    <button class="carousel-arrow next" id="carousel-next" aria-label="Next image" onclick="carouselNext()">
-                        ›
-                    </button>
-                    
-                    <!-- Navigation Dots -->
-                    <div class="carousel-controls" role="tablist">
-                        <button class="carousel-dot active" id="carousel-dot-0" aria-label="Image 1" role="tab" aria-selected="true" onclick="goToSlide(0)"></button>
-                    </div>
-                </div>
+            <!-- Image Section -->
+            <div class="resource-image-section">
+                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='600'%3E%3Crect fill='%23f0f0f0' width='800' height='600'/%3E%3C/svg%3E" 
+                     alt="{{ resource.name }}" 
+                     class="resource-image"
+                     data-resource-type="{{ resource.resource_type }}"
+                     data-resource-name="{{ resource.name }}">
             </div>
 
-            <!-- Resource Detail Card -->
-            <div class="resource-detail">
-                <div class="detail-header">
-                    <span class="detail-type">{{ resource.resource_type }}</span>
-                    <h1 class="detail-name">{{ resource.name }}</h1>
-                    
-                    <!-- Average Rating Display -->
-                    <div class="detail-rating" id="headerRating" style="margin-bottom: 12px; font-size: 16px;">
-                        <div class="rating-stars" id="headerStars">⭐</div>
-                        <span class="rating-value" id="headerRatingValue">Loading...</span>
-                    </div>
-                    
-                    <div class="detail-location">
-                        📍 {{ resource.location }}
-                    </div>
-                    <span class="status-badge {% if resource.is_available %}available{% else %}unavailable{% endif %}" role="status">
-                        {% if resource.is_available %}
-                        ✓ Available Now
-                        {% else %}
-                        ✗ Currently Unavailable
-                        {% endif %}
+            <!-- Quick Details Card -->
+            <div class="quick-details">
+                <h3>Quick Details</h3>
+                
+                <div class="detail-row">
+                    <span class="detail-label">Type</span>
+                    <span class="detail-value">{{ resource.resource_type|capitalize }}</span>
+                </div>
+
+                <div class="detail-row">
+                    <span class="detail-label">Status</span>
+                    <span class="status-badge {% if resource.is_available %}status-available{% else %}status-unavailable{% endif %}">
+                        {% if resource.is_available %}Available{% else %}Unavailable{% endif %}
                     </span>
                 </div>
 
-                <div class="detail-body">
-                    <!-- Tab Navigation -->
-                    <div class="tabs-container">
-                        <ul class="tabs-list" role="tablist">
-                            <li class="tab-item" role="presentation">
-                                <button class="tab-button active" id="tab-description" role="tab" aria-selected="true" aria-controls="panel-description" onclick="switchTab('description')">
-                                    📋 Description
-                                </button>
-                            </li>
-                            <li class="tab-item" role="presentation">
-                                <button class="tab-button" id="tab-reviews" role="tab" aria-selected="false" aria-controls="panel-reviews" onclick="switchTab('reviews')">
-                                    ⭐ Reviews
-                                </button>
-                            </li>
-                            <li class="tab-item" role="presentation">
-                                <button class="tab-button" id="tab-availability" role="tab" aria-selected="false" aria-controls="panel-availability" onclick="switchTab('availability')">
-                                    📅 Availability
-                                </button>
-                            </li>
-                            <li class="tab-item" role="presentation">
-                                <button class="tab-button" id="tab-details" role="tab" aria-selected="false" aria-controls="panel-details" onclick="switchTab('details')">
-                                    ℹ️ Details
-                                </button>
-                            </li>
-                        </ul>
-                    </div>
-
-                    <!-- Tab 1: Description -->
-                    <div class="tab-content active" id="panel-description" role="tabpanel" aria-labelledby="tab-description">
-                        {% if resource.description %}
-                        <div class="description-section" style="border-bottom: none; margin-bottom: 0; padding-bottom: 0;">
-                            <p>{{ resource.description }}</p>
-                        </div>
+                {% if resource.capacity and resource.resource_type not in ['equipment', 'facility'] %}
+                <div class="detail-row">
+                    <span class="detail-label">Capacity</span>
+                    <span class="detail-value">
+                        {% if resource.capacity == 1 %}
+                            1 Person
                         {% else %}
-                        <div class="info-box">
-                            <p>No description available for this resource.</p>
-                        </div>
+                            {{ resource.capacity }} People
                         {% endif %}
-                    </div>
-
-                    <!-- Tab 2: Reviews -->
-                    <div class="tab-content" id="panel-reviews" role="tabpanel" aria-labelledby="tab-reviews" data-resource-id="{{ resource.id }}">
-                        {% include "reviews/reviews_component.html" %}
-                    </div>
-
-                    <!-- Tab 3: Availability -->
-                    <div class="tab-content" id="panel-availability" role="tabpanel" aria-labelledby="tab-availability">
-                        <div style="padding: 10px 0;">
-                            <div class="detail-item" style="margin-bottom: 15px;">
-                                <div class="detail-item-label">Current Status</div>
-                                <div class="detail-item-value status">
-                                    {% if resource.is_available %}
-                                    ✓ Available Now
-                                    {% else %}
-                                    ✗ Currently Unavailable
-                                    {% endif %}
-                                </div>
-                            </div>
-                            
-                            {% if resource.capacity %}
-                            <div class="detail-item" style="margin-bottom: 15px;">
-                                <div class="detail-item-label">Capacity</div>
-                                <div class="detail-item-value">{{ resource.capacity }} people</div>
-                            </div>
-                            {% endif %}
-
-                            <div class="info-box">
-                                <p><strong>Need to book?</strong> Check availability and proceed to the sidebar booking section to secure your slot.</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Tab 4: Details Grid -->
-                    <div class="tab-content" id="panel-details" role="tabpanel" aria-labelledby="tab-details">
-                        <div class="details-grid">
-                            <div class="detail-item">
-                                <div class="detail-item-label">Resource Type</div>
-                                <div class="detail-item-value">{{ resource.resource_type }}</div>
-                            </div>
-
-                            <div class="detail-item">
-                                <div class="detail-item-label">Status</div>
-                                <div class="detail-item-value">{{ resource.status|capitalize }}</div>
-                            </div>
-
-                            <div class="detail-item">
-                                <div class="detail-item-label">Date Added</div>
-                                <div class="detail-item-value">{{ resource.created_at.strftime('%b %d, %Y') }}</div>
-                            </div>
-
-                            <div class="detail-item">
-                                <div class="detail-item-label">Last Updated</div>
-                                <div class="detail-item-value">{{ resource.updated_at.strftime('%b %d, %Y') }}</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Creator Information Section -->
-                {% if owner %}
-                <div style="margin-top: 40px; padding-top: 40px; border-top: 1px solid #eee;">
-                    <div class="section-title">👤 Resource Manager</div>
-                    <div class="creator-info">
-                        <div class="creator-label">Managed by</div>
-                        <div class="creator-name">{{ owner.full_name or owner.username }}</div>
-                        <div class="creator-email">{{ owner.email }}</div>
-                        {% if owner.department %}
-                        <div class="creator-email">Department: {{ owner.department }}</div>
-                        {% endif %}
-                        <div class="timestamps">
-                            Updated {{ resource.updated_at.strftime('%b %d, %Y at %I:%M %p') }}
-                        </div>
-                    </div>
+                    </span>
                 </div>
                 {% endif %}
+
+                <div class="detail-row">
+                    <span class="detail-label">Location</span>
+                    <span class="detail-value" style="text-align: right; font-size: 13px;">{{ resource.location }}</span>
+                </div>
             </div>
         </div>
 
-        <!-- Sidebar -->
-        <aside class="sidebar">
-            <!-- Booking Action -->
-            {% if resource.is_available and current_user.is_authenticated %}
-            <div class="action-box">
-                <div class="action-box-header">📅 Ready to Book?</div>
-                <div class="action-box-content">
-                    <a href="{{ url_for('bookings.create_booking') }}?resource_id={{ resource.id }}" class="btn-primary">
-                        🎯 Book Now
-                    </a>
-                    <p style="font-size: 13px; color: #666; text-align: center; margin-top: 15px;">
-                        Secure your spot for this resource
-                    </p>
+        <!-- COLUMN 2: Description & About (Main Content) -->
+        <div>
+            <!-- Resource Header -->
+            <div class="resource-header">
+                <span class="resource-type-tag">{{ resource.resource_type }}</span>
+                <h1 class="resource-name">{{ resource.name }}</h1>
+                
+                <div class="resource-location">
+                    <svg fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"/>
+                    </svg>
+                    {{ resource.location }}
                 </div>
             </div>
-            {% elif resource.is_available and not current_user.is_authenticated %}
-            <div class="action-box">
-                <div class="action-box-header">🔐 Want to Book?</div>
-                <div class="action-box-content">
-                    <a href="{{ url_for('auth.login') }}" class="btn-primary">
-                        🔑 Login to Book
-                    </a>
-                    <a href="{{ url_for('auth.register') }}" class="btn-secondary">
-                        ✏️ Create Account
-                    </a>
-                </div>
+
+            <!-- Description -->
+            {% if resource.description %}
+            <div class="content-section">
+                <h2 class="section-title">About</h2>
+                <p class="resource-description">{{ resource.description }}</p>
             </div>
-            {% else %}
-            <div class="action-box">
-                <div class="action-box-header">⏸️ Not Available</div>
-                <div class="action-box-content">
-                    <div class="info-box">
-                        <p>This resource is currently unavailable for booking. Please check back soon or explore other resources.</p>
+            {% endif %}
+        </div>
+
+        <!-- COLUMN 3: Action Buttons -->
+        <div>
+            <!-- Action Buttons -->
+            <div class="action-buttons">
+                {% if current_user.is_authenticated %}
+                <a href="{{ url_for('bookings.create_booking', resource_id=resource.id) }}" class="btn-primary">
+                    📅 Book This Resource
+                </a>
+                <a href="{{ url_for('bookings.list_bookings') }}" class="btn-secondary">
+                    View My Bookings
+                </a>
+                {% else %}
+                <a href="{{ url_for('auth.login') }}" class="btn-primary">
+                    Login to Book
+                </a>
+                <p style="text-align: center; color: #999; font-size: 13px; margin: 0;">
+                    New user? <a href="{{ url_for('auth.register') }}" style="color: var(--iu-crimson); font-weight: 600;">Create account</a>
+                </p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- REVIEWS SECTION - Full Width Below -->
+    <div class="reviews-section">
+        <h2 class="section-title">💬 Reviews & Comments</h2>
+        
+        <!-- Login Prompt or Review Form -->
+        {% if current_user.is_authenticated %}
+            <!-- Review Form -->
+            <div class="review-form">
+                <h3 style="margin: 0 0 var(--space-lg) 0; color: #333;">Leave a Review</h3>
+                <form id="review-form" method="POST" action="{{ url_for('reviews.create_review') }}">
+                    <input type="hidden" name="resource_id" value="{{ resource.id }}">
+                    
+                    <div class="form-group">
+                        <label>Rating</label>
+                        <div class="rating-stars" id="rating-stars">
+                            {% for i in range(1, 6) %}
+                            <input type="radio" name="rating" value="{{ i }}" id="star-{{ i }}" style="display: none;">
+                            <label for="star-{{ i }}" class="star" data-value="{{ i }}">★</label>
+                            {% endfor %}
+                        </div>
                     </div>
-                </div>
-            </div>
-            {% endif %}
 
-            <!-- Management Actions -->
-            {% if is_owner or is_admin %}
-            <div class="action-box">
-                <div class="action-box-header">⚙️ Manage</div>
-                <div class="action-box-content">
-                    <a href="{{ url_for('resources.edit_resource', resource_id=resource.id) }}" class="btn-secondary">
-                        ✏️ Edit Resource
-                    </a>
-                    <form method="POST" action="{{ url_for('resources.delete_resource', resource_id=resource.id) }}" class="delete-form" onsubmit="return confirm('Are you sure you want to delete this resource? This action cannot be undone.');">
-                        <button type="submit" class="btn-danger">🗑️ Delete Resource</button>
-                    </form>
-                </div>
-            </div>
-            {% endif %}
+                    <div class="form-group">
+                        <label for="review-title">Title (Optional)</label>
+                        <input type="text" id="review-title" name="title" placeholder="e.g., Great equipment!" maxlength="255">
+                    </div>
 
-            <!-- Share -->
-            <div class="action-box">
-                <div class="action-box-header">🔗 Share Resource</div>
-                <div class="action-box-content">
-                    <button class="btn-secondary" onclick="copyToClipboard('{{ request.base_url }}')" title="Copy this resource link to clipboard">
-                        🔗 Copy Link
-                    </button>
-                    <p style="font-size: 12px; color: #999; text-align: center; margin-top: 12px;">
-                        Share this resource with others
-                    </p>
-                </div>
+                    <div class="form-group">
+                        <label for="review-comment">Your Review</label>
+                        <textarea id="review-comment" name="comment" placeholder="Share your experience with this resource..." required minlength="5" maxlength="1000"></textarea>
+                    </div>
+
+                    <button type="submit" class="btn-submit-review">Submit Review</button>
+                </form>
             </div>
-        </aside>
+        {% else %}
+            <div class="login-prompt">
+                <p><strong>Want to leave a review?</strong></p>
+                <p>You need to be logged in to leave a review. <a href="{{ url_for('auth.login') }}">Login here</a> or <a href="{{ url_for('auth.register') }}">create an account</a>.</p>
+            </div>
+        {% endif %}
+
+        <!-- Reviews List -->
+        <div style="margin-top: var(--space-2xl);">
+            <h3 style="margin-bottom: var(--space-lg); color: #333;">Reviews from Users</h3>
+            
+            {% if resource.reviews.count() > 0 %}
+                {% for review in resource.reviews.all() %}
+                <div class="review-item">
+                    <div class="review-header">
+                        <div>
+                            <div class="review-author">{{ review.reviewer.full_name or review.reviewer.username }}</div>
+                            {% if review.title %}
+                            <div style="font-size: 14px; color: #555; font-weight: 500;">{{ review.title }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="review-date">{{ review.created_at.strftime('%B %d, %Y') }}</div>
+                    </div>
+                    <div class="review-rating">
+                        {% for i in range(review.rating) %}⭐{% endfor %}
+                        <span style="color: #999; font-size: 13px; margin-left: 8px;">{{ review.rating }} / 5</span>
+                    </div>
+                    <div class="review-text">{{ review.comment }}</div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="no-reviews">
+                    <p>No reviews yet. Be the first to share your experience!</p>
+                </div>
+            {% endif %}
+        </div>
     </div>
 </div>
-{% endblock %}
 
-{% block extra_js %}
+<!-- Load resource images script -->
+<script src="{{ url_for('static', filename='js/resource-images.js') }}"></script>
+
 <script>
-    // Carousel functionality
-    let currentSlide = 0;
-    const totalSlides = 1; // Currently only 1 placeholder, but extensible for multiple images
-
-    function goToSlide(slideIndex) {
-        currentSlide = slideIndex;
-        updateCarousel();
-    }
-
-    function carouselNext() {
-        currentSlide = (currentSlide + 1) % totalSlides;
-        updateCarousel();
-    }
-
-    function carouselPrev() {
-        currentSlide = (currentSlide - 1 + totalSlides) % totalSlides;
-        updateCarousel();
-    }
-
-    function updateCarousel() {
-        // Update image visibility
-        document.querySelectorAll('.carousel-image').forEach((img, idx) => {
-            img.classList.toggle('active', idx === currentSlide);
-        });
-
-        // Update dot visibility
-        document.querySelectorAll('.carousel-dot').forEach((dot, idx) => {
-            dot.classList.toggle('active', idx === currentSlide);
-            dot.setAttribute('aria-selected', idx === currentSlide);
-        });
-
-        // Update arrow button states
-        const prevBtn = document.getElementById('carousel-prev');
-        const nextBtn = document.getElementById('carousel-next');
+// Star rating selector
+document.querySelectorAll('.star').forEach(star => {
+    star.addEventListener('click', function() {
+        const value = this.dataset.value;
+        document.getElementById(`star-${value}`).checked = true;
         
-        if (prevBtn) prevBtn.disabled = totalSlides <= 1;
-        if (nextBtn) nextBtn.disabled = totalSlides <= 1;
-    }
-
-    // Tab switching functionality
-    function switchTab(tabName) {
-        // Hide all tab contents
-        document.querySelectorAll('.tab-content').forEach(content => {
-            content.classList.remove('active');
+        // Update visual state
+        document.querySelectorAll('.star').forEach((s, idx) => {
+            if (idx + 1 <= value) {
+                s.style.color = '#ffc107';
+            } else {
+                s.style.color = '#ddd';
+            }
         });
-
-        // Deactivate all tab buttons
-        document.querySelectorAll('.tab-button').forEach(btn => {
-            btn.classList.remove('active');
-            btn.setAttribute('aria-selected', 'false');
-        });
-
-        // Show selected tab content
-        const tabPanel = document.getElementById(`panel-${tabName}`);
-        if (tabPanel) {
-            tabPanel.classList.add('active');
-        }
-
-        // Activate selected tab button
-        const tabBtn = document.getElementById(`tab-${tabName}`);
-        if (tabBtn) {
-            tabBtn.classList.add('active');
-            tabBtn.setAttribute('aria-selected', 'true');
-            tabBtn.focus();
-        }
-
-        // Announce to screen readers
-        const ariaLive = document.createElement('div');
-        ariaLive.setAttribute('role', 'status');
-        ariaLive.setAttribute('aria-live', 'polite');
-        ariaLive.className = 'sr-only';
-        ariaLive.textContent = `${tabName.charAt(0).toUpperCase() + tabName.slice(1)} tab content loaded`;
-        document.body.appendChild(ariaLive);
-        setTimeout(() => ariaLive.remove(), 1000);
-    }
-
-    // Copy to clipboard with feedback
-    function copyToClipboard(text) {
-        navigator.clipboard.writeText(text).then(function() {
-            // Visual feedback
-            const btn = event.target;
-            const originalText = btn.innerHTML;
-            btn.innerHTML = '✓ Copied!';
-            btn.style.backgroundColor = '#28a745';
-            
-            setTimeout(() => {
-                btn.innerHTML = originalText;
-                btn.style.backgroundColor = '';
-            }, 2000);
-        }, function(err) {
-            console.error('Could not copy text: ', err);
-            alert('Failed to copy link. Please try again.');
-        });
-    }
-
-    // Keyboard navigation for carousel
-    document.addEventListener('keydown', function(event) {
-        if (event.key === 'ArrowLeft') {
-            carouselPrev();
-        } else if (event.key === 'ArrowRight') {
-            carouselNext();
-        }
     });
-
-    // Initialize carousel on page load
-    document.addEventListener('DOMContentLoaded', function() {
-        updateCarousel();
-        loadHeaderRating();
+    
+    // Hover effect
+    star.addEventListener('mouseover', function() {
+        const value = this.dataset.value;
+        document.querySelectorAll('.star').forEach((s, idx) => {
+            if (idx + 1 <= value) {
+                s.style.opacity = '0.7';
+            } else {
+                s.style.opacity = '1';
+            }
+        });
     });
+});
 
-    // Load average rating for header display
-    function loadHeaderRating() {
-        const resourceId = getResourceIdFromUrl();
-        if (!resourceId) return;
-
-        fetch(`/reviews/resource/${resourceId}/average`)
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === 'success') {
-                    const avgRating = data.average_rating;
-                    const totalReviews = data.total_reviews;
-
-                    // Generate stars
-                    const fullStars = Math.floor(avgRating);
-                    const hasHalf = avgRating % 1 !== 0;
-                    let stars = '★'.repeat(fullStars);
-                    if (hasHalf) stars += '½';
-                    stars += '☆'.repeat(5 - Math.ceil(avgRating));
-
-                    // Update display
-                    document.getElementById('headerStars').innerHTML = stars;
-                    const reviewText = totalReviews === 1 ? 'review' : 'reviews';
-                    document.getElementById('headerRatingValue').textContent = 
-                        `${avgRating.toFixed(1)} (${totalReviews} ${reviewText})`;
-                } else {
-                    // No rating yet
-                    document.getElementById('headerRatingValue').textContent = 'No ratings yet';
-                }
-            })
-            .catch(error => {
-                console.error('Error loading rating:', error);
-                document.getElementById('headerRatingValue').textContent = 'Rating unavailable';
-            });
+document.querySelector('.rating-stars').addEventListener('mouseout', function() {
+    const checked = document.querySelector('input[name="rating"]:checked');
+    if (checked) {
+        const value = checked.value;
+        document.querySelectorAll('.star').forEach((s, idx) => {
+            if (idx + 1 <= value) {
+                s.style.color = '#ffc107';
+            } else {
+                s.style.color = '#ddd';
+            }
+            s.style.opacity = '1';
+        });
+    } else {
+        document.querySelectorAll('.star').forEach(s => {
+            s.style.color = '#ddd';
+            s.style.opacity = '1';
+        });
     }
+});
 
-    function getResourceIdFromUrl() {
-        const match = window.location.pathname.match(/\/resources\/(\d+)/);
-        return match ? parseInt(match[1]) : null;
+// Form submission
+document.getElementById('review-form').addEventListener('submit', function(e) {
+    const rating = document.querySelector('input[name="rating"]:checked');
+    if (!rating) {
+        e.preventDefault();
+        alert('Please select a rating');
+        return false;
     }
-
-    // Fallback image URLs by resource type
-    function getFallbackImage(resourceType) {
-        const fallbackImages = {
-            'room': 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=800&h=533&fit=crop',
-            'equipment': 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=800&h=533&fit=crop',
-            'service': 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=800&h=533&fit=crop',
-            'software': 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=800&h=533&fit=crop',
-            'vehicle': 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=800&h=533&fit=crop',
-            'other': 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=800&h=533&fit=crop'
-        };
-        return fallbackImages[resourceType] || fallbackImages['other'];
-    }
-
-    function handleImageError() {
-        const img = document.getElementById('carousel-image-0');
-        const resourceType = '{{ resource.resource_type }}';
-        img.src = getFallbackImage(resourceType);
-    }
-
-
-    // Screen reader only styles
-    const style = document.createElement('style');
-    style.textContent = `
-        .sr-only {
-            position: absolute;
-            width: 1px;
-            height: 1px;
-            padding: 0;
-            margin: -1px;
-            overflow: hidden;
-            clip: rect(0, 0, 0, 0);
-            white-space: nowrap;
-            border-width: 0;
-        }
-    `;
-    document.head.appendChild(style);
+});
 </script>
+
 {% endblock %}

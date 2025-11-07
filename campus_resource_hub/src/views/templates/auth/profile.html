@@ -1,0 +1,467 @@
+{% extends "base.html" %}
+
+{% block title %}My Profile - Campus Resource Hub{% endblock %}
+
+{% block extra_css %}
+    .container {
+        max-width: 900px;
+        margin: var(--space-2xl) auto;
+        padding: var(--space-md);
+    }
+
+    .profile-header {
+        background: linear-gradient(135deg, var(--iu-crimson) 0%, #7a0000 100%);
+        border-radius: var(--radius-xl);
+        padding: var(--space-2xl);
+        margin-bottom: var(--space-xl);
+        color: white;
+        box-shadow: var(--shadow-lg);
+    }
+
+    .profile-header-content {
+        display: flex;
+        align-items: center;
+        gap: var(--space-xl);
+    }
+
+    .profile-picture-section {
+        position: relative;
+    }
+
+    .profile-picture {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        border: 4px solid white;
+        object-fit: cover;
+        background-color: var(--neutral-gray-200);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 48px;
+        color: var(--neutral-gray-600);
+    }
+
+    .profile-picture img {
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        object-fit: cover;
+    }
+
+    .profile-info h1 {
+        margin: 0;
+        font-size: var(--font-size-2xl);
+        font-weight: 600;
+    }
+
+    .profile-meta {
+        display: flex;
+        gap: var(--space-lg);
+        margin-top: var(--space-sm);
+        font-size: var(--font-size-sm);
+        opacity: 0.95;
+    }
+
+    .profile-meta span {
+        display: flex;
+        align-items: center;
+        gap: var(--space-xs);
+    }
+
+    .card {
+        background: white;
+        border-radius: var(--radius-xl);
+        padding: var(--space-xl);
+        box-shadow: var(--shadow-md);
+        margin-bottom: var(--space-lg);
+    }
+
+    .card h2 {
+        color: var(--iu-crimson);
+        font-size: var(--font-size-xl);
+        margin-bottom: var(--space-lg);
+        padding-bottom: var(--space-sm);
+        border-bottom: 2px solid var(--neutral-gray-200);
+    }
+
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: var(--space-lg);
+    }
+
+    .info-item {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-xs);
+    }
+
+    .info-label {
+        font-size: var(--font-size-sm);
+        color: var(--neutral-gray-600);
+        font-weight: 500;
+    }
+
+    .info-value {
+        font-size: var(--font-size-base);
+        color: var(--iu-dark);
+    }
+
+    .info-value.empty {
+        color: var(--neutral-gray-500);
+        font-style: italic;
+    }
+
+    .badge {
+        display: inline-block;
+        padding: var(--space-xs) var(--space-sm);
+        border-radius: var(--radius-md);
+        font-size: var(--font-size-xs);
+        font-weight: 500;
+    }
+
+    .badge-admin { background: #990000; color: white; }
+    .badge-staff { background: #007bff; color: white; }
+    .badge-student { background: #28a745; color: white; }
+
+    .action-buttons {
+        display: flex;
+        gap: var(--space-md);
+        flex-wrap: wrap;
+        margin-top: var(--space-lg);
+    }
+
+    .btn {
+        padding: var(--space-sm) var(--space-lg);
+        border-radius: var(--radius-lg);
+        text-decoration: none;
+        font-weight: 500;
+        font-size: var(--font-size-sm);
+        transition: all var(--transition-fast);
+        border: none;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: var(--space-xs);
+    }
+
+    .btn-primary {
+        background: var(--iu-crimson);
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background: #7a0000;
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md);
+    }
+
+    .btn-secondary {
+        background: white;
+        color: var(--iu-crimson);
+        border: 2px solid var(--iu-crimson);
+    }
+
+    .btn-secondary:hover {
+        background: var(--iu-crimson);
+        color: white;
+    }
+
+    .upload-form {
+        margin-top: var(--space-lg);
+        padding: var(--space-lg);
+        background: var(--iu-light);
+        border-radius: var(--radius-lg);
+    }
+
+    .file-input-wrapper {
+        display: flex;
+        gap: var(--space-md);
+        align-items: center;
+    }
+
+    input[type="file"] {
+        flex: 1;
+        padding: var(--space-sm);
+        border: 2px solid var(--neutral-gray-300);
+        border-radius: var(--radius-lg);
+        background: white;
+    }
+
+    .preferences-list {
+        list-style: none;
+        padding: 0;
+        margin: var(--space-md) 0;
+    }
+
+    .preferences-list li {
+        padding: var(--space-sm);
+        background: var(--iu-light);
+        border-radius: var(--radius-md);
+        margin-bottom: var(--space-xs);
+        display: flex;
+        align-items: center;
+        gap: var(--space-xs);
+    }
+
+    .preferences-list li::before {
+        content: "✓";
+        color: var(--iu-crimson);
+        font-weight: bold;
+    }
+
+    .preference-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin: var(--space-md) 0;
+    }
+
+    .preference-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 12px;
+        background: linear-gradient(135deg, rgba(153, 0, 0, 0.1) 0%, rgba(153, 0, 0, 0.05) 100%);
+        border: 1px solid rgba(153, 0, 0, 0.2);
+        color: var(--iu-crimson);
+        border-radius: 16px;
+        font-size: var(--font-size-xs);
+        font-weight: 600;
+        letter-spacing: 0.3px;
+    }
+
+    .preference-chip::before {
+        content: "●";
+        font-size: 8px;
+        color: var(--iu-crimson);
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: var(--space-2xl);
+        color: var(--neutral-gray-500);
+    }
+
+    .empty-state-icon {
+        font-size: 48px;
+        margin-bottom: var(--space-md);
+        opacity: 0.5;
+    }
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Profile Header -->
+    <div class="profile-header">
+        <div class="profile-header-content">
+            <div class="profile-picture-section">
+                <div class="profile-picture">
+                    {% if user.profile_image %}
+                        <img src="{{ url_for('static', filename=user.profile_image) }}" alt="{{ user.full_name }}">
+                    {% else %}
+                        <span>{{ user.full_name[0].upper() }}</span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="profile-info">
+                <h1>{{ user.full_name }}</h1>
+                <div class="profile-meta">
+                    <span>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="12" cy="7" r="4"></circle>
+                        </svg>
+                        @{{ user.username }}
+                    </span>
+                    <span>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                            <polyline points="22,6 12,13 2,6"></polyline>
+                        </svg>
+                        {{ user.email }}
+                    </span>
+                    <span class="badge badge-{{ user.role }}">{{ user.role.title() }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Profile Picture Upload -->
+    <div class="card">
+        <h2>Profile Picture</h2>
+        <form action="{{ url_for('auth.upload_profile_picture') }}" method="POST" enctype="multipart/form-data" class="upload-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+            <div class="file-input-wrapper">
+                <input type="file" name="profile_picture" accept="image/png,image/jpeg,image/jpg,image/gif" required>
+                <button type="submit" class="btn btn-primary">Upload</button>
+            </div>
+            <p style="margin-top: var(--space-sm); font-size: var(--font-size-xs); color: var(--neutral-gray-600);">
+                Accepted formats: PNG, JPG, JPEG, GIF • Max 5MB
+            </p>
+        </form>
+    </div>
+
+    <!-- Personal Information -->
+    <div class="card">
+        <h2>Personal Information</h2>
+        <div class="info-grid">
+            <div class="info-item">
+                <span class="info-label">Full Name</span>
+                <span class="info-value">{{ user.full_name }}</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Username</span>
+                <span class="info-value">{{ user.username }}</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Email</span>
+                <span class="info-value">{{ user.email }}</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Department</span>
+                <span class="info-value {% if not user.department %}empty{% endif %}">
+                    {{ user.department or 'Not specified' }}
+                </span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Year</span>
+                <span class="info-value {% if not user.year_in_school %}empty{% endif %}">
+                    {{ user.year_in_school or 'Not specified' }}
+                </span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Major</span>
+                <span class="info-value {% if not user.major %}empty{% endif %}">
+                    {{ user.major or 'Not specified' }}
+                </span>
+            </div>
+        </div>
+        <div class="action-buttons">
+            <a href="{{ url_for('auth.edit_profile') }}" class="btn btn-primary">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                </svg>
+                Edit Profile
+            </a>
+            <a href="{{ url_for('auth.change_password') }}" class="btn btn-secondary">Change Password</a>
+        </div>
+    </div>
+
+    <!-- Preferences for Recommendations -->
+    <div class="card">
+        <h2>Personalization Preferences</h2>
+        <p style="color: var(--neutral-gray-600); margin-bottom: var(--space-lg);">
+            Help the concierge chatbot provide better recommendations by sharing your preferences.
+        </p>
+        
+        {% set prefs = user.to_dict() %}
+        
+        <div class="info-grid">
+            <!-- Interests -->
+            <div class="info-item">
+                <span class="info-label">Interests</span>
+                {% if prefs.interests and prefs.interests|length > 0 %}
+                    <div class="preference-chips">
+                        {% for interest in prefs.interests %}
+                            <span class="preference-chip">{{ interest|title }}</span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <span class="info-value empty">No interests specified</span>
+                {% endif %}
+            </div>
+            
+            <!-- Study Preferences -->
+            <div class="info-item">
+                <span class="info-label">Study Preferences</span>
+                {% if prefs.study_preferences and prefs.study_preferences|length > 0 %}
+                    <div class="preference-chips">
+                        {% for key, value in prefs.study_preferences.items() %}
+                            {% if value and value|length > 0 %}
+                                {% if value is iterable and value is not string %}
+                                    {% for item in value %}
+                                        <span class="preference-chip">{{ item|replace('_', ' ')|title }}</span>
+                                    {% endfor %}
+                                {% else %}
+                                    <span class="preference-chip">{{ value|replace('_', ' ')|title }}</span>
+                                {% endif %}
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                    {% if (prefs.study_preferences|length == 0) or (prefs.study_preferences.values()|list|join('') == '') %}
+                        <span class="info-value empty">No study preferences set</span>
+                    {% endif %}
+                {% else %}
+                    <span class="info-value empty">No study preferences set</span>
+                {% endif %}
+            </div>
+            
+            <!-- Accessibility Needs -->
+            <div class="info-item">
+                <span class="info-label">Accessibility Needs</span>
+                {% if prefs.accessibility_needs and prefs.accessibility_needs|length > 0 %}
+                    <div class="preference-chips">
+                        {% for need in prefs.accessibility_needs %}
+                            <span class="preference-chip">{{ need|replace('_', ' ')|title }}</span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <span class="info-value empty">No accessibility needs specified</span>
+                {% endif %}
+            </div>
+            
+            <!-- Preferred Locations -->
+            <div class="info-item">
+                <span class="info-label">Preferred Locations</span>
+                {% if prefs.preferred_locations and prefs.preferred_locations|length > 0 %}
+                    <div class="preference-chips">
+                        {% for location in prefs.preferred_locations %}
+                            <span class="preference-chip">{{ location }}</span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <span class="info-value empty">No preferred locations</span>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="action-buttons">
+            <a href="{{ url_for('auth.preferences') }}" class="btn btn-primary">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <circle cx="12" cy="12" r="3"></circle>
+                    <path d="M12 1v6m0 6v6M5.64 5.64l4.24 4.24m4.24 4.24l4.24 4.24M1 12h6m6 0h6M5.64 18.36l4.24-4.24m4.24-4.24l4.24-4.24"></path>
+                </svg>
+                Manage Preferences
+            </a>
+        </div>
+    </div>
+
+    <!-- Account Information -->
+    <div class="card">
+        <h2>Account Information</h2>
+        <div class="info-grid">
+            <div class="info-item">
+                <span class="info-label">Member Since</span>
+                <span class="info-value">{{ user.created_at.strftime('%B %d, %Y') }}</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Last Updated</span>
+                <span class="info-value">{{ user.updated_at.strftime('%B %d, %Y at %I:%M %p') }}</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Account Status</span>
+                <span class="info-value">
+                    {% if user.is_active %}
+                        <span class="badge" style="background: #28a745;">Active</span>
+                    {% else %}
+                        <span class="badge" style="background: #dc3545;">Inactive</span>
+                    {% endif %}
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

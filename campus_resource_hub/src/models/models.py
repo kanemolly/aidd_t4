@@ -38,6 +38,14 @@ class User(UserMixin, db.Model):
     profile_image = db.Column(db.String(255), nullable=True)  # Path to profile image
     department = db.Column(db.String(120), nullable=True)  # Department or unit
     
+    # User Preferences & Profile Details (for personalized recommendations)
+    year_in_school = db.Column(db.String(20), nullable=True)  # Freshman, Sophomore, Junior, Senior, Graduate
+    major = db.Column(db.String(120), nullable=True)  # Academic major/program
+    interests = db.Column(db.Text, nullable=True)  # JSON: ["music", "coding", "sports"]
+    study_preferences = db.Column(db.Text, nullable=True)  # JSON: {"environment": "quiet", "time": "morning"}
+    accessibility_needs = db.Column(db.Text, nullable=True)  # JSON: ["wheelchair_access", "quiet_space"]
+    preferred_locations = db.Column(db.Text, nullable=True)  # JSON: ["Wells Library", "IMU"]
+    
     # Timestamps
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
@@ -71,6 +79,7 @@ class User(UserMixin, db.Model):
     
     def to_dict(self):
         """Convert user to dictionary."""
+        import json
         return {
             'id': self.id,
             'username': self.username,
@@ -80,6 +89,12 @@ class User(UserMixin, db.Model):
             'is_active': self.is_active,
             'profile_image': self.profile_image,
             'department': self.department,
+            'year_in_school': self.year_in_school,
+            'major': self.major,
+            'interests': json.loads(self.interests) if self.interests else [],
+            'study_preferences': json.loads(self.study_preferences) if self.study_preferences else {},
+            'accessibility_needs': json.loads(self.accessibility_needs) if self.accessibility_needs else [],
+            'preferred_locations': json.loads(self.preferred_locations) if self.preferred_locations else [],
             'created_at': self.created_at.isoformat(),
             'updated_at': self.updated_at.isoformat()
         }
@@ -267,6 +282,13 @@ class Review(db.Model):
     title = db.Column(db.String(255), nullable=True)
     comment = db.Column(db.Text, nullable=True)
     
+    # Flagging System
+    is_flagged = db.Column(db.Boolean, default=False, nullable=False, index=True)
+    flag_count = db.Column(db.Integer, default=0, nullable=False)
+    flag_reason = db.Column(db.Text, nullable=True)
+    flagged_by = db.Column(db.Text, nullable=True)  # JSON array of user IDs who flagged
+    flagged_at = db.Column(db.DateTime, nullable=True)
+    
     # Timestamps
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False, index=True)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
@@ -285,6 +307,8 @@ class Review(db.Model):
             'rating': self.rating,
             'title': self.title,
             'comment': self.comment,
+            'is_flagged': self.is_flagged,
+            'flag_count': self.flag_count,
             'created_at': self.created_at.isoformat(),
             'updated_at': self.updated_at.isoformat()
         }

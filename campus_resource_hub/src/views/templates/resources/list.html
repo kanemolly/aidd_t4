@@ -6,54 +6,55 @@
         .resources-container {
             display: grid;
             grid-template-columns: 1fr;
-            gap: 30px;
-            margin-top: 30px;
+            gap: var(--space-2xl);
+            margin-top: var(--space-2xl);
         }
 
         .search-section {
-            background: white;
-            border-radius: 12px;
-            padding: 30px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-            margin-bottom: 20px;
+            background: var(--neutral-white);
+            border-radius: var(--radius-xl);
+            padding: var(--space-2xl);
+            box-shadow: var(--shadow-sm);
+            margin-bottom: var(--space-lg);
+            border: 1px solid var(--neutral-gray-200);
         }
 
         .search-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
+            margin-bottom: var(--space-lg);
         }
 
         .search-header h2 {
-            color: #990000;
-            font-size: 24px;
+            color: var(--iu-crimson);
+            font-size: var(--font-size-2xl);
             margin: 0;
         }
 
         .btn-create {
-            background-color: #990000;
-            color: white;
-            padding: 10px 20px;
+            background-color: var(--iu-crimson);
+            color: var(--neutral-white);
+            padding: var(--space-sm) var(--space-lg);
             border: none;
-            border-radius: 6px;
+            border-radius: var(--radius-md);
             text-decoration: none;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all var(--transition-base);
         }
 
         .btn-create:hover {
-            background-color: #7a0000;
+            background-color: var(--iu-dark);
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(153, 0, 0, 0.3);
+            box-shadow: var(--shadow-lg);
         }
 
         .search-form {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-bottom: 15px;
+            gap: var(--space-md);
+            margin-bottom: var(--space-md);
         }
 
         .form-group {
@@ -380,7 +381,7 @@
     <div class="search-section">
         <div class="search-header">
             <h2>Browse Resources</h2>
-            {% if current_user.is_authenticated %}
+            {% if current_user.is_authenticated and (current_user.is_staff() or current_user.is_admin()) %}
             <a href="{{ url_for('resources.create_resource') }}" class="btn-create">+ Create Resource</a>
             {% endif %}
         </div>
@@ -442,18 +443,16 @@
         {% for resource in resources %}
         <div class="resource-card">
             <!-- Card Image -->
-            {% if resource.image_path %}
-            <img src="{{ url_for('static', filename='uploads/' + resource.image_path) }}" 
+            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='600'%3E%3Crect fill='%23f0f0f0' width='800' height='600'/%3E%3C/svg%3E" 
                  alt="{{ resource.name }}" 
                  class="resource-image"
-                 onerror="this.src=getCardFallback('{{ resource.resource_type }}')">
-            {% else %}
-            <img src="" 
-                 alt="{{ resource.name }}" 
-                 class="resource-image"
-                 onload="this.style.display='block'"
-                 onerror="this.src=getCardFallback('{{ resource.resource_type }}')">
-            {% endif %}
+                 data-resource-type="{{ resource.resource_type }}"
+                 data-resource-name="{{ resource.name }}"
+                 {% if resource.image_path %}
+                 data-uploaded-image="{{ url_for('static', filename=resource.image_path if resource.image_path.startswith('uploads/') else 'uploads/' + resource.image_path) }}"
+                 {% endif %}
+                 onerror="setResourceStockImage(this, '{{ resource.resource_type }}', '{{ resource.name }}', 'medium')">
+            
             
             <div class="resource-header">
                 <span class="resource-type">{{ resource.resource_type }}</span>
@@ -493,7 +492,7 @@
                     View Details
                 </a>
                 {% if resource.is_available and current_user.is_authenticated %}
-                <button class="btn-book" onclick="location.href='{{ url_for('bookings.create_booking') }}?resource_id={{ resource.id }}'">
+                <button class="btn-book" onclick="openBookingModal({{ resource.id }}, {{ resource.name|tojson }}, {{ resource.location|tojson }}, {{ resource.resource_type|tojson }}, {{ resource.capacity or 'null' }})">
                     Book Now
                 </button>
                 {% endif %}
@@ -513,7 +512,9 @@
         <span class="disabled">← Previous</span>
         {% endif %}
 
-        {% for p in range(max(1, page-2), min(total_pages+1, page+3)) %}
+        {% set start_page = [1, page-2]|max %}
+        {% set end_page = [total_pages+1, page+3]|min %}
+        {% for p in range(start_page, end_page) %}
             {% if p == page %}
             <span class="current">{{ p }}</span>
             {% else %}
@@ -546,9 +547,14 @@
 {% endblock %}
 
 {% block extra_js %}
+<script src="{{ url_for('static', filename='js/resource-images.js') }}"></script>
 <script>
-    // Clear button functionality
+    // Initialize resource images on page load
     document.addEventListener('DOMContentLoaded', function() {
+        // Initialize stock images for resources
+        initializeResourceImages();
+        
+        // Clear button functionality
         const keywordInput = document.getElementById('keyword');
         const typeSelect = document.getElementById('resource_type');
         const locationSelect = document.getElementById('location');
@@ -560,18 +566,9 @@
             }
         });
     });
-
-    // Fallback card images by resource type
-    function getCardFallback(resourceType) {
-        const fallbackImages = {
-            'room': 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=400&h=250&fit=crop',
-            'equipment': 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=400&h=250&fit=crop',
-            'service': 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=400&h=250&fit=crop',
-            'software': 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=400&h=250&fit=crop',
-            'vehicle': 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=400&h=250&fit=crop',
-            'other': 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=400&h=250&fit=crop'
-        };
-        return fallbackImages[resourceType] || fallbackImages['other'];
-    }
 </script>
+
+<!-- Include Booking Modal -->
+{% include "bookings/booking_modal.html" %}
+
 {% endblock %}

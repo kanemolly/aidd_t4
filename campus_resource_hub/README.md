@@ -1,10 +1,43 @@
-# Campus Resource Hub
+# Campus Resource Hub 🎓
 
-An AI-First Flask full-stack application for Indiana University resource management and discovery.
+> Indiana University's intelligent resource booking and management platform with AI-powered concierge assistance.
+
+[![Python](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
+[![Flask](https://img.shields.io/badge/flask-3.0+-green.svg)](https://flask.palletsprojects.com/)
+[![SQLite](https://img.shields.io/badge/sqlite-3-orange.svg)](https://www.sqlite.org/)
+[![WCAG 2.1 AA](https://img.shields.io/badge/WCAG-2.1%20AA-success.svg)](https://www.w3.org/WAI/WCAG21/quickref/)
+
+## 🚀 Quick Start
+
+```bash
+# 1. Clone and navigate
+cd campus_resource_hub
+
+# 2. Create virtual environment
+python -m venv .venv
+.venv\Scripts\activate  # Windows
+source .venv/bin/activate  # Mac/Linux
+
+# 3. Install dependencies
+pip install -r requirements.txt
+
+# 4. Set up environment
+copy .env.example .env
+# Edit .env and add your GEMINI_API_KEY
+
+# 5. Run the server
+python serve.py
+```
+
+Visit **http://127.0.0.1:5000** 🎉
+
+📖 **Detailed Guide**: See [START_HERE.md](START_HERE.md)
+
+---
 
 ## Project Overview
 
-Campus Resource Hub is designed to help IU students and staff efficiently discover and access campus resources including academic support, wellness services, technology resources, and more.
+Campus Resource Hub is an AI-first Flask full-stack application for Indiana University resource management and discovery.
 
 ## Project Structure
 

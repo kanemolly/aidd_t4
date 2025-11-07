@@ -1,0 +1,715 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Preferences - Campus Resource Hub{% endblock %}
+
+{% block extra_css %}
+    .container {
+        max-width: 800px;
+        margin: var(--space-2xl) auto;
+        padding: var(--space-md);
+    }
+
+    .card {
+        background: white;
+        border-radius: var(--radius-xl);
+        padding: var(--space-2xl);
+        box-shadow: var(--shadow-lg);
+    }
+
+    .header {
+        margin-bottom: var(--space-xl);
+    }
+
+    .header h1 {
+        color: var(--iu-crimson);
+        font-size: var(--font-size-2xl);
+        margin-bottom: var(--space-xs);
+    }
+
+    .header p {
+        color: var(--neutral-gray-600);
+        font-size: var(--font-size-sm);
+        line-height: 1.6;
+    }
+
+    .info-box {
+        background: linear-gradient(135deg, rgba(153, 0, 0, 0.05), rgba(153, 0, 0, 0.1));
+        border-left: 4px solid var(--iu-crimson);
+        padding: var(--space-md);
+        border-radius: var(--radius-md);
+        margin-bottom: var(--space-xl);
+    }
+
+    .info-box p {
+        margin: 0;
+        color: var(--iu-dark);
+        font-size: var(--font-size-sm);
+        line-height: 1.6;
+    }
+
+    .form-section {
+        margin-bottom: var(--space-2xl);
+        padding-bottom: var(--space-2xl);
+        border-bottom: 2px solid var(--neutral-gray-200);
+    }
+
+    .form-section:last-of-type {
+        border-bottom: none;
+    }
+
+    .form-section h2 {
+        color: var(--iu-dark);
+        font-size: var(--font-size-xl);
+        margin-bottom: var(--space-sm);
+    }
+
+    .form-section .section-description {
+        color: var(--neutral-gray-600);
+        font-size: var(--font-size-sm);
+        margin-bottom: var(--space-lg);
+    }
+
+    .form-group {
+        margin-bottom: var(--space-lg);
+    }
+
+    label {
+        display: block;
+        margin-bottom: var(--space-xs);
+        color: var(--iu-dark);
+        font-size: var(--font-size-sm);
+        font-weight: 500;
+    }
+
+    input[type="text"],
+    select,
+    textarea {
+        width: 100%;
+        padding: var(--space-sm) var(--space-md);
+        border: 2px solid var(--neutral-gray-300);
+        border-radius: var(--radius-lg);
+        font-size: var(--font-size-sm);
+        background-color: var(--iu-light);
+        color: var(--iu-dark);
+        transition: all var(--transition-fast);
+        font-family: inherit;
+    }
+
+    textarea {
+        min-height: 80px;
+        resize: vertical;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+        outline: none;
+        border-color: var(--iu-crimson);
+        background-color: white;
+        box-shadow: 0 0 0 3px rgba(153, 0, 0, 0.1);
+    }
+
+    .helper-text {
+        font-size: var(--font-size-xs);
+        color: var(--neutral-gray-600);
+        margin-top: var(--space-xs);
+    }
+
+    .checkbox-group {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: var(--space-md);
+    }
+
+    .checkbox-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: var(--space-sm);
+        padding: var(--space-md);
+        background: var(--iu-light);
+        border-radius: var(--radius-md);
+    }
+
+    .checkbox-item {
+        display: contents;
+    }
+
+    .checkbox-item input[type="checkbox"] {
+        display: none;
+    }
+
+    /* Trendy Button Styles */
+    .preference-button-group {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+        gap: 12px;
+        padding: var(--space-lg);
+        background: linear-gradient(135deg, rgba(153, 0, 0, 0.02) 0%, rgba(153, 0, 0, 0.04) 100%);
+        border-radius: var(--radius-lg);
+        border: 1px solid rgba(153, 0, 0, 0.08);
+    }
+
+    .preference-button {
+        position: relative;
+        padding: var(--space-md) var(--space-lg);
+        border: 2px solid #e0e0e0;
+        background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+        border-radius: var(--radius-lg);
+        cursor: pointer;
+        font-size: var(--font-size-sm);
+        font-weight: 500;
+        color: var(--iu-dark);
+        transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        user-select: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        min-height: 44px;
+        overflow: hidden;
+    }
+
+    .preference-button::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        border-radius: 50%;
+        background: rgba(153, 0, 0, 0.1);
+        transform: translate(-50%, -50%);
+        transition: width 0.6s, height 0.6s;
+        pointer-events: none;
+    }
+
+    .preference-button:hover::before {
+        width: 300px;
+        height: 300px;
+    }
+
+    .preference-button:hover {
+        border-color: var(--iu-crimson);
+        background: linear-gradient(135deg, #fff5f5 0%, #fffaf9 100%);
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(153, 0, 0, 0.15), 0 0 0 1px rgba(153, 0, 0, 0.1);
+    }
+
+    .preference-button.active {
+        background: linear-gradient(135deg, var(--iu-crimson) 0%, #8b0000 100%);
+        color: white;
+        border-color: #5c0000;
+        box-shadow: 0 8px 24px rgba(153, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        transform: scale(1.02);
+    }
+
+    .preference-button.active:hover {
+        background: linear-gradient(135deg, #8b0000 0%, #6b0000 100%);
+        border-color: #3c0000;
+        box-shadow: 0 12px 28px rgba(153, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        transform: scale(1.04) translateY(-2px);
+    }
+
+    /* Custom input as button chip container */
+    .custom-chip-input {
+        width: 100%;
+        padding: var(--space-md);
+        border: 2px solid var(--neutral-gray-300);
+        border-radius: var(--radius-lg);
+        font-size: var(--font-size-sm);
+        background-color: white;
+        color: var(--iu-dark);
+        transition: all var(--transition-fast);
+        font-family: inherit;
+    }
+
+    .custom-chip-input:focus {
+        outline: none;
+        border-color: var(--iu-crimson);
+        background-color: white;
+        box-shadow: 0 0 0 3px rgba(153, 0, 0, 0.1);
+    }
+
+    .custom-chips-display {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: var(--space-md);
+        padding: var(--space-lg);
+        background: linear-gradient(135deg, rgba(153, 0, 0, 0.02) 0%, rgba(153, 0, 0, 0.04) 100%);
+        border-radius: var(--radius-lg);
+        border: 1px dashed rgba(153, 0, 0, 0.1);
+        min-height: 50px;
+        align-items: center;
+        justify-content: flex-start;
+    }
+
+    .custom-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--space-xs);
+        padding: 6px 14px;
+        background: linear-gradient(135deg, var(--iu-crimson) 0%, #8b0000 100%);
+        color: white;
+        border-radius: 20px;
+        font-size: var(--font-size-xs);
+        font-weight: 600;
+        animation: slideIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        box-shadow: 0 4px 12px rgba(153, 0, 0, 0.3);
+        letter-spacing: 0.3px;
+    }
+
+    .custom-chip button {
+        background: none;
+        border: none;
+        color: white;
+        cursor: pointer;
+        padding: 0;
+        font-size: var(--font-size-lg);
+        line-height: 1;
+        display: flex;
+        align-items: center;
+        opacity: 0.8;
+        transition: opacity var(--transition-fast);
+    }
+
+    .custom-chip button:hover {
+        opacity: 1;
+    }
+
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: scale(0.8);
+        }
+        to {
+            opacity: 1;
+            transform: scale(1);
+        }
+    }
+
+    .button-group {
+        display: flex;
+        gap: var(--space-md);
+        margin-top: var(--space-xl);
+    }
+
+    .btn {
+        padding: var(--space-sm) var(--space-xl);
+        border-radius: var(--radius-lg);
+        font-weight: 500;
+        font-size: var(--font-size-base);
+        border: none;
+        cursor: pointer;
+        transition: all var(--transition-fast);
+        text-decoration: none;
+        display: inline-block;
+        text-align: center;
+    }
+
+    .btn-primary {
+        background: var(--iu-crimson);
+        color: white;
+        flex: 1;
+    }
+
+    .btn-primary:hover {
+        background: #7a0000;
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md);
+    }
+
+    .btn-secondary {
+        background: white;
+        color: var(--iu-crimson);
+        border: 2px solid var(--neutral-gray-300);
+    }
+
+    .btn-secondary:hover {
+        border-color: var(--iu-crimson);
+        background: var(--iu-light);
+    }
+
+    .example-chip {
+        display: inline-block;
+        padding: 4px 10px;
+        background: var(--iu-light);
+        border-radius: 12px;
+        font-size: var(--font-size-xs);
+        color: var(--iu-dark);
+        margin-right: var(--space-xs);
+        margin-bottom: var(--space-xs);
+    }
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="card">
+        <div class="header">
+            <h1>Personalization Preferences</h1>
+            <p>
+                Help the concierge chatbot provide better recommendations by sharing your preferences.
+                All fields are optional, but the more you share, the better the recommendations!
+            </p>
+        </div>
+
+        <div class="info-box">
+            <p>
+                <strong>🤖 How this helps:</strong> When you ask the chatbot questions like "Where can I study?" 
+                or "Find me a quiet space," it will use your preferences to recommend resources that match 
+                your needs, accessibility requirements, and favorite locations.
+            </p>
+        </div>
+
+        <form method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+            <!-- Interests -->
+            <div class="form-section">
+                <h2>Interests & Activities</h2>
+                <p class="section-description">
+                    What are you interested in? This helps us recommend relevant resources and events.
+                </p>
+                
+                <div class="form-group">
+                    <label>Select Your Interests (click to toggle)</label>
+                    <div class="preference-button-group" id="interestsGroup">
+                        {% set common_interests = [
+                            'Music', 'Coding', 'Sports', 'Art', 'Photography', 'Gaming',
+                            'Reading', 'Writing', 'Theater', 'Dance', 'Film', 'Fitness',
+                            'Hiking', 'Cooking', 'Science', 'Technology', 'Business',
+                            'Politics', 'Volunteering', 'Environment', 'Travel', 'Languages'
+                        ] %}
+                        {% for interest in common_interests %}
+                        <button type="button" class="preference-button" data-value="{{ interest|lower }}"
+                            {% if interest|lower in prefs.get('interests', []) %}data-active="true"{% endif %}>
+                            {{ interest }}
+                        </button>
+                        {% endfor %}
+                    </div>
+                    <input type="hidden" id="interests" name="interests" value="{{ prefs.get('interests', [])|join(',') }}">
+                    
+                    <div class="form-group" style="margin-top: var(--space-lg);">
+                        <label for="interests_custom">Add Custom Interests</label>
+                        <input 
+                            type="text" 
+                            id="interests_custom" 
+                            class="custom-chip-input" 
+                            placeholder="Type and press Enter to add (e.g., robotics, anime, cycling)"
+                            autocomplete="off"
+                        >
+                        <div class="custom-chips-display" id="customInterestChips">
+                            {% if prefs.get('interests') %}
+                                {% set common_lower = common_interests|map('lower')|list %}
+                                {% for interest in prefs.get('interests', []) %}
+                                    {% if interest not in common_lower %}
+                                    <div class="custom-chip" data-value="{{ interest }}">
+                                        {{ interest }}
+                                        <button type="button" tabindex="-1">×</button>
+                                    </div>
+                                    {% endif %}
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Study Preferences -->
+            <div class="form-section">
+                <h2>Study Preferences</h2>
+                <p class="section-description">
+                    Help us recommend the best study spaces for your style. Select all that apply.
+                </p>
+                
+                <div class="form-group">
+                    <label>Preferred Study Environments (click to toggle)</label>
+                    <div class="preference-button-group" id="studyEnvGroup">
+                        {% set study_envs = [
+                            ('quiet', 'Quiet / Silent'),
+                            ('moderate', 'Moderate noise okay'),
+                            ('collaborative', 'Collaborative / Social'),
+                            ('outdoor', 'Outdoor / Natural light'),
+                            ('private', 'Private / Enclosed'),
+                            ('open', 'Open / Spacious'),
+                            ('tech_equipped', 'Tech-equipped'),
+                            ('whiteboard', 'With whiteboard')
+                        ] %}
+                        {% for value, label in study_envs %}
+                        <button type="button" class="preference-button" data-value="{{ value }}"
+                            {% if prefs.get('study_preferences', {}).get('environment') and value in prefs.get('study_preferences', {}).get('environment', []) %}data-active="true"{% endif %}>
+                            {{ label }}
+                        </button>
+                        {% endfor %}
+                    </div>
+                    <input type="hidden" id="study_environment" name="study_environment" value="{{ prefs.get('study_preferences', {}).get('environment', [])|join(',') }}">
+                </div>
+
+                <div class="form-group">
+                    <label>Preferred Study Time (click to toggle)</label>
+                    <div class="preference-button-group" id="studyTimeGroup">
+                        {% set study_times = [
+                            ('early_morning', 'Early Morning (6AM-9AM)'),
+                            ('morning', 'Morning (9AM-12PM)'),
+                            ('afternoon', 'Afternoon (12PM-5PM)'),
+                            ('evening', 'Evening (5PM-9PM)'),
+                            ('late_night', 'Late Night (9PM+)')
+                        ] %}
+                        {% for value, label in study_times %}
+                        <button type="button" class="preference-button" data-value="{{ value }}"
+                            {% if prefs.get('study_preferences', {}).get('time') and value in prefs.get('study_preferences', {}).get('time', []) %}data-active="true"{% endif %}>
+                            {{ label }}
+                        </button>
+                        {% endfor %}
+                    </div>
+                    <input type="hidden" id="study_time" name="study_time" value="{{ prefs.get('study_preferences', {}).get('time', [])|join(',') }}">
+                </div>
+
+                <div class="form-group">
+                    <label>Typical Group Sizes (click to toggle)</label>
+                    <div class="preference-button-group" id="groupSizeGroup">
+                        {% set group_sizes = [
+                            ('solo', 'Solo study'),
+                            ('pair', 'Partner (2 people)'),
+                            ('small', 'Small group (3-5)'),
+                            ('large', 'Large group (6+)')
+                        ] %}
+                        {% for value, label in group_sizes %}
+                        <button type="button" class="preference-button" data-value="{{ value }}"
+                            {% if prefs.get('study_preferences', {}).get('group_size') and value in prefs.get('study_preferences', {}).get('group_size', []) %}data-active="true"{% endif %}>
+                            {{ label }}
+                        </button>
+                        {% endfor %}
+                    </div>
+                    <input type="hidden" id="group_size" name="group_size" value="{{ prefs.get('study_preferences', {}).get('group_size', [])|join(',') }}">
+                </div>
+            </div>
+
+            <!-- Accessibility Needs -->
+            <div class="form-section">
+                <h2>Accessibility Needs</h2>
+                <p class="section-description">
+                    Let us know about any accessibility requirements so we can recommend appropriate spaces.
+                </p>
+                
+                <div class="preference-button-group" id="accessibilityGroup">
+                    {% set accessibility_options = [
+                        ('wheelchair_accessible', 'Wheelchair accessible'),
+                        ('quiet_space', 'Quiet/sensory-friendly'),
+                        ('adjustable_furniture', 'Adjustable furniture'),
+                        ('ground_floor', 'Ground floor access'),
+                        ('assistive_technology', 'Assistive technology')
+                    ] %}
+                    {% for value, label in accessibility_options %}
+                    <button type="button" class="preference-button" data-value="{{ value }}"
+                        {% if value in prefs.get('accessibility_needs', []) %}data-active="true"{% endif %}>
+                        {{ label }}
+                    </button>
+                    {% endfor %}
+                </div>
+                <input type="hidden" id="accessibility_needs" name="accessibility_needs" value="{{ prefs.get('accessibility_needs', [])|join(',') }}">
+            </div>
+
+            <!-- Preferred Locations -->
+            <div class="form-section">
+                <h2>Preferred Campus Locations</h2>
+                <p class="section-description">
+                    Which campus buildings or areas do you prefer? We'll prioritize these in recommendations.
+                </p>
+                
+                <div class="form-group">
+                    <label>Select Favorite Locations (click to toggle)</label>
+                    <div class="preference-button-group" id="locationsGroup">
+                        {% set campus_locations = [
+                            'Wells Library', 'IMU (Indiana Memorial Union)', 'Luddy Hall',
+                            'Kelley School of Business', 'SRSC (Student Recreational Sports Center)',
+                            'Neal-Marshall Black Culture Center', 'Wright Education Building',
+                            'Music School', 'Fine Arts Building', 'Chemistry Building',
+                            'Physics Building', 'MSB-II (Multidisciplinary Science Building)',
+                            'Ballantine Hall', 'Woodburn Hall', 'Eigenmann Hall'
+                        ] %}
+                        {% for location in campus_locations %}
+                        <button type="button" class="preference-button" data-value="{{ location }}"
+                            {% if location in prefs.get('preferred_locations', []) %}data-active="true"{% endif %}>
+                            {{ location }}
+                        </button>
+                        {% endfor %}
+                    </div>
+                    <input type="hidden" id="preferred_locations" name="preferred_locations" value="{{ prefs.get('preferred_locations', [])|join(',') }}">
+                    
+                    <div class="form-group" style="margin-top: var(--space-lg);">
+                        <label for="preferred_locations_custom">Add Other Locations</label>
+                        <input 
+                            type="text" 
+                            id="preferred_locations_custom" 
+                            class="custom-chip-input" 
+                            placeholder="Type and press Enter to add (e.g., Global and International Studies Building)"
+                            autocomplete="off"
+                        >
+                        <div class="custom-chips-display" id="customLocationChips">
+                            {% if prefs.get('preferred_locations') %}
+                                {% set custom_locations = [] %}
+                                {% for loc in prefs.get('preferred_locations', []) %}
+                                    {% if loc not in campus_locations %}
+                                        {% set _ = custom_locations.append(loc) %}
+                                    {% endif %}
+                                {% endfor %}
+                                {% for location in custom_locations %}
+                                <div class="custom-chip" data-value="{{ location }}">
+                                    {{ location }}
+                                    <button type="button" tabindex="-1">×</button>
+                                </div>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="button-group">
+                <button type="submit" class="btn btn-primary">Save Preferences</button>
+                <a href="{{ url_for('auth.profile') }}" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    // Initialize button states based on data-active attribute
+    document.querySelectorAll('.preference-button[data-active="true"]').forEach(btn => {
+        btn.classList.add('active');
+    });
+
+    // Handle preference button clicks
+    document.querySelectorAll('.preference-button').forEach(button => {
+        button.addEventListener('click', (e) => {
+            e.preventDefault();
+            button.classList.toggle('active');
+            updateHiddenField(button.parentElement);
+        });
+    });
+
+    // Handle custom interest input
+    const interestInput = document.getElementById('interests_custom');
+    if (interestInput) {
+        interestInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                addCustomChip('customInterestChips', 'interests', interestInput);
+            }
+        });
+    }
+
+    // Handle custom location input
+    const locationInput = document.getElementById('preferred_locations_custom');
+    if (locationInput) {
+        locationInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                addCustomChip('customLocationChips', 'preferred_locations', locationInput);
+            }
+        });
+    }
+
+    function addCustomChip(containerId, fieldId, inputElement) {
+        const value = inputElement.value.trim();
+        if (!value) return;
+
+        const container = document.getElementById(containerId);
+        
+        // Check if already exists
+        if (Array.from(container.querySelectorAll('.custom-chip')).some(chip => 
+            chip.getAttribute('data-value').toLowerCase() === value.toLowerCase())) {
+            inputElement.value = '';
+            return;
+        }
+
+        // Create chip
+        const chip = document.createElement('div');
+        chip.className = 'custom-chip';
+        chip.setAttribute('data-value', value);
+        chip.innerHTML = `
+            ${value}
+            <button type="button" tabindex="-1">×</button>
+        `;
+
+        // Remove button functionality
+        chip.querySelector('button').addEventListener('click', (e) => {
+            e.preventDefault();
+            chip.remove();
+            updateAllFields();
+        });
+
+        container.appendChild(chip);
+        inputElement.value = '';
+        updateAllFields();
+    }
+
+    // Handle existing chip removal
+    document.querySelectorAll('.custom-chip button').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            btn.closest('.custom-chip').remove();
+            updateAllFields();
+        });
+    });
+
+    function updateHiddenField(group) {
+        const buttons = group.querySelectorAll('.preference-button.active');
+        const values = Array.from(buttons).map(btn => btn.getAttribute('data-value')).join(',');
+        
+        // Determine which field to update based on group ID
+        const groupId = group.id;
+        let fieldId = '';
+        
+        if (groupId === 'interestsGroup') {
+            fieldId = 'interests';
+        } else if (groupId === 'studyEnvGroup') {
+            fieldId = 'study_environment';
+        } else if (groupId === 'studyTimeGroup') {
+            fieldId = 'study_time';
+        } else if (groupId === 'groupSizeGroup') {
+            fieldId = 'group_size';
+        } else if (groupId === 'accessibilityGroup') {
+            fieldId = 'accessibility_needs';
+        } else if (groupId === 'locationsGroup') {
+            fieldId = 'preferred_locations';
+        }
+        
+        if (fieldId) {
+            document.getElementById(fieldId).value = values;
+        }
+    }
+
+    function updateAllFields() {
+        // Update all button groups
+        ['interestsGroup', 'studyEnvGroup', 'studyTimeGroup', 'groupSizeGroup', 'accessibilityGroup', 'locationsGroup'].forEach(groupId => {
+            const group = document.getElementById(groupId);
+            if (group) {
+                updateHiddenField(group);
+            }
+        });
+
+        // Update custom chips in hidden fields
+        const customInterests = Array.from(document.querySelectorAll('#customInterestChips .custom-chip')).map(c => c.getAttribute('data-value'));
+        const interestField = document.getElementById('interests');
+        if (interestField && customInterests.length > 0) {
+            const current = interestField.value ? interestField.value.split(',') : [];
+            const allInterests = [...new Set([...current, ...customInterests])].filter(v => v);
+            interestField.value = allInterests.join(',');
+        }
+
+        const customLocations = Array.from(document.querySelectorAll('#customLocationChips .custom-chip')).map(c => c.getAttribute('data-value'));
+        const locationField = document.getElementById('preferred_locations');
+        if (locationField && customLocations.length > 0) {
+            const current = locationField.value ? locationField.value.split(',') : [];
+            const allLocations = [...new Set([...current, ...customLocations])].filter(v => v);
+            locationField.value = allLocations.join(',');
+        }
+    }
+
+    // Update fields on form submission
+    document.querySelector('form').addEventListener('submit', () => {
+        updateAllFields();
+    });
+</script>
+{% endblock %}

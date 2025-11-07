@@ -1,0 +1,439 @@
+{% extends "base.html" %}
+
+{% block title %}Flagged Reviews - Campus Resource Hub{% endblock %}
+
+{% block extra_css %}
+<style>
+    .flagged-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: var(--space-xl) var(--space-md);
+    }
+
+    .page-header {
+        margin-bottom: var(--space-2xl);
+    }
+
+    .page-header h1 {
+        color: var(--iu-dark);
+        font-size: var(--font-size-3xl);
+        margin-bottom: var(--space-sm);
+        display: flex;
+        align-items: center;
+        gap: var(--space-md);
+    }
+
+    .admin-badge {
+        background: linear-gradient(135deg, var(--iu-crimson), #4B0000);
+        color: white;
+        padding: var(--space-xs) var(--space-md);
+        border-radius: var(--radius-full);
+        font-size: var(--font-size-sm);
+        font-weight: 600;
+    }
+
+    .flagged-list {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-lg);
+    }
+
+    .flagged-card {
+        background: var(--neutral-white);
+        border-radius: var(--radius-xl);
+        padding: var(--space-xl);
+        box-shadow: var(--shadow-md);
+        border-left: 4px solid #ff9800;
+        transition: all var(--transition-base);
+    }
+
+    .flagged-card:hover {
+        box-shadow: var(--shadow-xl);
+        transform: translateY(-2px);
+    }
+
+    .flagged-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: var(--space-md);
+        padding-bottom: var(--space-md);
+        border-bottom: 2px solid var(--neutral-gray-200);
+    }
+
+    .flagged-info {
+        flex: 1;
+    }
+
+    .resource-link {
+        color: var(--iu-crimson);
+        font-weight: 600;
+        text-decoration: none;
+        font-size: var(--font-size-lg);
+    }
+
+    .resource-link:hover {
+        text-decoration: underline;
+    }
+
+    .flag-badge {
+        background: #ff9800;
+        color: white;
+        padding: 4px 12px;
+        border-radius: var(--radius-full);
+        font-size: var(--font-size-sm);
+        font-weight: 600;
+        margin-left: var(--space-sm);
+    }
+
+    .review-meta {
+        display: flex;
+        gap: var(--space-lg);
+        margin-top: var(--space-sm);
+        color: var(--neutral-gray-600);
+        font-size: var(--font-size-sm);
+    }
+
+    .review-content {
+        background: var(--neutral-gray-50);
+        padding: var(--space-lg);
+        border-radius: var(--radius-lg);
+        margin: var(--space-md) 0;
+    }
+
+    .review-stars {
+        color: #ffc107;
+        font-size: var(--font-size-lg);
+        margin-bottom: var(--space-sm);
+    }
+
+    .review-comment {
+        color: var(--iu-dark);
+        line-height: 1.6;
+    }
+
+    .flag-reasons {
+        background: #fff3e0;
+        border-left: 3px solid #ff9800;
+        padding: var(--space-md);
+        border-radius: var(--radius-md);
+        margin: var(--space-md) 0;
+    }
+
+    .flag-reasons h4 {
+        color: #e65100;
+        font-size: var(--font-size-sm);
+        text-transform: uppercase;
+        margin-bottom: var(--space-sm);
+        font-weight: 700;
+    }
+
+    .flag-reason-item {
+        color: var(--neutral-gray-700);
+        font-size: var(--font-size-sm);
+        margin: var(--space-xs) 0;
+        padding-left: var(--space-md);
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: var(--space-md);
+        margin-top: var(--space-lg);
+    }
+
+    .btn {
+        padding: var(--space-sm) var(--space-lg);
+        border-radius: var(--radius-lg);
+        font-weight: 600;
+        cursor: pointer;
+        transition: all var(--transition-fast);
+        border: none;
+        font-size: var(--font-size-sm);
+    }
+
+    .btn-delete {
+        background: #dc3545;
+        color: white;
+    }
+
+    .btn-delete:hover {
+        background: #c82333;
+        transform: translateY(-1px);
+        box-shadow: var(--shadow-md);
+    }
+
+    .btn-dismiss {
+        background: var(--neutral-gray-300);
+        color: var(--iu-dark);
+    }
+
+    .btn-dismiss:hover {
+        background: var(--neutral-gray-400);
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: var(--space-3xl);
+        background: var(--neutral-white);
+        border-radius: var(--radius-xl);
+        box-shadow: var(--shadow-md);
+    }
+
+    .empty-state-icon {
+        font-size: 64px;
+        margin-bottom: var(--space-md);
+        opacity: 0.5;
+    }
+
+    .empty-state h2 {
+        color: var(--iu-dark);
+        margin-bottom: var(--space-sm);
+    }
+
+    .empty-state p {
+        color: var(--neutral-gray-600);
+    }
+
+    .success-message {
+        background: #d4edda;
+        border: 1px solid #c3e6cb;
+        color: #155724;
+        padding: var(--space-md);
+        border-radius: var(--radius-lg);
+        margin-bottom: var(--space-lg);
+        display: none;
+    }
+
+    .error-message {
+        background: #f8d7da;
+        border: 1px solid #f5c6cb;
+        color: #721c24;
+        padding: var(--space-md);
+        border-radius: var(--radius-lg);
+        margin-bottom: var(--space-lg);
+        display: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="flagged-container">
+    <div class="page-header">
+        <h1>
+            🚩 Flagged Reviews 
+            <span class="admin-badge">{{ current_user.role.title() }} View</span>
+        </h1>
+        <p>Review and manage user-reported content</p>
+    </div>
+
+    <div id="successMessage" class="success-message"></div>
+    <div id="errorMessage" class="error-message"></div>
+
+    <div id="flaggedList" class="flagged-list">
+        <div class="empty-state">
+            <div class="empty-state-icon">⏳</div>
+            <h2>Loading flagged reviews...</h2>
+        </div>
+    </div>
+</div>
+
+<script>
+    async function loadFlaggedReviews() {
+        try {
+            const response = await fetch('/reviews/flagged');
+            const data = await response.json();
+
+            const container = document.getElementById('flaggedList');
+
+            if (!response.ok || data.status === 'error') {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">⚠️</div>
+                        <h2>Error Loading Reviews</h2>
+                        <p>${data.message || 'Failed to load flagged reviews'}</p>
+                    </div>
+                `;
+                return;
+            }
+
+            if (data.reviews.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">✅</div>
+                        <h2>No Flagged Reviews</h2>
+                        <p>All reviews are clean! No reports to review at this time.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = data.reviews.map(review => `
+                <div class="flagged-card" data-review-id="${review.id}">
+                    <div class="flagged-header">
+                        <div class="flagged-info">
+                            <div>
+                                <a href="/resources/${review.resource_id}" class="resource-link">
+                                    ${review.resource_name}
+                                </a>
+                                <span class="flag-badge">${review.flag_count} Report${review.flag_count > 1 ? 's' : ''}</span>
+                            </div>
+                            <div class="review-meta">
+                                <span>👤 Reviewer: ${review.reviewer_name}</span>
+                                <span>📅 Posted: ${formatDate(review.created_at)}</span>
+                                <span>🚩 Flagged: ${formatDate(review.flagged_at || review.created_at)}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="review-content">
+                        <div class="review-stars">${'★'.repeat(review.rating)}${'☆'.repeat(5 - review.rating)}</div>
+                        ${review.comment ? `<div class="review-comment">${escapeHtml(review.comment)}</div>` : '<p><em>No comment provided</em></p>'}
+                    </div>
+
+                    <div class="flag-reasons">
+                        <h4>🚩 Report Reasons:</h4>
+                        ${review.flag_reason.split('\n').map(reason => 
+                            `<div class="flag-reason-item">${escapeHtml(reason)}</div>`
+                        ).join('')}
+                    </div>
+
+                    <div class="action-buttons">
+                        <button class="btn btn-delete" onclick="deleteReview(${review.id})">
+                            🗑️ Delete Review
+                        </button>
+                        <button class="btn btn-dismiss" onclick="dismissFlag(${review.id})">
+                            ✓ Dismiss Flag
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        } catch (error) {
+            console.error('Error loading flagged reviews:', error);
+            document.getElementById('flaggedList').innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-state-icon">⚠️</div>
+                    <h2>Error</h2>
+                    <p>Failed to load flagged reviews. Please try again.</p>
+                </div>
+            `;
+        }
+    }
+
+    async function deleteReview(reviewId) {
+        if (!confirm('Are you sure you want to delete this review? This action cannot be undone.')) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`/reviews/${reviewId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                showSuccess('Review deleted successfully');
+                // Remove from UI
+                const card = document.querySelector(`[data-review-id="${reviewId}"]`);
+                if (card) {
+                    card.remove();
+                }
+                
+                // Check if empty
+                const remaining = document.querySelectorAll('.flagged-card').length;
+                if (remaining === 0) {
+                    await loadFlaggedReviews();
+                }
+            } else {
+                showError(data.message || 'Failed to delete review');
+            }
+        } catch (error) {
+            console.error('Error deleting review:', error);
+            showError('An error occurred while deleting the review');
+        }
+    }
+
+    async function dismissFlag(reviewId) {
+        if (!confirm('Dismiss this flag? The review will remain visible but will no longer appear as flagged.')) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`/reviews/${reviewId}/unflag`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                showSuccess('Flag dismissed successfully');
+                // Remove from UI
+                const card = document.querySelector(`[data-review-id="${reviewId}"]`);
+                if (card) {
+                    card.remove();
+                }
+                
+                // Check if empty
+                const remaining = document.querySelectorAll('.flagged-card').length;
+                if (remaining === 0) {
+                    await loadFlaggedReviews();
+                }
+            } else {
+                showError(data.message || 'Failed to dismiss flag');
+            }
+        } catch (error) {
+            console.error('Error dismissing flag:', error);
+            showError('An error occurred while dismissing the flag');
+        }
+    }
+
+    function formatDate(dateString) {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    }
+
+    function escapeHtml(text) {
+        const map = {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#039;'
+        };
+        return text.replace(/[&<>"']/g, m => map[m]);
+    }
+
+    function showSuccess(message) {
+        const msgDiv = document.getElementById('successMessage');
+        msgDiv.textContent = message;
+        msgDiv.style.display = 'block';
+        setTimeout(() => {
+            msgDiv.style.display = 'none';
+        }, 3000);
+    }
+
+    function showError(message) {
+        const msgDiv = document.getElementById('errorMessage');
+        msgDiv.textContent = message;
+        msgDiv.style.display = 'block';
+        setTimeout(() => {
+            msgDiv.style.display = 'none';
+        }, 5000);
+    }
+
+    // Load on page load
+    document.addEventListener('DOMContentLoaded', loadFlaggedReviews);
+</script>
+{% endblock %}

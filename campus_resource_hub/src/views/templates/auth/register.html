@@ -3,30 +3,20 @@
 {% block title %}Register - Campus Resource Hub{% endblock %}
 
 {% block extra_css %}
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #FFF8F0;
-        }
-
         .container {
             width: 100%;
             max-width: 450px;
-            margin: 40px auto;
-            padding: 20px;
+            margin: var(--space-2xl) auto;
+            padding: var(--space-md);
         }
 
         .card {
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(153, 0, 0, 0.1);
-            padding: 40px;
-            animation: slideIn 0.3s ease-out;
+            background: var(--neutral-white);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-lg);
+            padding: var(--space-2xl);
+            animation: slideIn var(--transition-base);
+            border: 1px solid var(--neutral-gray-200);
         }
 
         @keyframes slideIn {
@@ -42,42 +32,42 @@
 
         .header {
             text-align: center;
-            margin-bottom: 30px;
+            margin-bottom: var(--space-xl);
         }
 
         .header h1 {
-            color: #990000;
-            font-size: 28px;
-            margin-bottom: 8px;
+            color: var(--iu-crimson);
+            font-size: var(--font-size-2xl);
+            margin-bottom: var(--space-sm);
             font-weight: 600;
         }
 
         .header p {
-            color: #666;
-            font-size: 14px;
+            color: var(--neutral-gray-600);
+            font-size: var(--font-size-sm);
         }
 
         .form-group {
-            margin-bottom: 18px;
+            margin-bottom: var(--space-lg);
         }
 
         label {
             display: block;
-            margin-bottom: 6px;
-            color: #333;
-            font-size: 14px;
+            margin-bottom: var(--space-xs);
+            color: var(--iu-dark);
+            font-size: var(--font-size-sm);
             font-weight: 500;
         }
 
         input, select {
             width: 100%;
-            padding: 12px 14px;
-            border: 2px solid #E8D4C4;
-            border-radius: 8px;
-            font-size: 14px;
-            background-color: #FFFBF7;
-            color: #333;
-            transition: all 0.3s ease;
+            padding: var(--space-sm) var(--space-md);
+            border: 2px solid var(--neutral-gray-300);
+            border-radius: var(--radius-lg);
+            font-size: var(--font-size-sm);
+            background-color: var(--iu-light);
+            color: var(--iu-dark);
+            transition: all var(--transition-fast);
             font-family: inherit;
         }
 
@@ -325,29 +315,19 @@
                     <div class="validation-message" id="fullNameError"></div>
                 </div>
 
-                <!-- Role & Department Row -->
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="role">Role <span class="required">*</span></label>
-                        <select id="role" name="role" class="role-select" required>
-                            <option value="student">Student</option>
-                            <option value="staff">Staff</option>
-                            <option value="faculty">Faculty</option>
-                            <option value="admin">Admin</option>
-                        </select>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="department">Department</label>
-                        <input 
-                            type="text" 
-                            id="department" 
-                            name="department" 
-                            placeholder="e.g., Computer Science"
-                            maxlength="100"
-                            class="department"
-                        >
-                    </div>
+                <!-- Department -->
+                <div class="form-group">
+                    <label for="department">Department</label>
+                    <input 
+                        type="text" 
+                        id="department" 
+                        name="department" 
+                        placeholder="e.g., Computer Science, Business, Engineering"
+                        maxlength="100"
+                    >
+                    <small style="color: var(--neutral-gray-600); font-size: var(--font-size-xs); display: block; margin-top: 4px;">
+                        Optional - Your academic department or school
+                    </small>
                 </div>
 
                 <!-- Password -->

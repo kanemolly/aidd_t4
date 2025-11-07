@@ -172,7 +172,8 @@ class UserDAL:
 
         Args:
             user_id (int): User's primary key
-            **kwargs: Fields to update (email, full_name, department, profile_image, role, is_active)
+            **kwargs: Fields to update (email, full_name, department, profile_image, role, is_active, 
+                      year_in_school, major, interests, study_preferences, accessibility_needs, preferred_locations)
 
         Returns:
             User: Updated user object
@@ -187,7 +188,11 @@ class UserDAL:
             if not user:
                 raise ValueError(f"User with ID {user_id} not found")
 
-            allowed_fields = {'email', 'full_name', 'department', 'profile_image', 'role', 'is_active'}
+            allowed_fields = {
+                'email', 'full_name', 'department', 'profile_image', 'role', 'is_active',
+                'year_in_school', 'major', 'interests', 'study_preferences', 
+                'accessibility_needs', 'preferred_locations'
+            }
             for key, value in kwargs.items():
                 if key in allowed_fields:
                     setattr(user, key, value)
@@ -324,3 +329,76 @@ class UserDAL:
         except SQLAlchemyError as e:
             db.session.rollback()
             raise SQLAlchemyError(f"Error activating user: {str(e)}")
+
+    @staticmethod
+    def update_preferences(user_id: int, **preferences) -> User:
+        """
+        Update user preferences for personalized recommendations.
+
+        Args:
+            user_id (int): User's primary key
+            **preferences: Preference fields (year_in_school, major, interests, study_preferences, 
+                          accessibility_needs, preferred_locations)
+
+        Returns:
+            User: Updated user object
+
+        Raises:
+            ValueError: If user not found
+            SQLAlchemyError: For database errors
+        """
+        import json
+        try:
+            user = db.session.get(User, user_id)
+            if not user:
+                raise ValueError(f"User with ID {user_id} not found")
+
+            # Handle JSON fields
+            if 'interests' in preferences and preferences['interests']:
+                user.interests = json.dumps(preferences['interests'])
+            if 'study_preferences' in preferences and preferences['study_preferences']:
+                user.study_preferences = json.dumps(preferences['study_preferences'])
+            if 'accessibility_needs' in preferences and preferences['accessibility_needs']:
+                user.accessibility_needs = json.dumps(preferences['accessibility_needs'])
+            if 'preferred_locations' in preferences and preferences['preferred_locations']:
+                user.preferred_locations = json.dumps(preferences['preferred_locations'])
+            
+            # Handle simple text fields
+            if 'year_in_school' in preferences:
+                user.year_in_school = preferences['year_in_school']
+            if 'major' in preferences:
+                user.major = preferences['major']
+
+            db.session.commit()
+            return user
+        except SQLAlchemyError as e:
+            db.session.rollback()
+            raise SQLAlchemyError(f"Error updating preferences: {str(e)}")
+
+    @staticmethod
+    def get_user_preferences(user_id: int) -> dict:
+        """
+        Get user preferences as a dictionary.
+
+        Args:
+            user_id (int): User's primary key
+
+        Returns:
+            dict: User preferences
+
+        Raises:
+            ValueError: If user not found
+        """
+        import json
+        user = db.session.get(User, user_id)
+        if not user:
+            raise ValueError(f"User with ID {user_id} not found")
+
+        return {
+            'year_in_school': user.year_in_school,
+            'major': user.major,
+            'interests': json.loads(user.interests) if user.interests else [],
+            'study_preferences': json.loads(user.study_preferences) if user.study_preferences else {},
+            'accessibility_needs': json.loads(user.accessibility_needs) if user.accessibility_needs else [],
+            'preferred_locations': json.loads(user.preferred_locations) if user.preferred_locations else []
+        }

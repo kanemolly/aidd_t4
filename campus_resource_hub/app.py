@@ -4,7 +4,17 @@ A Flask full-stack application for Indiana University resource management.
 """
 
 import os
+from pathlib import Path
 from flask import Flask
+
+# Load environment variables from .env file
+try:
+    from dotenv import load_dotenv
+    env_path = Path(__file__).parent / '.env'
+    load_dotenv(env_path)
+except ImportError:
+    pass  # python-dotenv not installed, use system env vars
+
 from src.config import config
 from src.extensions import db, login_manager, csrf_protect
 
@@ -56,15 +66,16 @@ def create_app(config_name=None):
 
 def _register_blueprints(app):
     """Register all Flask blueprints."""
-    from src.controllers import auth, resources, bookings, messages, reviews, admin
+    from src.controllers import auth, resources, bookings, messages, reviews, admin, concierge
     
-    # Register blueprints with URL prefixes
+    # Register blueprints (they have their own url_prefix defined)
     app.register_blueprint(auth.bp)
-    app.register_blueprint(resources.bp, url_prefix='/resources')
-    app.register_blueprint(bookings.bp, url_prefix='/bookings')
-    app.register_blueprint(messages.bp, url_prefix='/messages')
-    app.register_blueprint(reviews.bp, url_prefix='/reviews')
-    app.register_blueprint(admin.bp, url_prefix='/admin')
+    app.register_blueprint(resources.bp)
+    app.register_blueprint(bookings.bp)
+    app.register_blueprint(messages.bp)
+    app.register_blueprint(reviews.bp)
+    app.register_blueprint(admin.bp)
+    app.register_blueprint(concierge.bp)
 
 
 def _register_error_handlers(app):
@@ -104,4 +115,5 @@ app = create_app()
 
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    print("Starting Flask...")
+    app.run(debug=False, host='127.0.0.1', port=5001)

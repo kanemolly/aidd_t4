@@ -1,0 +1,391 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="booking-confirmation-container">
+    <!-- Header -->
+    <div class="confirmation-header">
+        <div class="confirmation-icon">✓</div>
+        <h1>Booking Confirmed!</h1>
+        <p class="subtitle">Your reservation has been successfully created</p>
+    </div>
+
+    <!-- Main Content -->
+    <div class="confirmation-content">
+        <!-- Booking Details Card -->
+        <div class="details-card">
+            <h2>Booking Details</h2>
+            
+            <div class="detail-grid">
+                <!-- Booking ID -->
+                <div class="detail-row">
+                    <label>Booking ID:</label>
+                    <div class="detail-value">
+                        <strong>#{{ booking.id }}</strong>
+                    </div>
+                </div>
+
+                <!-- Resource -->
+                <div class="detail-row">
+                    <label>Resource:</label>
+                    <div class="detail-value">
+                        <strong>{{ resource.name }}</strong>
+                        <p class="secondary">{{ resource.location }}</p>
+                    </div>
+                </div>
+
+                <!-- Start Time -->
+                <div class="detail-row">
+                    <label>Start Time:</label>
+                    <div class="detail-value">
+                        <strong>{{ booking.start_time.strftime('%B %d, %Y') }}</strong>
+                        <p class="secondary">{{ booking.start_time.strftime('%I:%M %p') }}</p>
+                    </div>
+                </div>
+
+                <!-- End Time -->
+                <div class="detail-row">
+                    <label>End Time:</label>
+                    <div class="detail-value">
+                        <strong>{{ booking.end_time.strftime('%B %d, %Y') }}</strong>
+                        <p class="secondary">{{ booking.end_time.strftime('%I:%M %p') }}</p>
+                    </div>
+                </div>
+
+                <!-- Duration -->
+                <div class="detail-row">
+                    <label>Duration:</label>
+                    <div class="detail-value">
+                        <strong>{{ duration_hours }} hours</strong>
+                    </div>
+                </div>
+
+                <!-- Status -->
+                <div class="detail-row">
+                    <label>Status:</label>
+                    <div class="detail-value">
+                        <span class="status-badge status-{{ booking.status }}">
+                            {{ booking.status|capitalize }}
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Notes (if any) -->
+                {% if booking.notes %}
+                <div class="detail-row">
+                    <label>Notes:</label>
+                    <div class="detail-value">
+                        <p>{{ booking.notes }}</p>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Resource Info Card -->
+        <div class="info-card">
+            <h3>Resource Information</h3>
+            <div class="resource-info">
+                <p><strong>Type:</strong> {{ resource.resource_type }}</p>
+                <p><strong>Capacity:</strong> {{ resource.capacity or 'N/A' }} people</p>
+                {% if resource.amenities %}
+                <div class="amenities">
+                    <strong>Amenities:</strong>
+                    <ul>
+                        {% for amenity in resource.amenities.split(',') %}
+                        <li>{{ amenity.strip() }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Actions Card -->
+        <div class="actions-card">
+            <h3>Next Steps</h3>
+            <div class="action-buttons">
+                <!-- Back to Resources -->
+                <a href="/resources" 
+                   class="action-btn btn-primary"
+                   title="Browse more resources">
+                    📚 Browse Resources
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+:root {
+    --iu-crimson: #9d2235;
+    --iu-cream: #fffbf0;
+    --iu-dark: #2d2d2d;
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.12);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+}
+
+.booking-confirmation-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 40px 20px;
+    background: linear-gradient(135deg, var(--iu-cream) 0%, #f5f4f2 100%);
+    min-height: 100vh;
+}
+
+.confirmation-header {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.confirmation-icon {
+    font-size: 64px;
+    color: #4caf50;
+    margin-bottom: 20px;
+    display: block;
+    animation: checkmark-bounce 0.6s ease-out;
+}
+
+@keyframes checkmark-bounce {
+    0% {
+        opacity: 0;
+        transform: scale(0.5);
+    }
+    50% {
+        transform: scale(1.1);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.confirmation-header h1 {
+    font-size: 2.5rem;
+    color: var(--iu-dark);
+    margin: 0 0 10px 0;
+    font-weight: 700;
+}
+
+.confirmation-header .subtitle {
+    color: #666;
+    font-size: 1.1rem;
+    margin: 0;
+}
+
+/* Cards */
+.details-card,
+.info-card,
+.actions-card,
+.reminder-card {
+    background: white;
+    border-radius: 12px;
+    padding: 30px;
+    margin-bottom: 20px;
+    box-shadow: var(--shadow-md);
+    border-left: 4px solid var(--iu-crimson);
+}
+
+.details-card h2,
+.info-card h3,
+.actions-card h3,
+.reminder-card h3 {
+    margin: 0 0 20px 0;
+    color: var(--iu-crimson);
+    font-size: 1.3rem;
+    font-weight: 700;
+}
+
+/* Detail Grid */
+.detail-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+@media (max-width: 600px) {
+    .detail-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.detail-row {
+    display: flex;
+    flex-direction: column;
+}
+
+.detail-row label {
+    font-size: 0.85rem;
+    color: #999;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 5px;
+    font-weight: 600;
+}
+
+.detail-value {
+    font-size: 1.1rem;
+}
+
+.detail-value strong {
+    color: var(--iu-dark);
+    display: block;
+    margin-bottom: 5px;
+}
+
+.detail-value .secondary {
+    color: #666;
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+/* Status Badge */
+.status-badge {
+    display: inline-block;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.status-pending {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.status-confirmed {
+    background: #d4edda;
+    color: #155724;
+}
+
+.status-completed {
+    background: #cfe2ff;
+    color: #084298;
+}
+
+.status-cancelled {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+/* Resource Info */
+.resource-info {
+    line-height: 1.8;
+}
+
+.resource-info p {
+    margin: 10px 0;
+    color: var(--iu-dark);
+}
+
+.resource-info strong {
+    color: var(--iu-crimson);
+}
+
+.amenities {
+    margin-top: 15px;
+}
+
+.amenities ul {
+    margin: 10px 0 0 20px;
+    padding: 0;
+    list-style: disc;
+}
+
+.amenities li {
+    margin: 5px 0;
+    color: var(--iu-dark);
+}
+
+/* Action Buttons */
+.action-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+@media (max-width: 600px) {
+    .action-buttons {
+        grid-template-columns: 1fr;
+    }
+}
+
+.action-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 20px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.95rem;
+    transition: all 0.2s;
+    gap: 8px;
+    text-align: center;
+}
+
+.btn-primary {
+    background: var(--iu-crimson);
+    color: white;
+    border: 2px solid var(--iu-crimson);
+}
+
+.btn-primary:hover {
+    background: #7a1a28;
+    border-color: #7a1a28;
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+}
+
+.btn-secondary {
+    background: white;
+    color: var(--iu-crimson);
+    border: 2px solid var(--iu-crimson);
+}
+
+.btn-secondary:hover {
+    background: var(--iu-cream);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+/* Reminder Card */
+.reminder-card {
+    background: #e8f5e9;
+    border-left-color: #4caf50;
+}
+
+.reminder-card h3 {
+    color: #2e7d32;
+}
+
+.reminder-card ul {
+    margin: 0;
+    padding-left: 20px;
+    line-height: 1.8;
+}
+
+.reminder-card li {
+    margin: 10px 0;
+    color: var(--iu-dark);
+}
+
+@media (max-width: 768px) {
+    .booking-confirmation-container {
+        padding: 20px 15px;
+    }
+
+    .confirmation-header h1 {
+        font-size: 2rem;
+    }
+
+    .details-card,
+    .info-card,
+    .actions-card,
+    .reminder-card {
+        padding: 20px;
+    }
+}
+</style>
+{% endblock %}

@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Profile - Campus Resource Hub{% endblock %}
+
+{% block extra_css %}
+    .container {
+        max-width: 600px;
+        margin: var(--space-2xl) auto;
+        padding: var(--space-md);
+    }
+
+    .card {
+        background: white;
+        border-radius: var(--radius-xl);
+        padding: var(--space-2xl);
+        box-shadow: var(--shadow-lg);
+    }
+
+    .header {
+        margin-bottom: var(--space-xl);
+    }
+
+    .header h1 {
+        color: var(--iu-crimson);
+        font-size: var(--font-size-2xl);
+        margin-bottom: var(--space-xs);
+    }
+
+    .header p {
+        color: var(--neutral-gray-600);
+        font-size: var(--font-size-sm);
+    }
+
+    .form-group {
+        margin-bottom: var(--space-lg);
+    }
+
+    label {
+        display: block;
+        margin-bottom: var(--space-xs);
+        color: var(--iu-dark);
+        font-size: var(--font-size-sm);
+        font-weight: 500;
+    }
+
+    .required {
+        color: var(--iu-crimson);
+    }
+
+    input[type="text"],
+    input[type="email"],
+    select {
+        width: 100%;
+        padding: var(--space-sm) var(--space-md);
+        border: 2px solid var(--neutral-gray-300);
+        border-radius: var(--radius-lg);
+        font-size: var(--font-size-sm);
+        background-color: var(--iu-light);
+        color: var(--iu-dark);
+        transition: all var(--transition-fast);
+        font-family: inherit;
+    }
+
+    input:focus,
+    select:focus {
+        outline: none;
+        border-color: var(--iu-crimson);
+        background-color: white;
+        box-shadow: 0 0 0 3px rgba(153, 0, 0, 0.1);
+    }
+
+    select {
+        cursor: pointer;
+    }
+
+    .helper-text {
+        font-size: var(--font-size-xs);
+        color: var(--neutral-gray-600);
+        margin-top: var(--space-xs);
+    }
+
+    .button-group {
+        display: flex;
+        gap: var(--space-md);
+        margin-top: var(--space-xl);
+    }
+
+    .btn {
+        padding: var(--space-sm) var(--space-xl);
+        border-radius: var(--radius-lg);
+        font-weight: 500;
+        font-size: var(--font-size-base);
+        border: none;
+        cursor: pointer;
+        transition: all var(--transition-fast);
+        text-decoration: none;
+        display: inline-block;
+        text-align: center;
+    }
+
+    .btn-primary {
+        background: var(--iu-crimson);
+        color: white;
+        flex: 1;
+    }
+
+    .btn-primary:hover {
+        background: #7a0000;
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md);
+    }
+
+    .btn-secondary {
+        background: white;
+        color: var(--iu-crimson);
+        border: 2px solid var(--neutral-gray-300);
+    }
+
+    .btn-secondary:hover {
+        border-color: var(--iu-crimson);
+        background: var(--iu-light);
+    }
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="card">
+        <div class="header">
+            <h1>Edit Profile</h1>
+            <p>Update your personal information</p>
+        </div>
+
+        <form method="POST" novalidate>
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+            <div class="form-group">
+                <label for="full_name">Full Name <span class="required">*</span></label>
+                <input 
+                    type="text" 
+                    id="full_name" 
+                    name="full_name" 
+                    value="{{ user.full_name }}"
+                    required
+                    maxlength="120"
+                >
+                <p class="helper-text">Your full name as you'd like it displayed</p>
+            </div>
+
+            <div class="form-group">
+                <label for="department">Department</label>
+                <input 
+                    type="text" 
+                    id="department" 
+                    name="department" 
+                    value="{{ user.department or '' }}"
+                    maxlength="120"
+                    placeholder="e.g., Computer Science, Biology"
+                >
+                <p class="helper-text">Your academic department or organizational unit</p>
+            </div>
+
+            <div class="form-group">
+                <label for="year_in_school">Year in School</label>
+                <select id="year_in_school" name="year_in_school">
+                    <option value="">Not specified</option>
+                    <option value="Freshman" {% if user.year_in_school == 'Freshman' %}selected{% endif %}>Freshman</option>
+                    <option value="Sophomore" {% if user.year_in_school == 'Sophomore' %}selected{% endif %}>Sophomore</option>
+                    <option value="Junior" {% if user.year_in_school == 'Junior' %}selected{% endif %}>Junior</option>
+                    <option value="Senior" {% if user.year_in_school == 'Senior' %}selected{% endif %}>Senior</option>
+                    <option value="Graduate" {% if user.year_in_school == 'Graduate' %}selected{% endif %}>Graduate Student</option>
+                    <option value="PhD" {% if user.year_in_school == 'PhD' %}selected{% endif %}>PhD Student</option>
+                    <option value="Faculty" {% if user.year_in_school == 'Faculty' %}selected{% endif %}>Faculty</option>
+                    <option value="Staff" {% if user.year_in_school == 'Staff' %}selected{% endif %}>Staff</option>
+                </select>
+                <p class="helper-text">Your current academic year or position</p>
+            </div>
+
+            <div class="form-group">
+                <label for="major">Major / Program</label>
+                <input 
+                    type="text" 
+                    id="major" 
+                    name="major" 
+                    value="{{ user.major or '' }}"
+                    maxlength="120"
+                    placeholder="e.g., Computer Science, Informatics"
+                >
+                <p class="helper-text">Your academic major or program of study</p>
+            </div>
+
+            <div class="button-group">
+                <button type="submit" class="btn btn-primary">Save Changes</button>
+                <a href="{{ url_for('auth.profile') }}" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

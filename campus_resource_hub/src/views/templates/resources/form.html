@@ -347,6 +347,7 @@
             {% endwith %}
 
             <form id="resourceForm" method="POST" novalidate>
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                 <!-- Resource Name -->
                 <div class="form-group">
                     <label for="name" class="required">Resource Name</label>

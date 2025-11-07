@@ -2,12 +2,13 @@
 Bookings blueprint - resource booking and reservation management.
 """
 
-from datetime import datetime
-from flask import Blueprint, request, jsonify
+from datetime import datetime, date
+from flask import Blueprint, request, jsonify, render_template
 from flask_login import login_required, current_user
 from src.data_access.booking_dal import BookingDAL
 from src.data_access.resource_dal import ResourceDAL
 from src.models import Booking
+from src.extensions import csrf_protect
 
 bp = Blueprint('bookings', __name__)
 
@@ -49,11 +50,13 @@ def list_bookings():
         - status: Filter by status (pending, confirmed, cancelled, completed)
         - limit: Max results to return
         - offset: Results to skip
+        - format: 'json' for API response, 'html' (default) for web page
     """
     try:
         status = request.args.get('status')
         limit = request.args.get('limit', type=int)
         offset = request.args.get('offset', default=0, type=int)
+        response_format = request.args.get('format', 'html')
         
         # Admins can see all bookings, others see only their own
         if current_user.is_admin():
@@ -61,16 +64,31 @@ def list_bookings():
                 bookings = BookingDAL.get_bookings_by_status(status, limit=limit, offset=offset)
             else:
                 bookings = BookingDAL.get_all_bookings(limit=limit, offset=offset)
+            is_admin_view = True
         else:
             bookings = BookingDAL.get_bookings_by_user(current_user.id, limit=limit, offset=offset)
+            is_admin_view = False
         
-        return jsonify({
-            'success': True,
-            'bookings': [b.to_dict() for b in bookings],
-            'count': len(bookings)
-        }), 200
+        # Return JSON for API calls
+        if response_format == 'json' or request.headers.get('Accept') == 'application/json':
+            return jsonify({
+                'success': True,
+                'bookings': [b.to_dict() for b in bookings],
+                'count': len(bookings)
+            }), 200
+        
+        # Return HTML template for web view
+        return render_template(
+            'bookings/list.html',
+            bookings=bookings,
+            is_admin_view=is_admin_view,
+            current_status=status
+        )
+        
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+        if response_format == 'json' or request.headers.get('Accept') == 'application/json':
+            return jsonify({'success': False, 'error': str(e)}), 500
+        return render_template('error.html', error=str(e)), 500
 
 
 @bp.route('/<int:booking_id>', methods=['GET'])
@@ -91,7 +109,40 @@ def get_booking(booking_id):
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
+@bp.route('/new', methods=['GET'])
+@login_required
+def booking_form():
+    """
+    Display booking form for a specific resource.
+    
+    Query params:
+        - resource_id (int, required): ID of resource to book
+    
+    Returns:
+        Rendered booking form template
+    """
+    resource_id = request.args.get('resource_id', type=int)
+    
+    if not resource_id:
+        return jsonify({'success': False, 'error': 'resource_id is required'}), 400
+    
+    resource = ResourceDAL.get_resource_by_id(resource_id)
+    
+    if not resource:
+        return jsonify({'success': False, 'error': 'Resource not found'}), 404
+    
+    if not resource.is_available:
+        return jsonify({'success': False, 'error': 'Resource is not available for booking'}), 400
+    
+    return render_template(
+        'bookings/form.html',
+        resource=resource,
+        today=date.today().isoformat()
+    )
+
+
 @bp.route('/', methods=['POST'])
+@csrf_protect.exempt
 @login_required
 def create_booking():
     """
@@ -142,6 +193,29 @@ def create_booking():
                 'error': 'Invalid datetime format. Use: YYYY-MM-DD HH:MM:SS'
             }), 400
         
+        # Validate business hours (8 AM - 8 PM)
+        BUSINESS_HOURS_START = 8  # 8 AM
+        BUSINESS_HOURS_END = 20   # 8 PM
+        
+        if start_time.hour < BUSINESS_HOURS_START or start_time.hour >= BUSINESS_HOURS_END:
+            return jsonify({
+                'success': False,
+                'error': f'Start time must be between {BUSINESS_HOURS_START}:00 AM and {BUSINESS_HOURS_END}:00 (8 PM). Business hours only.'
+            }), 400
+        
+        if end_time.hour < BUSINESS_HOURS_START or end_time.hour > BUSINESS_HOURS_END:
+            return jsonify({
+                'success': False,
+                'error': f'End time must be between {BUSINESS_HOURS_START}:00 AM and {BUSINESS_HOURS_END}:00 (8 PM). Business hours only.'
+            }), 400
+        
+        # Allow bookings to end exactly at 8 PM (20:00) if minutes are 0
+        if end_time.hour == BUSINESS_HOURS_END and end_time.minute > 0:
+            return jsonify({
+                'success': False,
+                'error': 'Bookings must end by 8:00 PM.'
+            }), 400
+        
         # Validate datetime range
         if start_time >= end_time:
             return jsonify({
@@ -169,6 +243,7 @@ def create_booking():
         return jsonify({
             'success': True,
             'message': 'Booking created successfully',
+            'booking_id': booking.id,
             'booking': booking.to_dict()
         }), 201
         
@@ -347,3 +422,365 @@ def confirm_booking(booking_id):
         
     except Exception as e:
         return jsonify({'success': False, 'error': f'Server error: {str(e)}'}), 500
+
+
+@bp.route('/<int:booking_id>/confirmation', methods=['GET'])
+@login_required
+def confirmation_page(booking_id):
+    """Display booking confirmation page."""
+    from flask import render_template
+    from src.data_access.resource_dal import ResourceDAL
+    import traceback
+    
+    try:
+        booking = BookingDAL.get_booking_by_id(booking_id)
+        if not booking:
+            return jsonify({'success': False, 'error': 'Booking not found'}), 404
+        
+        # Users can only view their own bookings unless they're admin
+        if not current_user.is_admin() and booking.user_id != current_user.id:
+            return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+        
+        # Get resource details
+        resource = ResourceDAL.get_resource_by_id(booking.resource_id)
+        
+        # Calculate duration
+        duration = booking.end_time - booking.start_time
+        duration_hours = duration.total_seconds() / 3600
+        
+        return render_template(
+            'bookings/confirmation.html',
+            booking=booking,
+            resource=resource,
+            duration_hours=f"{duration_hours:.1f}",
+            current_user=current_user
+        )
+    except Exception as e:
+        # Log the full traceback for debugging
+        print(f"Error in confirmation_page: {str(e)}")
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': f'Server error: {str(e)}'}), 500
+
+
+@bp.route('/<int:booking_id>/export/gcal', methods=['GET'])
+@login_required
+def export_to_gcal(booking_id):
+    """
+    Redirect to Google Calendar with booking details.
+    Creates a Google Calendar link that user can click to add to their calendar.
+    """
+    import urllib.parse
+    from src.data_access.resource_dal import ResourceDAL
+    
+    try:
+        booking = BookingDAL.get_booking_by_id(booking_id)
+        if not booking:
+            return jsonify({'success': False, 'error': 'Booking not found'}), 404
+        
+        # Users can only export their own bookings unless they're admin
+        if not current_user.is_admin() and booking.user_id != current_user.id:
+            return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+        
+        # Get resource details
+        resource = ResourceDAL.get_resource_by_id(booking.resource_id)
+        
+        # Format times for Google Calendar (RFC3339 format)
+        start_time = booking.start_time.isoformat()
+        end_time = booking.end_time.isoformat()
+        
+        # Create event details
+        event_title = f"Campus Booking: {resource.name}"
+        event_description = f"""Campus Resource Booking
+
+Resource: {resource.name}
+Location: {resource.location}
+Booking ID: {booking.id}
+Type: {resource.resource_type}
+
+Notes: {booking.notes or 'No notes'}"""
+        
+        # Build Google Calendar URL
+        params = {
+            'action': 'TEMPLATE',
+            'text': event_title,
+            'dates': f"{start_time.replace('-', '').replace(':', '')}/{end_time.replace('-', '').replace(':', '')}",
+            'details': event_description,
+            'location': resource.location or 'Indiana University'
+        }
+        
+        gcal_url = 'https://calendar.google.com/calendar/render?' + urllib.parse.urlencode(params)
+        
+        from flask import redirect
+        return redirect(gcal_url)
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': f'Server error: {str(e)}'}), 500
+
+
+@bp.route('/<int:booking_id>/export/ical', methods=['GET'])
+@login_required
+def export_to_ical(booking_id):
+    """
+    Export booking as iCalendar (.ics) file.
+    Can be imported into any calendar application (Google, Outlook, Apple, etc).
+    """
+    from src.data_access.resource_dal import ResourceDAL
+    from flask import Response
+    
+    try:
+        booking = BookingDAL.get_booking_by_id(booking_id)
+        if not booking:
+            return jsonify({'success': False, 'error': 'Booking not found'}), 404
+        
+        # Users can only export their own bookings unless they're admin
+        if not current_user.is_admin() and booking.user_id != current_user.id:
+            return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+        
+        # Get resource details
+        resource = ResourceDAL.get_resource_by_id(booking.resource_id)
+        
+        # Create iCalendar content
+        ical_content = create_ical(booking, resource, current_user)
+        
+        # Return as downloadable file
+        return Response(
+            ical_content,
+            mimetype='text/calendar',
+            headers={
+                'Content-Disposition': f'attachment; filename="booking-{booking.id}.ics"'
+            }
+        )
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': f'Server error: {str(e)}'}), 500
+
+
+def create_ical(booking, resource, user):
+    """
+    Create an iCalendar (.ics) formatted string for a booking.
+    
+    Args:
+        booking: Booking object
+        resource: Resource object
+        user: User object
+    
+    Returns:
+        str: iCalendar formatted content
+    """
+    from datetime import datetime, timezone
+    import uuid
+    
+    # Convert to UTC and format as RFC5545
+    start = booking.start_time.isoformat().replace('-', '').replace(':', '').split('.')[0] + 'Z'
+    end = booking.end_time.isoformat().replace('-', '').replace(':', '').split('.')[0] + 'Z'
+    created = datetime.now(timezone.utc).isoformat().replace('-', '').replace(':', '').split('.')[0] + 'Z'
+    
+    # Generate unique ID
+    uid = f"booking-{booking.id}-{uuid.uuid4()}@campusresourcehub.iu.edu"
+    
+    ical = f"""BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Campus Resource Hub//IU//EN
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+BEGIN:VEVENT
+UID:{uid}
+DTSTAMP:{created}
+DTSTART:{start}
+DTEND:{end}
+SUMMARY:Campus Booking: {resource.name}
+DESCRIPTION:Campus Resource Booking\\n\\nResource: {resource.name}\\nLocation: {resource.location}\\nBooking ID: {booking.id}\\nType: {resource.resource_type}\\n\\nNotes: {booking.notes or 'No notes'}
+LOCATION:{resource.location or 'Indiana University'}
+ORGANIZER;CN=Campus Resource Hub:mailto:resourcehub@iu.edu
+ATTENDEE;RSVP=TRUE;PARTSTAT=ACCEPTED;CN={user.name}:mailto:{user.email}
+STATUS:CONFIRMED
+SEQUENCE:0
+END:VEVENT
+END:VCALENDAR"""
+    
+    return ical
+
+
+@bp.route('/resource/<int:resource_id>/availability', methods=['GET'])
+def get_resource_availability(resource_id):
+    """
+    Get booking availability data for a resource within a date range.
+    
+    Query params:
+        - start_date: ISO format date (YYYY-MM-DD)
+        - end_date: ISO format date (YYYY-MM-DD)
+    
+    Returns:
+        JSON with confirmed bookings in the date range
+    """
+    try:
+        from datetime import datetime, timedelta
+        
+        # Get date range from query params
+        start_date_str = request.args.get('start_date')
+        end_date_str = request.args.get('end_date')
+        
+        # Default to current month if not provided
+        if not start_date_str:
+            start_date = datetime.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        else:
+            start_date = datetime.fromisoformat(start_date_str)
+        
+        if not end_date_str:
+            # End of current month
+            next_month = start_date.replace(day=28) + timedelta(days=4)
+            end_date = next_month - timedelta(days=next_month.day)
+            end_date = end_date.replace(hour=23, minute=59, second=59)
+        else:
+            end_date = datetime.fromisoformat(end_date_str)
+        
+        # Get confirmed bookings for this resource in date range
+        bookings = BookingDAL.get_confirmed_bookings_for_resource(
+            resource_id,
+            start_time=start_date,
+            end_time=end_date
+        )
+        
+        # Format bookings for calendar
+        events = []
+        for booking in bookings:
+            events.append({
+                'id': booking.id,
+                'start': booking.start_datetime.isoformat(),
+                'end': booking.end_datetime.isoformat(),
+                'title': f'Booked by {booking.user.username if booking.user else "Unknown"}',
+                'status': booking.status
+            })
+        
+        return jsonify({
+            'success': True,
+            'events': events,
+            'resource_id': resource_id
+        }), 200
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@bp.route('/analytics', methods=['GET'])
+@login_required
+def analytics():
+    """
+    Admin booking analytics and log page.
+    Shows comprehensive insights into booking patterns and history.
+    """
+    # Only admins can access analytics
+    if not current_user.is_admin():
+        from flask import flash, redirect, url_for
+        flash('You do not have permission to access analytics.', 'error')
+        return redirect(url_for('bookings.list_bookings'))
+    
+    try:
+        from src.models import Resource, User
+        from sqlalchemy import func
+        from datetime import timedelta
+        
+        # Get filter parameters
+        start_date = request.args.get('start_date')
+        end_date = request.args.get('end_date')
+        resource_type = request.args.get('resource_type')
+        user_id = request.args.get('user_id', type=int)
+        
+        # Base query
+        query = Booking.query
+        
+        # Apply filters
+        if start_date:
+            query = query.filter(Booking.start_time >= datetime.strptime(start_date, '%Y-%m-%d'))
+        if end_date:
+            query = query.filter(Booking.end_time <= datetime.strptime(end_date, '%Y-%m-%d'))
+        if user_id:
+            query = query.filter(Booking.user_id == user_id)
+        
+        # Get all bookings matching filters
+        all_bookings = query.all()
+        
+        # Filter by resource type if specified
+        if resource_type:
+            all_bookings = [b for b in all_bookings if b.resource.resource_type == resource_type]
+        
+        # Calculate statistics
+        total_bookings = len(all_bookings)
+        confirmed_count = len([b for b in all_bookings if b.status == 'confirmed'])
+        pending_count = len([b for b in all_bookings if b.status == 'pending'])
+        cancelled_count = len([b for b in all_bookings if b.status == 'cancelled'])
+        completed_count = len([b for b in all_bookings if b.status == 'completed'])
+        
+        # Top users (who books most)
+        user_booking_counts = {}
+        for booking in all_bookings:
+            user_id = booking.user_id
+            if user_id not in user_booking_counts:
+                user_booking_counts[user_id] = {'user': booking.user, 'count': 0}
+            user_booking_counts[user_id]['count'] += 1
+        
+        top_users = sorted(user_booking_counts.values(), key=lambda x: x['count'], reverse=True)[:10]
+        
+        # Top resources (most booked)
+        resource_booking_counts = {}
+        for booking in all_bookings:
+            res_id = booking.resource_id
+            if res_id not in resource_booking_counts:
+                resource_booking_counts[res_id] = {'resource': booking.resource, 'count': 0}
+            resource_booking_counts[res_id]['count'] += 1
+        
+        top_resources = sorted(resource_booking_counts.values(), key=lambda x: x['count'], reverse=True)[:10]
+        
+        # Bookings by resource type
+        type_counts = {}
+        for booking in all_bookings:
+            r_type = booking.resource.resource_type
+            type_counts[r_type] = type_counts.get(r_type, 0) + 1
+        
+        # Bookings by day of week
+        day_counts = {0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0}
+        for booking in all_bookings:
+            day = booking.start_time.weekday()
+            day_counts[day] += 1
+        
+        # Bookings by hour of day
+        hour_counts = {hour: 0 for hour in range(24)}
+        for booking in all_bookings:
+            hour = booking.start_time.hour
+            hour_counts[hour] += 1
+        
+        # Average booking duration
+        total_duration = sum([(b.end_time - b.start_time).total_seconds() for b in all_bookings])
+        avg_duration_hours = (total_duration / len(all_bookings) / 3600) if all_bookings else 0
+        
+        # Get all resource types and users for filters
+        all_resource_types = sorted(set(r.resource_type for r in Resource.query.all()))
+        all_users = User.query.order_by(User.full_name).all()
+        
+        return render_template(
+            'bookings/analytics.html',
+            bookings=all_bookings,
+            total_bookings=total_bookings,
+            confirmed_count=confirmed_count,
+            pending_count=pending_count,
+            cancelled_count=cancelled_count,
+            completed_count=completed_count,
+            top_users=top_users,
+            top_resources=top_resources,
+            type_counts=type_counts,
+            day_counts=day_counts,
+            hour_counts=hour_counts,
+            avg_duration_hours=avg_duration_hours,
+            all_resource_types=all_resource_types,
+            all_users=all_users,
+            # Pass back filter values
+            filter_start_date=start_date or '',
+            filter_end_date=end_date or '',
+            filter_resource_type=resource_type or '',
+            filter_user_id=user_id or ''
+        )
+        
+    except Exception as e:
+        from flask import flash, redirect, url_for
+        flash(f'Error loading analytics: {str(e)}', 'error')
+        return redirect(url_for('bookings.list_bookings'))

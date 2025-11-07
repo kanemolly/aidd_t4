@@ -4,6 +4,7 @@ Handles user registration, login, logout, and session management.
 Uses Flask-Login for session management and DAL for database operations.
 """
 
+from datetime import datetime
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
 from flask_login import login_user, logout_user, login_required, current_user
 from sqlalchemy.exc import SQLAlchemyError
@@ -29,7 +30,9 @@ def register():
         full_name = request.form.get('full_name', '').strip()
         password = request.form.get('password', '')
         confirm_password = request.form.get('confirm_password', '')
-        role = request.form.get('role', 'student')
+        # Public registration always creates student accounts
+        # Staff and Admin accounts must be created by existing admins
+        role = User.ROLE_STUDENT
         department = request.form.get('department', '').strip() or None
         
         # Validation
@@ -166,6 +169,8 @@ def edit_profile():
     if request.method == 'POST':
         full_name = request.form.get('full_name', '').strip()
         department = request.form.get('department', '').strip() or None
+        year_in_school = request.form.get('year_in_school', '').strip() or None
+        major = request.form.get('major', '').strip() or None
         
         if not full_name:
             flash('Full name is required.', 'error')
@@ -175,13 +180,17 @@ def edit_profile():
             user = UserDAL.update_user(
                 user_id=current_user.id,
                 full_name=full_name,
-                department=department
+                department=department,
+                year_in_school=year_in_school,
+                major=major
             )
             flash('Profile updated successfully!', 'success')
             return redirect(url_for('auth.profile'))
         
-        except SQLAlchemyError as e:
-            flash('An error occurred while updating your profile.', 'error')
+        except Exception as e:
+            # Log the actual error for debugging
+            print(f"Error updating profile: {type(e).__name__}: {str(e)}")
+            flash(f'An error occurred while updating your profile: {str(e)}', 'error')
             return redirect(url_for('auth.edit_profile'))
     
     return render_template('auth/edit_profile.html', user=current_user)
@@ -225,6 +234,123 @@ def change_password():
             return redirect(url_for('auth.change_password'))
     
     return render_template('auth/change_password.html')
+
+
+@auth_bp.route('/profile/picture', methods=['POST'])
+@login_required
+def upload_profile_picture():
+    """Upload profile picture."""
+    import os
+    from werkzeug.utils import secure_filename
+    from flask_wtf.csrf import validate_csrf
+    from wtforms import ValidationError
+    
+    # Manually validate CSRF token for multipart/form-data
+    try:
+        validate_csrf(request.form.get('csrf_token'))
+    except ValidationError:
+        flash('Invalid CSRF token. Please try again.', 'error')
+        return redirect(url_for('auth.profile'))
+    
+    if 'profile_picture' not in request.files:
+        flash('No file selected.', 'error')
+        return redirect(url_for('auth.profile'))
+    
+    file = request.files['profile_picture']
+    
+    if file.filename == '':
+        flash('No file selected.', 'error')
+        return redirect(url_for('auth.profile'))
+    
+    # Validate file type
+    allowed_extensions = {'png', 'jpg', 'jpeg', 'gif'}
+    filename = secure_filename(file.filename)
+    if '.' not in filename or filename.rsplit('.', 1)[1].lower() not in allowed_extensions:
+        flash('Invalid file type. Please upload a PNG, JPG, JPEG, or GIF image.', 'error')
+        return redirect(url_for('auth.profile'))
+    
+    # Create uploads directory if it doesn't exist
+    upload_folder = os.path.join('static', 'uploads', 'profiles')
+    os.makedirs(upload_folder, exist_ok=True)
+    
+    # Generate unique filename
+    ext = filename.rsplit('.', 1)[1].lower()
+    new_filename = f"user_{current_user.id}_{datetime.utcnow().strftime('%Y%m%d%H%M%S')}.{ext}"
+    filepath = os.path.join(upload_folder, new_filename)
+    
+    try:
+        # Save file
+        file.save(filepath)
+        
+        # Update user profile
+        profile_image_path = f"uploads/profiles/{new_filename}"
+        UserDAL.update_user(user_id=current_user.id, profile_image=profile_image_path)
+        
+        flash('Profile picture updated successfully!', 'success')
+        return redirect(url_for('auth.profile'))
+    
+    except Exception as e:
+        print(f"Error uploading profile picture: {type(e).__name__}: {str(e)}")
+        flash(f'An error occurred while uploading your picture: {str(e)}', 'error')
+        return redirect(url_for('auth.profile'))
+
+
+@auth_bp.route('/profile/preferences', methods=['GET', 'POST'])
+@login_required
+def preferences():
+    """Manage user preferences for personalized recommendations."""
+    import json
+    
+    if request.method == 'POST':
+        # Get form data - handle checkboxes (getlist) and custom inputs
+        interests = request.form.getlist('interests')
+        interests_custom = request.form.get('interests_custom', '').strip()
+        if interests_custom:
+            interests.extend([i.strip() for i in interests_custom.split(',') if i.strip()])
+        
+        # Study environment - multiple selections
+        study_envs = request.form.getlist('study_environment')
+        study_times = request.form.getlist('study_time')
+        group_sizes = request.form.getlist('group_size')
+        
+        study_preferences = {}
+        if study_envs:
+            study_preferences['environment'] = study_envs
+        if study_times:
+            study_preferences['time'] = study_times
+        if group_sizes:
+            study_preferences['group_size'] = group_sizes
+        
+        accessibility_raw = request.form.getlist('accessibility_needs')
+        accessibility_needs = [a for a in accessibility_raw if a]
+        
+        # Preferred locations - checkboxes + custom
+        preferred_locations = request.form.getlist('preferred_locations')
+        locations_custom = request.form.get('preferred_locations_custom', '').strip()
+        if locations_custom:
+            preferred_locations.extend([l.strip() for l in locations_custom.split(',') if l.strip()])
+        
+        try:
+            UserDAL.update_preferences(
+                user_id=current_user.id,
+                interests=interests,
+                study_preferences=study_preferences,
+                accessibility_needs=accessibility_needs,
+                preferred_locations=preferred_locations
+            )
+            flash('Preferences updated successfully! The chatbot will use these to personalize recommendations.', 'success')
+            return redirect(url_for('auth.profile'))
+        
+        except Exception as e:
+            flash('An error occurred while updating preferences.', 'error')
+            return redirect(url_for('auth.preferences'))
+    
+    # GET request - show preferences form
+    try:
+        prefs = UserDAL.get_user_preferences(current_user.id)
+        return render_template('auth/preferences.html', user=current_user, prefs=prefs)
+    except Exception:
+        return render_template('auth/preferences.html', user=current_user, prefs={})
 
 
 @login_manager.user_loader

@@ -1,0 +1,616 @@
+<!-- Booking Modal -->
+<div id="bookingModal" class="booking-modal" style="display: none;">
+    <div class="booking-modal-overlay" onclick="closeBookingModal()"></div>
+    <div class="booking-modal-content">
+        <div class="booking-modal-header">
+            <h2>📅 Book Resource</h2>
+            <button class="modal-close-btn" onclick="closeBookingModal()">&times;</button>
+        </div>
+
+        <div class="booking-modal-body">
+            <!-- Resource Info will be dynamically inserted -->
+            <div id="modalResourceInfo" class="modal-resource-info"></div>
+
+            <div class="error-message" id="modalErrorMessage" style="display: none;"></div>
+            <div class="success-message" id="modalSuccessMessage" style="display: none;"></div>
+
+            <form id="modalBookingForm">
+                <input type="hidden" id="modalResourceId" name="resource_id">
+
+                <!-- Business Hours Notice -->
+                <div style="background: #fff8e1; border: 1px solid #ffc107; padding: 12px 15px; border-radius: 8px; margin-bottom: 20px; font-size: 14px; color: #856404;">
+                    <strong>⏰ Business Hours:</strong> Bookings are available from 8:00 AM to 8:00 PM daily (including weekends).
+                </div>
+
+                <div class="form-row">
+                    <!-- Start Date/Time -->
+                    <div class="form-group">
+                        <label>
+                            Start Date & Time
+                            <span class="required">*</span>
+                        </label>
+                        <div class="datetime-input-group">
+                            <input 
+                                type="date" 
+                                id="modalStartDate" 
+                                name="start_date" 
+                                required
+                            >
+                            <input 
+                                type="time" 
+                                id="modalStartTime" 
+                                name="start_time" 
+                                required
+                            >
+                        </div>
+                    </div>
+
+                    <!-- End Date/Time -->
+                    <div class="form-group">
+                        <label>
+                            End Date & Time
+                            <span class="required">*</span>
+                        </label>
+                        <div class="datetime-input-group">
+                            <input 
+                                type="date" 
+                                id="modalEndDate" 
+                                name="end_date" 
+                                required
+                            >
+                            <input 
+                                type="time" 
+                                id="modalEndTime" 
+                                name="end_time" 
+                                required
+                            >
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Notes -->
+                <div class="form-group">
+                    <label>Notes (optional)</label>
+                    <textarea 
+                        id="modalNotes" 
+                        name="notes" 
+                        rows="3"
+                        placeholder="Add any special requirements or notes about your booking..."
+                    ></textarea>
+                </div>
+
+                <!-- Form Actions -->
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" onclick="closeBookingModal()">
+                        Cancel
+                    </button>
+                    <button type="submit" class="btn-primary" id="modalSubmitBtn">
+                        🎯 Confirm Booking
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Loading Overlay -->
+<div class="modal-loading-overlay" id="modalLoadingOverlay" style="display: none;">
+    <div class="loading-spinner">
+        <div class="spinner"></div>
+        <p>Processing your booking...</p>
+    </div>
+</div>
+
+<style>
+    .booking-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 10000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .booking-modal-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.7);
+        backdrop-filter: blur(4px);
+    }
+
+    .booking-modal-content {
+        position: relative;
+        background: white;
+        border-radius: 16px;
+        max-width: 700px;
+        width: 90%;
+        max-height: 90vh;
+        overflow-y: auto;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        animation: modalSlideIn 0.3s ease-out;
+    }
+
+    @keyframes modalSlideIn {
+        from {
+            opacity: 0;
+            transform: translateY(-30px) scale(0.95);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+    }
+
+    .booking-modal-header {
+        background: linear-gradient(135deg, #990000 0%, #7d0000 100%);
+        color: white;
+        padding: 25px 30px;
+        border-radius: 16px 16px 0 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .booking-modal-header h2 {
+        margin: 0;
+        font-size: 24px;
+        font-weight: 600;
+    }
+
+    .modal-close-btn {
+        background: none;
+        border: none;
+        color: white;
+        font-size: 32px;
+        cursor: pointer;
+        padding: 0;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        transition: background 0.2s;
+    }
+
+    .modal-close-btn:hover {
+        background: rgba(255, 255, 255, 0.2);
+    }
+
+    .booking-modal-body {
+        padding: 30px;
+    }
+
+    .modal-resource-info {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 12px;
+        margin-bottom: 25px;
+        border-left: 4px solid #990000;
+    }
+
+    .modal-resource-info h3 {
+        margin: 0 0 10px 0;
+        color: #990000;
+        font-size: 18px;
+    }
+
+    .modal-resource-info p {
+        margin: 5px 0;
+        color: #666;
+        font-size: 14px;
+    }
+
+    .modal-resource-info .resource-meta {
+        display: flex;
+        gap: 15px;
+        margin-top: 10px;
+        flex-wrap: wrap;
+    }
+
+    .modal-resource-info .meta-badge {
+        background: white;
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 13px;
+        color: #333;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        margin-bottom: 20px;
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-group label {
+        display: block;
+        color: #333;
+        font-weight: 600;
+        margin-bottom: 8px;
+        font-size: 14px;
+    }
+
+    .form-group .required {
+        color: #dc3545;
+        margin-left: 3px;
+    }
+
+    .datetime-input-group {
+        display: flex;
+        gap: 10px;
+    }
+
+    .form-group input[type="date"],
+    .form-group input[type="time"],
+    .form-group textarea {
+        width: 100%;
+        padding: 12px 15px;
+        border: 2px solid #ddd;
+        border-radius: 8px;
+        font-size: 15px;
+        font-family: inherit;
+        transition: border-color 0.3s, box-shadow 0.3s;
+    }
+
+    .datetime-input-group input {
+        flex: 1;
+    }
+
+    .form-group input:focus,
+    .form-group textarea:focus {
+        outline: none;
+        border-color: #990000;
+        box-shadow: 0 0 0 3px rgba(153, 0, 0, 0.1);
+    }
+
+    .form-group textarea {
+        resize: vertical;
+        min-height: 80px;
+    }
+
+    .modal-actions {
+        display: flex;
+        gap: 15px;
+        margin-top: 30px;
+        padding-top: 20px;
+        border-top: 1px solid #eee;
+    }
+
+    .btn-secondary {
+        flex: 1;
+        background: white;
+        color: #666;
+        border: 2px solid #ddd;
+        padding: 14px 24px;
+        border-radius: 8px;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .btn-secondary:hover {
+        border-color: #990000;
+        color: #990000;
+    }
+
+    .btn-primary {
+        flex: 1;
+        background: linear-gradient(135deg, #990000 0%, #7d0000 100%);
+        color: white;
+        border: none;
+        padding: 14px 24px;
+        border-radius: 8px;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(153, 0, 0, 0.3);
+    }
+
+    .btn-primary:disabled,
+    .btn-secondary:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    .error-message {
+        background: #fff3cd;
+        border: 1px solid #ffc107;
+        color: #856404;
+        padding: 12px 15px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        font-size: 14px;
+    }
+
+    .success-message {
+        background: #d4edda;
+        border: 1px solid #28a745;
+        color: #155724;
+        padding: 12px 15px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        font-size: 14px;
+    }
+
+    .modal-loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10001;
+    }
+
+    .loading-spinner {
+        background: white;
+        padding: 30px 40px;
+        border-radius: 12px;
+        text-align: center;
+    }
+
+    .spinner {
+        width: 50px;
+        height: 50px;
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid #990000;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 15px;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    @media (max-width: 768px) {
+        .booking-modal-content {
+            width: 95%;
+            max-height: 95vh;
+        }
+
+        .booking-modal-header {
+            padding: 20px;
+        }
+
+        .booking-modal-header h2 {
+            font-size: 20px;
+        }
+
+        .booking-modal-body {
+            padding: 20px;
+        }
+
+        .form-row {
+            grid-template-columns: 1fr;
+            gap: 0;
+        }
+
+        .modal-actions {
+            flex-direction: column;
+        }
+
+        .datetime-input-group {
+            flex-direction: column;
+        }
+    }
+</style>
+
+<script>
+function openBookingModal(resourceId, resourceName, resourceLocation, resourceType, resourceCapacity) {
+    const modal = document.getElementById('bookingModal');
+    const resourceInfo = document.getElementById('modalResourceInfo');
+    
+    // Populate resource info
+    resourceInfo.innerHTML = `
+        <h3>${resourceName}</h3>
+        <div class="resource-meta">
+            <span class="meta-badge">📍 ${resourceLocation}</span>
+            <span class="meta-badge">🏷️ ${resourceType}</span>
+            ${resourceCapacity ? `<span class="meta-badge">👥 Capacity: ${resourceCapacity}</span>` : ''}
+            <span class="meta-badge">🕐 Hours: 8 AM - 8 PM</span>
+        </div>
+    `;
+    
+    // Set resource ID
+    document.getElementById('modalResourceId').value = resourceId;
+    
+    // Set default times within business hours (8 AM - 8 PM)
+    const now = new Date();
+    let startTime = new Date(now.getTime() + 60 * 60 * 1000); // 1 hour from now
+    startTime.setMinutes(0);
+    startTime.setSeconds(0);
+    
+    // Ensure start time is within business hours (8 AM - 8 PM)
+    if (startTime.getHours() < 8) {
+        startTime.setHours(8, 0, 0, 0);
+    } else if (startTime.getHours() >= 18) {
+        // If too late today, set to 8 AM tomorrow
+        startTime.setDate(startTime.getDate() + 1);
+        startTime.setHours(8, 0, 0, 0);
+    }
+    
+    // End time 2 hours after start, but not after 8 PM
+    let endTime = new Date(startTime.getTime() + 2 * 60 * 60 * 1000);
+    if (endTime.getHours() > 20 || (endTime.getHours() === 20 && endTime.getMinutes() > 0)) {
+        endTime.setHours(20, 0, 0, 0);
+    }
+    
+    const startDate = startTime.toISOString().split('T')[0];
+    const endDate = endTime.toISOString().split('T')[0];
+    const today = new Date().toISOString().split('T')[0];
+    
+    // Reset form and messages first
+    document.getElementById('modalBookingForm').reset();
+    document.getElementById('modalErrorMessage').style.display = 'none';
+    document.getElementById('modalSuccessMessage').style.display = 'none';
+    
+    // Then set values
+    document.getElementById('modalResourceId').value = resourceId;
+    document.getElementById('modalStartDate').value = startDate;
+    document.getElementById('modalStartDate').min = today;
+    document.getElementById('modalStartTime').value = startTime.toTimeString().slice(0, 5);
+    document.getElementById('modalStartTime').min = '08:00';
+    document.getElementById('modalStartTime').max = '19:59';
+    document.getElementById('modalEndDate').value = endDate;
+    document.getElementById('modalEndDate').min = today;
+    document.getElementById('modalEndTime').value = endTime.toTimeString().slice(0, 5);
+    document.getElementById('modalEndTime').min = '08:00';
+    document.getElementById('modalEndTime').max = '20:00';
+    
+    // Show modal
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+}
+
+function closeBookingModal() {
+    const modal = document.getElementById('bookingModal');
+    modal.style.display = 'none';
+    document.body.style.overflow = '';
+}
+
+// Close modal on Escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeBookingModal();
+    }
+});
+
+// Form submission
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('modalBookingForm');
+    if (!form) return;
+    
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const errorMessage = document.getElementById('modalErrorMessage');
+        const successMessage = document.getElementById('modalSuccessMessage');
+        const loadingOverlay = document.getElementById('modalLoadingOverlay');
+        const submitBtn = document.getElementById('modalSubmitBtn');
+        
+        // Validate
+        const startDate = document.getElementById('modalStartDate').value;
+        const startTime = document.getElementById('modalStartTime').value;
+        const endDate = document.getElementById('modalEndDate').value;
+        const endTime = document.getElementById('modalEndTime').value;
+        
+        if (!startDate || !startTime || !endDate || !endTime) {
+            errorMessage.textContent = 'Please fill in all date and time fields.';
+            errorMessage.style.display = 'block';
+            return;
+        }
+        
+        const start = new Date(`${startDate}T${startTime}`);
+        const end = new Date(`${endDate}T${endTime}`);
+        
+        if (start >= end) {
+            errorMessage.textContent = 'End time must be after start time.';
+            errorMessage.style.display = 'block';
+            return;
+        }
+        
+        if (start < new Date()) {
+            errorMessage.textContent = 'Start time cannot be in the past.';
+            errorMessage.style.display = 'block';
+            return;
+        }
+        
+        // Validate business hours (8 AM - 8 PM)
+        const startHour = start.getHours();
+        const endHour = end.getHours();
+        const endMinute = end.getMinutes();
+        
+        if (startHour < 8 || startHour >= 20) {
+            errorMessage.textContent = 'Start time must be between 8:00 AM and 8:00 PM (business hours only).';
+            errorMessage.style.display = 'block';
+            return;
+        }
+        
+        if (endHour < 8 || endHour > 20 || (endHour === 20 && endMinute > 0)) {
+            errorMessage.textContent = 'End time must be between 8:00 AM and 8:00 PM (business hours only).';
+            errorMessage.style.display = 'block';
+            return;
+        }
+        
+        // Hide messages
+        errorMessage.style.display = 'none';
+        successMessage.style.display = 'none';
+        
+        // Show loading
+        loadingOverlay.style.display = 'flex';
+        submitBtn.disabled = true;
+        
+        // Prepare data
+        const data = {
+            resource_id: parseInt(document.getElementById('modalResourceId').value),
+            start_datetime: `${startDate} ${startTime}:00`,
+            end_datetime: `${endDate} ${endTime}:00`,
+            notes: document.getElementById('modalNotes').value
+        };
+        
+        try {
+            const response = await fetch('/bookings/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify(data)
+            });
+            
+            const result = await response.json();
+            
+            loadingOverlay.style.display = 'none';
+            submitBtn.disabled = false;
+            
+            if (response.ok && result.success) {
+                // Redirect to confirmation page
+                window.location.href = `/bookings/${result.booking_id}/confirmation`;
+            } else {
+                errorMessage.textContent = result.error || 'Failed to create booking. Please try again.';
+                errorMessage.style.display = 'block';
+            }
+        } catch (error) {
+            loadingOverlay.style.display = 'none';
+            submitBtn.disabled = false;
+            errorMessage.textContent = 'Network error. Please check your connection and try again.';
+            errorMessage.style.display = 'block';
+            console.error('Booking error:', error);
+        }
+    });
+    
+    // Auto-update end date when start date changes
+    document.getElementById('modalStartDate').addEventListener('change', function() {
+        const endDateInput = document.getElementById('modalEndDate');
+        if (!endDateInput.value || new Date(endDateInput.value) < new Date(this.value)) {
+            endDateInput.value = this.value;
+        }
+    });
+});
+</script>

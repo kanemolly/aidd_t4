@@ -6,8 +6,8 @@
     .container {
         width: 100%;
         max-width: 400px;
-        margin: 40px auto;
-        padding: 20px;
+        margin: var(--space-2xl) auto;
+        padding: var(--space-md);
     }
 
     .auth-card-wrapper {
@@ -15,11 +15,12 @@
     }
 
     .card {
-        background: white;
-        border-radius: 12px;
-        box-shadow: 0 4px 20px rgba(153, 0, 0, 0.1);
-        padding: 40px;
-        animation: slideIn 0.3s ease-out;
+        background: var(--neutral-white);
+        border-radius: var(--radius-xl);
+        box-shadow: var(--shadow-lg);
+        padding: var(--space-2xl);
+        animation: slideIn var(--transition-base);
+        border: 1px solid var(--neutral-gray-200);
     }
 
     @keyframes slideIn {
@@ -35,59 +36,63 @@
 
     .header {
         text-align: center;
-        margin-bottom: 30px;
+        margin-bottom: var(--space-xl);
     }
 
     .logo {
         font-size: 32px;
-        margin-bottom: 12px;
+        margin-bottom: var(--space-sm);
     }
 
     .header h1 {
-        color: #990000;
-        font-size: 26px;
-        margin-bottom: 6px;
+        color: var(--iu-crimson);
+        font-size: var(--font-size-2xl);
+        margin-bottom: var(--space-xs);
         font-weight: 600;
     }
 
     .header p {
-        color: #666;
-        font-size: 14px;
+        color: var(--neutral-gray-600);
+        font-size: var(--font-size-sm);
     }
 
     .form-group {
-        margin-bottom: 18px;
+        margin-bottom: var(--space-lg);
     }
 
     label {
         display: block;
-        margin-bottom: 6px;
-        color: #333;
-        font-size: 14px;
+        margin-bottom: var(--space-xs);
+        color: var(--iu-dark);
+        font-size: var(--font-size-sm);
         font-weight: 500;
     }
 
-    input {
+    input[type="text"],
+    input[type="email"],
+    input[type="password"] {
         width: 100%;
-        padding: 12px 14px;
-        border: 2px solid #E8D4C4;
-        border-radius: 8px;
-        font-size: 14px;
-        background-color: #FFFBF7;
-        color: #333;
-        transition: all 0.3s ease;
+        padding: var(--space-sm) var(--space-md);
+        border: 2px solid var(--neutral-gray-300);
+        border-radius: var(--radius-lg);
+        font-size: var(--font-size-sm);
+        background-color: var(--iu-light);
+        color: var(--iu-dark);
+        transition: all var(--transition-fast);
         font-family: inherit;
     }
 
-    input:focus {
+    input[type="text"]:focus,
+    input[type="email"]:focus,
+    input[type="password"]:focus {
         outline: none;
-        border-color: #990000;
-        background-color: #FFF;
+        border-color: var(--iu-crimson);
+        background-color: var(--neutral-white);
         box-shadow: 0 0 0 3px rgba(153, 0, 0, 0.1);
     }
 
     input::placeholder {
-        color: #999;
+        color: var(--neutral-gray-500);
     }
 
     .password-group {
@@ -99,32 +104,34 @@
         right: 14px;
         top: 38px;
         cursor: pointer;
-        color: #999;
+        color: var(--neutral-gray-500);
         font-size: 18px;
         user-select: none;
+        transition: color var(--transition-fast);
     }
 
     .toggle-password:hover {
-        color: #990000;
+        color: var(--iu-crimson);
     }
 
     .remember-forgot {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 20px;
-        font-size: 14px;
+        margin-bottom: var(--space-lg);
+        font-size: var(--font-size-sm);
     }
 
     .remember-me {
         display: flex;
         align-items: center;
-        gap: 6px;
+        gap: var(--space-xs);
     }
 
     .remember-me input[type="checkbox"] {
         width: auto;
         cursor: pointer;
+        accent-color: var(--iu-crimson);
     }
 
     .remember-me label {
@@ -134,14 +141,14 @@
     }
 
     .forgot-password {
-        color: #990000;
+        color: var(--iu-crimson);
         text-decoration: none;
         font-weight: 500;
-        transition: color 0.3s ease;
+        transition: color var(--transition-fast);
     }
 
     .forgot-password:hover {
-        color: #4B0000;
+        color: var(--iu-dark);
         text-decoration: underline;
     }
 
@@ -149,10 +156,10 @@
         font-size: 13px;
         margin-top: 4px;
         display: none;
-        padding: 6px 10px;
-        border-radius: 4px;
-        background-color: #FEE;
-        color: #990000;
+        padding: var(--space-xs) var(--space-sm);
+        border-radius: var(--radius-sm);
+        background-color: var(--error-light);
+        color: var(--error);
     }
 
     .validation-message.error {
@@ -161,21 +168,21 @@
 
     button {
         width: 100%;
-        padding: 12px;
-        background-color: #990000;
-        color: white;
+        padding: var(--space-sm);
+        background-color: var(--iu-crimson);
+        color: var(--neutral-white);
         border: none;
-        border-radius: 8px;
-        font-size: 15px;
+        border-radius: var(--radius-lg);
+        font-size: var(--font-size-base);
         font-weight: 600;
         cursor: pointer;
-        transition: all 0.3s ease;
+        transition: all var(--transition-base);
     }
 
     button:hover {
-        background-color: #4B0000;
+        background-color: var(--iu-dark);
         transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(153, 0, 0, 0.3);
+        box-shadow: var(--shadow-lg);
     }
 
     button:active {
@@ -183,14 +190,14 @@
     }
 
     button:disabled {
-        background-color: #CCC;
+        background-color: var(--neutral-gray-300);
         cursor: not-allowed;
         transform: none;
     }
 
     .signup-link {
         text-align: center;
-        margin-top: 20px;
+        margin-top: var(--space-lg);
         font-size: 14px;
         color: #666;
     }

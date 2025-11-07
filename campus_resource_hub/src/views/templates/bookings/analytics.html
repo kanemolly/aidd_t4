@@ -1,0 +1,499 @@
+{% extends "base.html" %}
+
+{% block title %}Booking Analytics - Campus Resource Hub{% endblock %}
+
+{% block extra_css %}
+<style>
+    .analytics-container {
+        max-width: 1600px;
+        margin: 0 auto;
+        padding: var(--space-xl) var(--space-md);
+    }
+
+    .page-header {
+        margin-bottom: var(--space-2xl);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: var(--space-md);
+    }
+
+    .page-header h1 {
+        color: var(--iu-dark);
+        font-size: var(--font-size-3xl);
+        display: flex;
+        align-items: center;
+        gap: var(--space-md);
+    }
+
+    .admin-badge {
+        background: linear-gradient(135deg, var(--iu-crimson), #4B0000);
+        color: white;
+        padding: var(--space-xs) var(--space-md);
+        border-radius: var(--radius-full);
+        font-size: var(--font-size-sm);
+        font-weight: 600;
+    }
+
+    /* Filters */
+    .filters-card {
+        background: var(--neutral-white);
+        padding: var(--space-xl);
+        border-radius: var(--radius-xl);
+        box-shadow: var(--shadow-md);
+        margin-bottom: var(--space-2xl);
+        border: 1px solid var(--neutral-gray-200);
+    }
+
+    .filters-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: var(--space-lg);
+        margin-bottom: var(--space-lg);
+    }
+
+    .filter-group label {
+        display: block;
+        font-weight: 600;
+        color: var(--iu-dark);
+        margin-bottom: var(--space-xs);
+        font-size: var(--font-size-sm);
+    }
+
+    .filter-group input,
+    .filter-group select {
+        width: 100%;
+        padding: var(--space-sm);
+        border: 2px solid var(--neutral-gray-300);
+        border-radius: var(--radius-lg);
+        font-size: var(--font-size-sm);
+    }
+
+    .filter-actions {
+        display: flex;
+        gap: var(--space-sm);
+    }
+
+    /* Stats Grid */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: var(--space-lg);
+        margin-bottom: var(--space-2xl);
+    }
+
+    .stat-card {
+        background: linear-gradient(135deg, var(--neutral-white), var(--iu-light));
+        padding: var(--space-xl);
+        border-radius: var(--radius-xl);
+        box-shadow: var(--shadow-md);
+        border: 1px solid var(--neutral-gray-200);
+        text-align: center;
+        transition: all var(--transition-base);
+    }
+
+    .stat-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--shadow-xl);
+    }
+
+    .stat-value {
+        font-size: var(--font-size-3xl);
+        font-weight: 700;
+        color: var(--iu-crimson);
+        margin-bottom: var(--space-xs);
+    }
+
+    .stat-label {
+        color: var(--neutral-gray-600);
+        font-size: var(--font-size-sm);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 600;
+    }
+
+    /* Charts Grid */
+    .charts-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+        gap: var(--space-xl);
+        margin-bottom: var(--space-2xl);
+    }
+
+    .chart-card {
+        background: var(--neutral-white);
+        padding: var(--space-xl);
+        border-radius: var(--radius-xl);
+        box-shadow: var(--shadow-md);
+        border: 1px solid var(--neutral-gray-200);
+    }
+
+    .chart-header {
+        font-size: var(--font-size-xl);
+        font-weight: 700;
+        color: var(--iu-dark);
+        margin-bottom: var(--space-lg);
+        display: flex;
+        align-items: center;
+        gap: var(--space-sm);
+    }
+
+    .chart-content {
+        min-height: 300px;
+    }
+
+    /* Top Lists */
+    .top-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .top-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: var(--space-md);
+        margin-bottom: var(--space-sm);
+        background: var(--iu-light);
+        border-radius: var(--radius-lg);
+        transition: all var(--transition-fast);
+    }
+
+    .top-item:hover {
+        background: var(--neutral-gray-200);
+        transform: translateX(4px);
+    }
+
+    .top-rank {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 28px;
+        height: 28px;
+        background: var(--iu-crimson);
+        color: white;
+        border-radius: 50%;
+        font-weight: 700;
+        font-size: var(--font-size-sm);
+        margin-right: var(--space-md);
+    }
+
+    .top-name {
+        flex: 1;
+        font-weight: 600;
+        color: var(--iu-dark);
+    }
+
+    .top-count {
+        background: var(--neutral-white);
+        padding: var(--space-xs) var(--space-md);
+        border-radius: var(--radius-full);
+        font-weight: 700;
+        color: var(--iu-crimson);
+    }
+
+    /* Booking Log Table */
+    .log-section {
+        background: var(--neutral-white);
+        padding: var(--space-xl);
+        border-radius: var(--radius-xl);
+        box-shadow: var(--shadow-md);
+        border: 1px solid var(--neutral-gray-200);
+    }
+
+    .log-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: var(--space-lg);
+    }
+
+    .log-table th {
+        background: var(--iu-dark);
+        color: white;
+        padding: var(--space-md);
+        text-align: left;
+        font-weight: 600;
+        font-size: var(--font-size-sm);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .log-table td {
+        padding: var(--space-md);
+        border-bottom: 1px solid var(--neutral-gray-200);
+        font-size: var(--font-size-sm);
+    }
+
+    .log-table tr:hover {
+        background: var(--iu-light);
+    }
+
+    .status-badge {
+        padding: var(--space-xs) var(--space-sm);
+        border-radius: var(--radius-full);
+        font-size: var(--font-size-xs);
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .status-confirmed { background: #D1FAE5; color: #065F46; }
+    .status-pending { background: #FEF3C7; color: #92400E; }
+    .status-cancelled { background: #FEE2E2; color: #991B1B; }
+    .status-completed { background: #E0E7FF; color: #3730A3; }
+
+    .btn {
+        padding: var(--space-sm) var(--space-lg);
+        border-radius: var(--radius-lg);
+        font-weight: 600;
+        font-size: var(--font-size-sm);
+        cursor: pointer;
+        transition: all var(--transition-fast);
+        border: none;
+        text-decoration: none;
+        display: inline-block;
+    }
+
+    .btn-primary {
+        background: var(--iu-crimson);
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background: #4B0000;
+    }
+
+    .btn-secondary {
+        background: var(--neutral-gray-200);
+        color: var(--iu-dark);
+    }
+
+    @media (max-width: 768px) {
+        .charts-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .log-table {
+            font-size: var(--font-size-xs);
+        }
+        
+        .log-table th,
+        .log-table td {
+            padding: var(--space-sm);
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="analytics-container">
+    <div class="page-header">
+        <h1>
+            📊 Booking Analytics <span class="admin-badge">Admin</span>
+        </h1>
+        <a href="{{ url_for('bookings.list_bookings') }}" class="btn btn-secondary">
+            ← Back to Bookings
+        </a>
+    </div>
+
+    <!-- Filters -->
+    <div class="filters-card">
+        <form method="GET" action="{{ url_for('bookings.analytics') }}">
+            <div class="filters-grid">
+                <div class="filter-group">
+                    <label for="start_date">Start Date</label>
+                    <input type="date" id="start_date" name="start_date" value="{{ filter_start_date }}">
+                </div>
+                <div class="filter-group">
+                    <label for="end_date">End Date</label>
+                    <input type="date" id="end_date" name="end_date" value="{{ filter_end_date }}">
+                </div>
+                <div class="filter-group">
+                    <label for="resource_type">Resource Type</label>
+                    <select id="resource_type" name="resource_type">
+                        <option value="">All Types</option>
+                        {% for type in all_resource_types %}
+                        <option value="{{ type }}" {{ 'selected' if type == filter_resource_type else '' }}>
+                            {{ type.title() }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="user_id">User</label>
+                    <select id="user_id" name="user_id">
+                        <option value="">All Users</option>
+                        {% for user in all_users %}
+                        <option value="{{ user.id }}" {{ 'selected' if user.id == filter_user_id else '' }}>
+                            {{ user.full_name }} ({{ user.role }})
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="filter-actions">
+                <button type="submit" class="btn btn-primary">Apply Filters</button>
+                <a href="{{ url_for('bookings.analytics') }}" class="btn btn-secondary">Clear Filters</a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Key Statistics -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-value">{{ total_bookings }}</div>
+            <div class="stat-label">Total Bookings</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ confirmed_count }}</div>
+            <div class="stat-label">Confirmed</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ pending_count }}</div>
+            <div class="stat-label">Pending</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ completed_count }}</div>
+            <div class="stat-label">Completed</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ "%.1f"|format(avg_duration_hours) }}</div>
+            <div class="stat-label">Avg Duration (hrs)</div>
+        </div>
+    </div>
+
+    <!-- Charts/Insights -->
+    <div class="charts-grid">
+        <!-- Top Users -->
+        <div class="chart-card">
+            <div class="chart-header">👥 Top Users</div>
+            <div class="chart-content">
+                {% if top_users %}
+                <ul class="top-list">
+                    {% for item in top_users %}
+                    <li class="top-item">
+                        <span class="top-rank">{{ loop.index }}</span>
+                        <span class="top-name">{{ item.user.full_name }}</span>
+                        <span class="top-count">{{ item.count }} bookings</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p style="text-align: center; color: var(--neutral-gray-600); padding: var(--space-xl);">
+                    No booking data available
+                </p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Top Resources -->
+        <div class="chart-card">
+            <div class="chart-header">🏆 Most Booked Resources</div>
+            <div class="chart-content">
+                {% if top_resources %}
+                <ul class="top-list">
+                    {% for item in top_resources %}
+                    <li class="top-item">
+                        <span class="top-rank">{{ loop.index }}</span>
+                        <span class="top-name">{{ item.resource.name }}</span>
+                        <span class="top-count">{{ item.count }} bookings</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p style="text-align: center; color: var(--neutral-gray-600); padding: var(--space-xl);">
+                    No booking data available
+                </p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Bookings by Type -->
+        <div class="chart-card">
+            <div class="chart-header">📦 Bookings by Resource Type</div>
+            <div class="chart-content">
+                {% if type_counts %}
+                <ul class="top-list">
+                    {% for type, count in type_counts.items() | sort(attribute='1', reverse=True) %}
+                    <li class="top-item">
+                        <span class="top-name">{{ type.title() }}</span>
+                        <span class="top-count">{{ count }}</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p style="text-align: center; color: var(--neutral-gray-600); padding: var(--space-xl);">
+                    No data available
+                </p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Bookings by Day of Week -->
+        <div class="chart-card">
+            <div class="chart-header">📅 Bookings by Day of Week</div>
+            <div class="chart-content">
+                <ul class="top-list">
+                    {% set days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] %}
+                    {% for day_num, count in day_counts.items() | sort %}
+                    <li class="top-item">
+                        <span class="top-name">{{ days[day_num] }}</span>
+                        <span class="top-count">{{ count }}</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Booking Log -->
+    <div class="log-section">
+        <div class="chart-header">📋 Detailed Booking Log</div>
+        
+        {% if bookings %}
+        <div style="overflow-x: auto;">
+            <table class="log-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>User</th>
+                        <th>Resource</th>
+                        <th>Type</th>
+                        <th>Start Time</th>
+                        <th>End Time</th>
+                        <th>Duration</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for booking in bookings | reverse %}
+                    <tr>
+                        <td>#{{ booking.id }}</td>
+                        <td>{{ booking.user.full_name }}</td>
+                        <td>{{ booking.resource.name }}</td>
+                        <td>{{ booking.resource.resource_type.title() }}</td>
+                        <td>{{ booking.start_time.strftime('%Y-%m-%d %I:%M %p') }}</td>
+                        <td>{{ booking.end_time.strftime('%Y-%m-%d %I:%M %p') }}</td>
+                        <td>
+                            {% set duration = (booking.end_time - booking.start_time).total_seconds() / 3600 %}
+                            {{ "%.1f"|format(duration) }}h
+                        </td>
+                        <td>
+                            <span class="status-badge status-{{ booking.status }}">
+                                {{ booking.status }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p style="text-align: center; color: var(--neutral-gray-600); padding: var(--space-2xl);">
+            No bookings found matching your filters.
+        </p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

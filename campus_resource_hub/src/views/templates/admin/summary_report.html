@@ -1,0 +1,424 @@
+{% extends "base.html" %}
+
+{% block title %}Summary Report - Admin Dashboard{% endblock %}
+
+{% block extra_css %}
+<style>
+    .report-container {
+        background: var(--neutral-white);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-md);
+        padding: var(--space-lg);
+        margin-bottom: var(--space-xl);
+    }
+
+    .report-header {
+        border-bottom: 2px solid var(--iu-crimson);
+        padding-bottom: var(--space-lg);
+        margin-bottom: var(--space-xl);
+    }
+
+    .report-header h1 {
+        color: var(--iu-crimson);
+        margin-bottom: var(--space-sm);
+    }
+
+    .report-meta {
+        display: flex;
+        gap: var(--space-2xl);
+        flex-wrap: wrap;
+        margin-top: var(--space-md);
+        font-size: var(--font-size-sm);
+        color: var(--neutral-gray-600);
+    }
+
+    .meta-item {
+        display: flex;
+        align-items: center;
+        gap: var(--space-sm);
+    }
+
+    .meta-label {
+        font-weight: 600;
+        color: var(--iu-dark);
+    }
+
+    /* Charts Section */
+    .charts-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: var(--space-lg);
+        margin-bottom: var(--space-xl);
+    }
+
+    .chart-card {
+        background: var(--iu-light);
+        border-radius: var(--radius-lg);
+        border: 1px solid var(--neutral-gray-200);
+        padding: var(--space-lg);
+        min-height: 400px;
+    }
+
+    .chart-card h3 {
+        color: var(--iu-crimson);
+        margin-bottom: var(--space-lg);
+        font-size: var(--font-size-lg);
+    }
+
+    /* Stats Cards */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: var(--space-lg);
+        margin-bottom: var(--space-xl);
+    }
+
+    .stat-card {
+        background: var(--iu-light);
+        border: 2px solid var(--iu-crimson);
+        border-radius: var(--radius-lg);
+        padding: var(--space-lg);
+        text-align: center;
+        transition: all var(--transition-base);
+    }
+
+    .stat-card:hover {
+        box-shadow: var(--shadow-md);
+        transform: translateY(-2px);
+    }
+
+    .stat-value {
+        font-size: var(--font-size-3xl);
+        font-weight: 700;
+        color: var(--iu-crimson);
+        margin: var(--space-md) 0;
+    }
+
+    .stat-label {
+        font-size: var(--font-size-sm);
+        color: var(--neutral-gray-600);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    /* Table Styling */
+    .report-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: var(--space-lg) 0;
+    }
+
+    .report-table thead {
+        background: var(--iu-crimson);
+        color: var(--neutral-white);
+    }
+
+    .report-table th {
+        padding: var(--space-md);
+        text-align: left;
+        font-weight: 600;
+    }
+
+    .report-table td {
+        padding: var(--space-md);
+        border-bottom: 1px solid var(--neutral-gray-200);
+    }
+
+    .report-table tbody tr:hover {
+        background: var(--iu-light);
+    }
+
+    .report-table tbody tr:nth-child(even) {
+        background: var(--neutral-gray-100);
+    }
+
+    .rank-badge {
+        display: inline-block;
+        width: 32px;
+        height: 32px;
+        background: var(--iu-crimson);
+        color: var(--neutral-white);
+        border-radius: 50%;
+        line-height: 32px;
+        text-align: center;
+        font-weight: 600;
+    }
+
+    .resource-type-badge {
+        display: inline-block;
+        background: var(--iu-cream);
+        color: var(--iu-dark);
+        padding: var(--space-xs) var(--space-sm);
+        border-radius: var(--radius-full);
+        font-size: var(--font-size-sm);
+        font-weight: 500;
+    }
+
+    /* Markdown Content */
+    .markdown-content {
+        background: var(--iu-light);
+        border-left: 4px solid var(--iu-crimson);
+        border-radius: var(--radius-md);
+        padding: var(--space-lg);
+        margin: var(--space-lg) 0;
+        line-height: var(--line-height-relaxed);
+    }
+
+    .markdown-content h2 {
+        color: var(--iu-crimson);
+        margin-top: var(--space-lg);
+        margin-bottom: var(--space-md);
+    }
+
+    .markdown-content h3 {
+        color: var(--iu-dark);
+        margin-top: var(--space-md);
+        margin-bottom: var(--space-sm);
+    }
+
+    .markdown-content table {
+        width: 100%;
+        margin: var(--space-md) 0;
+    }
+
+    .markdown-content code {
+        background: var(--neutral-white);
+        border: 1px solid var(--neutral-gray-300);
+    }
+
+    /* Actions */
+    .report-actions {
+        display: flex;
+        gap: var(--space-md);
+        margin-top: var(--space-xl);
+        flex-wrap: wrap;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .charts-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .report-meta {
+            gap: var(--space-md);
+        }
+
+        .stats-grid {
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .report-container {
+            padding: var(--space-md);
+        }
+    }
+
+    @media (max-width: 480px) {
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .report-meta {
+            flex-direction: column;
+        }
+
+        .report-actions {
+            flex-direction: column;
+        }
+
+        .btn {
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="report-container">
+    <!-- Header -->
+    <div class="report-header">
+        <h1>📊 Weekly Summary Report</h1>
+        <div class="report-meta">
+            <div class="meta-item">
+                <span class="meta-label">Period:</span>
+                {{ start_date.strftime('%B %d, %Y') }} to {{ report_date.strftime('%B %d, %Y') }}
+            </div>
+            <div class="meta-item">
+                <span class="meta-label">Generated:</span>
+                {{ report_date.strftime('%Y-%m-%d %H:%M:%S') }}
+            </div>
+            <div class="meta-item">
+                <span class="meta-label">Weekly Bookings:</span>
+                <strong>{{ weekly_total }}</strong>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Overview -->
+    <div style="margin-bottom: var(--space-xl);">
+        <h2 style="margin-bottom: var(--space-lg); color: var(--iu-crimson);">System Overview</h2>
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">Total Users</div>
+                <div class="stat-value">{{ total_users }}</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Total Resources</div>
+                <div class="stat-value">{{ total_resources }}</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Total Bookings</div>
+                <div class="stat-value">{{ total_bookings }}</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Total Reviews</div>
+                <div class="stat-value">{{ total_reviews }}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="charts-grid">
+        <!-- Weekly Bookings Chart -->
+        <div class="chart-card">
+            <h3>📈 Daily Bookings Trend</h3>
+            <div id="bookingsChart"></div>
+        </div>
+
+        <!-- Top Resources Chart -->
+        <div class="chart-card">
+            <h3>🏆 Top 5 Resources</h3>
+            <div id="topResourcesChart"></div>
+        </div>
+    </div>
+
+    <!-- Top Resources Table -->
+    <div style="margin-bottom: var(--space-xl);">
+        <h2 style="color: var(--iu-crimson); margin-bottom: var(--space-lg);">Top 5 Most Booked Resources</h2>
+        <table class="report-table">
+            <thead>
+                <tr>
+                    <th>Rank</th>
+                    <th>Resource Name</th>
+                    <th>Type</th>
+                    <th>Bookings</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for resource in top_resources %}
+                <tr>
+                    <td><span class="rank-badge">#{{ resource.rank }}</span></td>
+                    <td><strong>{{ resource.name }}</strong></td>
+                    <td><span class="resource-type-badge">{{ resource.type }}</span></td>
+                    <td><strong>{{ resource.bookings }}</strong></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Markdown Report Preview -->
+    <div style="margin-bottom: var(--space-xl);">
+        <h2 style="color: var(--iu-crimson); margin-bottom: var(--space-lg);">📄 Report Content</h2>
+        <div class="markdown-content">
+            <pre style="white-space: pre-wrap; word-wrap: break-word; font-family: 'Open Sans', sans-serif;">{{ report_content }}</pre>
+        </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="report-actions">
+        <a href="{{ url_for('admin.dashboard') }}" class="btn btn-secondary">← Back to Dashboard</a>
+        <button onclick="downloadReport()" class="btn btn-primary">⬇️ Download Report</button>
+        <button onclick="printReport()" class="btn btn-secondary">🖨️ Print Report</button>
+    </div>
+</div>
+
+<script>
+    // Prepare data for charts
+    const dailyData = {{ daily_data | tojson }};
+    const topResourcesData = {{ top_resources | tojson }};
+
+    // Daily Bookings Chart
+    const bookingsTrace = {
+        x: dailyData.dates,
+        y: dailyData.counts,
+        type: 'scatter',
+        mode: 'lines+markers',
+        line: {
+            color: '#990000',
+            width: 3
+        },
+        marker: {
+            size: 8,
+            color: '#990000'
+        },
+        fill: 'tozeroy',
+        fillcolor: 'rgba(153, 0, 0, 0.1)',
+        hovertemplate: '<b>%{x}</b><br>Bookings: %{y}<extra></extra>'
+    };
+
+    const bookingsLayout = {
+        title: '',
+        xaxis: { title: 'Date' },
+        yaxis: { title: 'Number of Bookings' },
+        margin: { l: 50, r: 50, t: 40, b: 50 },
+        plot_bgcolor: '#f8f7f5',
+        paper_bgcolor: '#ffffff',
+        font: { family: 'Open Sans, sans-serif', color: '#4B0000' },
+        hovermode: 'x unified'
+    };
+
+    Plotly.newPlot('bookingsChart', [bookingsTrace], bookingsLayout, { responsive: true });
+
+    // Top Resources Bar Chart
+    const resourceNames = topResourcesData.map(r => r.name);
+    const resourceBookings = topResourcesData.map(r => r.bookings);
+
+    const resourcesTrace = {
+        x: resourceNames,
+        y: resourceBookings,
+        type: 'bar',
+        marker: {
+            color: '#990000'
+        },
+        hovertemplate: '<b>%{x}</b><br>Bookings: %{y}<extra></extra>'
+    };
+
+    const resourcesLayout = {
+        title: '',
+        xaxis: { title: 'Resource' },
+        yaxis: { title: 'Number of Bookings' },
+        margin: { l: 50, r: 50, t: 40, b: 100 },
+        plot_bgcolor: '#f8f7f5',
+        paper_bgcolor: '#ffffff',
+        font: { family: 'Open Sans, sans-serif', color: '#4B0000' },
+        xaxis: {
+            tickangle: -45
+        }
+    };
+
+    Plotly.newPlot('topResourcesChart', [resourcesTrace], resourcesLayout, { responsive: true });
+
+    // Functions
+    function downloadReport() {
+        const reportContent = `{{ report_content | replace('\n', '\\n') | replace('"', '\\"') }}`;
+        const element = document.createElement('a');
+        element.setAttribute('href', 'data:text/markdown;charset=utf-8,' + encodeURIComponent(reportContent));
+        element.setAttribute('download', 'summary_report_{{ report_date.strftime("%Y%m%d") }}.md');
+        element.style.display = 'none';
+        document.body.appendChild(element);
+        element.click();
+        document.body.removeChild(element);
+    }
+
+    function printReport() {
+        window.print();
+    }
+
+    // Handle responsive charts
+    window.addEventListener('resize', function() {
+        Plotly.Plots.resize('bookingsChart');
+        Plotly.Plots.resize('topResourcesChart');
+    });
+</script>
+{% endblock %}

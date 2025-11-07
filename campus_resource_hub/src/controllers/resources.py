@@ -178,22 +178,15 @@ def detail_resource(resource_id):
             flash('Resource not found', 'warning')
             return redirect(url_for('resources.list_resources'))
         
-        # Get owner information
-        owner = User.query.get(resource.creator_id)
-        
-        # Check if current user is owner or admin
-        is_owner = current_user.is_authenticated and current_user.id == resource.creator_id
-        is_admin = current_user.is_authenticated and current_user.is_admin
-        
         return render_template(
             'resources/detail.html',
-            resource=resource,
-            owner=owner,
-            is_owner=is_owner,
-            is_admin=is_admin
+            resource=resource
         )
     
     except Exception as e:
+        print(f'DETAIL PAGE ERROR: {str(e)}')
+        import traceback
+        traceback.print_exc()
         flash(f'Error loading resource: {str(e)}', 'error')
         return redirect(url_for('resources.list_resources'))
 
@@ -207,7 +200,13 @@ def create_resource():
     Create a new resource
     GET: Show create form
     POST: Process form submission
+    Only staff and admin users can create resources.
     """
+    # Only staff and admin can create resources
+    if not (current_user.is_staff() or current_user.is_admin()):
+        flash('You do not have permission to create resources. Please contact staff or admin.', 'error')
+        return redirect(url_for('resources.list_resources'))
+    
     try:
         if request.method == 'GET':
             return render_template('resources/form.html', resource=None, action='Create')
