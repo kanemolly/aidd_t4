@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block title %}Redirecting...{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="alert alert-info">
+        <h2>Dashboard Temporarily Unavailable</h2>
+        <p>The admin dashboard is being rebuilt. Redirecting you to the bookings list...</p>
+        <p>If you are not redirected automatically, <a href="{{ url_for('bookings.list_bookings') }}">click here</a>.</p>
+    </div>
+</div>
+
+<script>
+    window.location.href = "{{ url_for('bookings.list_bookings') }}";
+</script>
+{% endblock %}

@@ -86,9 +86,16 @@
             box-shadow: 0 0 0 3px rgba(153, 0, 0, 0.1);
         }
 
+        .form-group.button-group {
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+        }
+
         .search-buttons {
             display: flex;
             gap: 10px;
+            margin-top: auto;
         }
 
         .btn-search,
@@ -100,6 +107,10 @@
             cursor: pointer;
             transition: all 0.3s ease;
             flex: 1;
+            height: 42px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .btn-search {
@@ -374,10 +385,241 @@
                 width: 100%;
             }
         }
+
+        /* Recommendations Section Styling */
+        .recommendations-section {
+            background: linear-gradient(135deg, rgba(153, 0, 0, 0.05) 0%, rgba(153, 0, 0, 0.02) 100%);
+            border-radius: var(--radius-xl);
+            padding: var(--space-2xl);
+            margin-bottom: var(--space-2xl);
+            border: 2px solid rgba(153, 0, 0, 0.1);
+        }
+
+        .recommendations-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: var(--space-xl);
+        }
+
+        .recommendations-header h2 {
+            color: var(--iu-crimson);
+            font-size: var(--font-size-2xl);
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .recommendation-icon {
+            font-size: 28px;
+            animation: sparkle 2s ease-in-out infinite;
+        }
+
+        @keyframes sparkle {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+        }
+
+        .recommendations-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: var(--space-lg);
+            margin-top: var(--space-lg);
+        }
+
+        .recommendation-card {
+            background: var(--neutral-white);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            box-shadow: var(--shadow-md);
+            transition: all var(--transition-base);
+            border-left: 4px solid var(--iu-crimson);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .recommendation-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-lg);
+            border-left-color: var(--iu-dark);
+        }
+
+        .recommendation-badge {
+            background: linear-gradient(135deg, var(--iu-crimson), var(--iu-dark));
+            color: white;
+            padding: 8px 12px;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .recommendation-content {
+            padding: var(--space-lg);
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .recommendation-reason {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--iu-crimson);
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: var(--space-md);
+            background: rgba(153, 0, 0, 0.08);
+            padding: 6px 10px;
+            border-radius: var(--radius-md);
+            width: fit-content;
+        }
+
+        .recommendation-name {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--iu-dark);
+            margin-bottom: var(--space-sm);
+            line-height: 1.3;
+        }
+
+        .recommendation-type {
+            font-size: 13px;
+            color: #666;
+            margin-bottom: var(--space-sm);
+        }
+
+        .recommendation-location {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            color: #666;
+            margin-bottom: var(--space-md);
+        }
+
+        .recommendation-description {
+            font-size: 13px;
+            color: #777;
+            margin-bottom: var(--space-md);
+            flex-grow: 1;
+            line-height: 1.5;
+        }
+
+        .recommendation-footer {
+            display: flex;
+            gap: var(--space-sm);
+            margin-top: auto;
+        }
+
+        .recommendation-footer a {
+            flex: 1;
+            padding: 8px 12px;
+            border: none;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            text-decoration: none;
+            text-align: center;
+            cursor: pointer;
+            transition: all var(--transition-base);
+            font-size: 13px;
+        }
+
+        .recommendation-footer a.view {
+            background-color: #f0f0f0;
+            color: #333;
+        }
+
+        .recommendation-footer a.view:hover {
+            background-color: #e0e0e0;
+        }
+
+        .recommendation-footer a.book {
+            background-color: var(--iu-crimson);
+            color: white;
+        }
+
+        .recommendation-footer a.book:hover {
+            background-color: var(--iu-dark);
+        }
+
+        @media (max-width: 1024px) {
+            .recommendations-grid {
+                grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            }
+        }
+
+        @media (max-width: 768px) {
+            .recommendations-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .recommendations-section {
+                padding: var(--space-lg);
+            }
+
+            .recommendations-header h2 {
+                font-size: var(--font-size-xl);
+            }
+        }
 {% endblock %}
 
 {% block content %}
 <div class="container">
+    <!-- Personalized Recommendations Section -->
+    {% if recommendations %}
+    <div class="recommendations-section">
+        <div class="recommendations-header">
+            <h2>
+                <span class="recommendation-icon">✨</span>
+                Recommended for You
+            </h2>
+        </div>
+
+        <div class="recommendations-grid">
+            {% for rec in recommendations %}
+            <div class="recommendation-card">
+                <div class="recommendation-badge">
+                    Personalized Recommendation
+                </div>
+                
+                <div class="recommendation-content">
+                    <div class="recommendation-reason">
+                        {{ rec.reason }}
+                    </div>
+                    
+                    <h3 class="recommendation-name">{{ rec.resource.name }}</h3>
+                    
+                    {% if rec.resource.resource_type %}
+                    <div class="recommendation-type">
+                        📚 {{ rec.resource.resource_type|capitalize }}
+                    </div>
+                    {% endif %}
+                    
+                    {% if rec.resource.location %}
+                    <div class="recommendation-location">
+                        📍 {{ rec.resource.location }}
+                    </div>
+                    {% endif %}
+                    
+                    {% if rec.resource.description %}
+                    <div class="recommendation-description">
+                        {{ rec.resource.description[:80] }}{% if rec.resource.description|length > 80 %}...{% endif %}
+                    </div>
+                    {% endif %}
+                    
+                    <div class="recommendation-footer">
+                        <a href="{{ url_for('resources.view_resource', id=rec.resource.id) }}" class="view">View Details</a>
+                        <button type="button" class="book" onclick="openBookingModal({{ rec.resource.id }}, {{ rec.resource.name|tojson }}, {{ rec.resource.location|tojson }}, {{ rec.resource.resource_type|tojson }})">Book</button>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
     <!-- Search Section -->
     <div class="search-section">
         <div class="search-header">
@@ -400,7 +642,7 @@
             </div>
 
             <div class="form-group">
-                <label for="resource_type">Resource Type</label>
+                <label for="resource_type">Resource Type (Category)</label>
                 <select id="resource_type" name="resource_type">
                     <option value="">All Types</option>
                     {% for type in types %}
@@ -423,7 +665,39 @@
                 </select>
             </div>
 
-            <div class="form-group" style="justify-content: flex-end;">
+            <div class="form-group">
+                <label for="min_capacity">Minimum Capacity</label>
+                <input 
+                    type="number" 
+                    id="min_capacity" 
+                    name="min_capacity" 
+                    placeholder="Min people..."
+                    value="{{ min_capacity }}"
+                    min="1"
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="available_date">Available Date</label>
+                <input 
+                    type="date" 
+                    id="available_date" 
+                    name="available_date" 
+                    value="{{ available_date }}"
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="sort">Sort By</label>
+                <select id="sort" name="sort">
+                    <option value="recent" {% if sort_by == 'recent' %}selected{% endif %}>Recent (Newest First)</option>
+                    <option value="most_booked" {% if sort_by == 'most_booked' %}selected{% endif %}>Most Booked</option>
+                    <option value="top_rated" {% if sort_by == 'top_rated' %}selected{% endif %}>Top Rated</option>
+                </select>
+            </div>
+
+            <div class="form-group button-group">
+                <label style="visibility: hidden;">Actions</label>
                 <div class="search-buttons">
                     <button type="submit" class="btn-search">Search</button>
                     <a href="{{ url_for('resources.list_resources') }}" class="btn-clear">Clear</a>

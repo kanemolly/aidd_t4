@@ -18,11 +18,15 @@ except ImportError:
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
 
-# Set environment for production
-os.environ['FLASK_ENV'] = 'production'
+# Set environment for development (to avoid template caching)
+os.environ['FLASK_ENV'] = 'development'
 
 # Import app
 from app import app
+
+# Disable template caching for development
+app.config['TEMPLATES_AUTO_RELOAD'] = True
+app.jinja_env.auto_reload = True
 
 if __name__ == '__main__':
     print("=" * 60, flush=True)

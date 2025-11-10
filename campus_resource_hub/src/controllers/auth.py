@@ -130,17 +130,24 @@ def login():
                     login_user(user, remember=remember)
                     flash(f'Welcome back, {user.full_name}!', 'success')
                     
-                    # Redirect to next page or resources list
+                    # Redirect to next page or role-appropriate landing page
                     next_page = request.args.get('next')
                     if next_page and next_page.startswith('/'):
                         return redirect(next_page)
+                    
+                    # Admins and staff go to bookings list, students to resources
+                    if user.is_admin() or user.is_staff():
+                        return redirect(url_for('bookings.list_bookings'))
                     return redirect(url_for('resources.list_resources'))
             
             flash('Invalid username or password.', 'error')
             return redirect(url_for('auth.login'))
         
         except Exception as e:
-            flash('An error occurred during login. Please try again.', 'error')
+            import traceback
+            print(f"LOGIN ERROR: {str(e)}")
+            print(traceback.format_exc())
+            flash(f'An error occurred during login: {str(e)}', 'error')
             return redirect(url_for('auth.login'))
     
     return render_template('auth/login.html')

@@ -1,0 +1,331 @@
+{% extends "base.html" %}
+
+{% block title %}Booking Details - Campus Resource Hub{% endblock %}
+
+{% block extra_css %}
+<style>
+    .detail-container {
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: var(--space-xl) var(--space-md);
+    }
+
+    .detail-card {
+        background: var(--neutral-white);
+        border-radius: var(--radius-xl);
+        padding: var(--space-2xl);
+        box-shadow: var(--shadow-lg);
+        border: 1px solid var(--neutral-gray-200);
+    }
+
+    .detail-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: start;
+        margin-bottom: var(--space-xl);
+        padding-bottom: var(--space-lg);
+        border-bottom: 2px solid var(--neutral-gray-200);
+    }
+
+    .detail-header h1 {
+        color: var(--iu-dark);
+        font-size: var(--font-size-3xl);
+        margin: 0 0 var(--space-sm) 0;
+    }
+
+    .status-badge {
+        padding: var(--space-sm) var(--space-lg);
+        border-radius: var(--radius-md);
+        font-size: var(--font-size-sm);
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .status-pending {
+        background: #FFF3CD;
+        color: #856404;
+    }
+
+    .status-confirmed {
+        background: #D4EDDA;
+        color: #155724;
+    }
+
+    .status-cancelled {
+        background: #F8D7DA;
+        color: #721C24;
+    }
+
+    .status-completed {
+        background: #D1ECF1;
+        color: #0C5460;
+    }
+
+    .detail-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: var(--space-xl);
+        margin-bottom: var(--space-xl);
+    }
+
+    .detail-section {
+        margin-bottom: var(--space-xl);
+    }
+
+    .detail-section h2 {
+        color: var(--iu-crimson);
+        font-size: var(--font-size-xl);
+        margin-bottom: var(--space-md);
+    }
+
+    .detail-field {
+        margin-bottom: var(--space-md);
+    }
+
+    .detail-label {
+        font-weight: 600;
+        color: var(--neutral-gray-600);
+        font-size: var(--font-size-sm);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: var(--space-xs);
+    }
+
+    .detail-value {
+        color: var(--iu-dark);
+        font-size: var(--font-size-md);
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: var(--space-md);
+        padding-top: var(--space-lg);
+        border-top: 2px solid var(--neutral-gray-200);
+    }
+
+    .btn {
+        padding: var(--space-sm) var(--space-xl);
+        border: none;
+        border-radius: var(--radius-md);
+        font-weight: 600;
+        cursor: pointer;
+        transition: all var(--transition-fast);
+        text-decoration: none;
+        display: inline-block;
+    }
+
+    .btn-primary {
+        background: var(--iu-crimson);
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background: var(--iu-dark);
+    }
+
+    .btn-success {
+        background: #28A745;
+        color: white;
+    }
+
+    .btn-success:hover {
+        background: #218838;
+    }
+
+    .btn-danger {
+        background: #DC3545;
+        color: white;
+    }
+
+    .btn-danger:hover {
+        background: #C82333;
+    }
+
+    .btn-secondary {
+        background: var(--neutral-gray-200);
+        color: var(--iu-dark);
+    }
+
+    .btn-secondary:hover {
+        background: var(--neutral-gray-300);
+    }
+
+    .approval-notice {
+        background: #FFF3CD;
+        border-left: 4px solid #FFA500;
+        padding: var(--space-md);
+        border-radius: var(--radius-md);
+        margin-bottom: var(--space-lg);
+    }
+
+    .approval-notice strong {
+        color: #856404;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="detail-container">
+    <div class="detail-card">
+        <div class="detail-header">
+            <div>
+                <h1>Booking Details</h1>
+                <p style="color: var(--neutral-gray-600); margin: 0;">ID: #{{ booking.id }}</p>
+            </div>
+            <span class="status-badge status-{{ booking.status }}">{{ booking.status }}</span>
+        </div>
+
+        {% if booking.status == 'pending' and booking.resource.requires_approval %}
+        <div class="approval-notice">
+            <strong>⚠️ Awaiting Approval:</strong> This booking requires administrative approval before confirmation.
+        </div>
+        {% endif %}
+
+        <div class="detail-grid">
+            <!-- User Information -->
+            <div class="detail-section">
+                <h2>User Information</h2>
+                <div class="detail-field">
+                    <div class="detail-label">Name</div>
+                    <div class="detail-value">{{ booking.user.full_name }}</div>
+                </div>
+                <div class="detail-field">
+                    <div class="detail-label">Email</div>
+                    <div class="detail-value">{{ booking.user.email }}</div>
+                </div>
+                <div class="detail-field">
+                    <div class="detail-label">Role</div>
+                    <div class="detail-value">{{ booking.user.role|capitalize }}</div>
+                </div>
+            </div>
+
+            <!-- Resource Information -->
+            <div class="detail-section">
+                <h2>Resource Information</h2>
+                <div class="detail-field">
+                    <div class="detail-label">Resource Name</div>
+                    <div class="detail-value">{{ booking.resource.name }}</div>
+                </div>
+                <div class="detail-field">
+                    <div class="detail-label">Type</div>
+                    <div class="detail-value">{{ booking.resource.resource_type|capitalize }}</div>
+                </div>
+                <div class="detail-field">
+                    <div class="detail-label">Location</div>
+                    <div class="detail-value">{{ booking.resource.location }}</div>
+                </div>
+                {% if booking.resource.capacity %}
+                <div class="detail-field">
+                    <div class="detail-label">Capacity</div>
+                    <div class="detail-value">{{ booking.resource.capacity }} people</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Booking Details -->
+        <div class="detail-section">
+            <h2>Booking Details</h2>
+            <div class="detail-grid">
+                <div class="detail-field">
+                    <div class="detail-label">Date</div>
+                    <div class="detail-value">{{ booking.start_date.strftime('%A, %B %d, %Y') }}</div>
+                </div>
+                <div class="detail-field">
+                    <div class="detail-label">Time</div>
+                    <div class="detail-value">
+                        {% if booking.start_time and booking.end_time %}
+                        {{ booking.start_time.strftime('%I:%M %p') }} - {{ booking.end_time.strftime('%I:%M %p') }}
+                        {% else %}
+                        All Day
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="detail-field">
+                    <div class="detail-label">Created</div>
+                    <div class="detail-value">{{ booking.created_at.strftime('%b %d, %Y at %I:%M %p') }}</div>
+                </div>
+                {% if booking.updated_at %}
+                <div class="detail-field">
+                    <div class="detail-label">Last Updated</div>
+                    <div class="detail-value">{{ booking.updated_at.strftime('%b %d, %Y at %I:%M %p') }}</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if booking.purpose %}
+        <div class="detail-section">
+            <h2>Purpose</h2>
+            <div class="detail-value">{{ booking.purpose }}</div>
+        </div>
+        {% endif %}
+
+        {% if booking.is_recurring %}
+        <div class="detail-section">
+            <h2>Recurrence Information</h2>
+            <div class="detail-grid">
+                <div class="detail-field">
+                    <div class="detail-label">Pattern</div>
+                    <div class="detail-value">{{ booking.recurrence_pattern|capitalize }}</div>
+                </div>
+                {% if booking.recurrence_end_date %}
+                <div class="detail-field">
+                    <div class="detail-label">Ends</div>
+                    <div class="detail-value">{{ booking.recurrence_end_date.strftime('%B %d, %Y') }}</div>
+                </div>
+                {% endif %}
+                {% if booking.parent_booking_id %}
+                <div class="detail-field">
+                    <div class="detail-label">Part of Series</div>
+                    <div class="detail-value">
+                        <a href="{{ url_for('bookings.view_booking', booking_id=booking.parent_booking_id) }}">View Parent Booking</a>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        {% if booking.approved_by_id and booking.approved_at %}
+        <div class="detail-section">
+            <h2>Approval Information</h2>
+            <div class="detail-grid">
+                <div class="detail-field">
+                    <div class="detail-label">Approved By</div>
+                    <div class="detail-value">{{ booking.approved_by.full_name }}</div>
+                </div>
+                <div class="detail-field">
+                    <div class="detail-label">Approved At</div>
+                    <div class="detail-value">{{ booking.approved_at.strftime('%b %d, %Y at %I:%M %p') }}</div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Actions -->
+        <div class="action-buttons">
+            {% if current_user.is_admin() or current_user.is_staff() %}
+                {% if booking.status == 'pending' %}
+                <form method="POST" action="{{ url_for('bookings.confirm_booking', booking_id=booking.id) }}" style="display:inline;">
+                    <button type="submit" class="btn btn-success">✓ Approve Booking</button>
+                </form>
+                <form method="POST" action="{{ url_for('bookings.cancel_booking', booking_id=booking.id) }}" style="display:inline;">
+                    <button type="submit" class="btn btn-danger">✗ Deny Booking</button>
+                </form>
+                {% endif %}
+            {% endif %}
+            
+            {% if booking.user_id == current_user.id and booking.status in ['pending', 'confirmed'] %}
+            <form method="POST" action="{{ url_for('bookings.cancel_booking', booking_id=booking.id) }}" style="display:inline;">
+                <button type="submit" class="btn btn-danger">Cancel Booking</button>
+            </form>
+            {% endif %}
+            
+            <a href="{{ url_for('bookings.list_bookings') }}" class="btn btn-secondary">
+                ← Back to Bookings
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

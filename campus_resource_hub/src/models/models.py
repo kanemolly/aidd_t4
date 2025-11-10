@@ -4,9 +4,8 @@ Includes User, Resource, Booking, Message, and Review models with relationships.
 """
 
 from datetime import datetime
-from src.extensions import db
+from src.extensions import db, bcrypt
 from flask_login import UserMixin
-from werkzeug.security import generate_password_hash, check_password_hash
 
 
 class User(UserMixin, db.Model):
@@ -58,12 +57,12 @@ class User(UserMixin, db.Model):
     reviews = db.relationship('Review', backref='reviewer', lazy='dynamic', foreign_keys='Review.reviewer_id')
     
     def set_password(self, password):
-        """Hash and set the user's password."""
-        self.password_hash = generate_password_hash(password)
+        """Hash and set the user's password using bcrypt."""
+        self.password_hash = bcrypt.generate_password_hash(password).decode('utf-8')
     
     def check_password(self, password):
-        """Verify the user's password."""
-        return check_password_hash(self.password_hash, password)
+        """Verify the user's password against bcrypt hash."""
+        return bcrypt.check_password_hash(self.password_hash, password)
     
     def is_admin(self):
         """Check if user has admin role."""
@@ -199,9 +198,22 @@ class Booking(db.Model):
     status = db.Column(db.String(20), default=STATUS_PENDING, nullable=False)
     notes = db.Column(db.Text, nullable=True)
     
+    # Recurrence fields (optional)
+    is_recurring = db.Column(db.Boolean, default=False, nullable=False)
+    recurrence_pattern = db.Column(db.String(20), nullable=True)  # daily, weekly, monthly
+    recurrence_end_date = db.Column(db.DateTime, nullable=True)  # When recurrence stops
+    parent_booking_id = db.Column(db.Integer, db.ForeignKey('bookings.id'), nullable=True)  # For recurring instances
+    
+    # Approval tracking
+    approved_by_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)  # Staff/admin who approved
+    approved_at = db.Column(db.DateTime, nullable=True)  # When approved
+    
     # Timestamps
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    
+    # Relationships
+    recurring_instances = db.relationship('Booking', backref=db.backref('parent_booking', remote_side=[id]), lazy='dynamic')
     
     def to_dict(self):
         """Convert booking to dictionary."""

@@ -114,6 +114,43 @@
                         <small class="form-hint">Automatically calculated from start time + duration</small>
                     </div>
 
+                    <!-- Recurrence Section -->
+                    <div class="form-group recurrence-section">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="isRecurring" name="isRecurring" value="1">
+                            <span>🔁 Make this a recurring booking</span>
+                        </label>
+                        <small class="form-hint">Book the same time slot on multiple dates</small>
+                    </div>
+
+                    <!-- Recurrence Options (Hidden by default) -->
+                    <div id="recurrenceOptions" class="recurrence-options" style="display: none;">
+                        <div class="form-group">
+                            <label for="recurrencePattern">Repeat Pattern</label>
+                            <select id="recurrencePattern" name="recurrencePattern" class="pattern-select">
+                                <option value="daily">Daily</option>
+                                <option value="weekly" selected>Weekly (same day each week)</option>
+                                <option value="biweekly">Bi-weekly (every 2 weeks)</option>
+                                <option value="monthly">Monthly (same date each month)</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="recurrenceEndDate">Repeat Until</label>
+                            <input type="date" id="recurrenceEndDate" name="recurrenceEndDate" class="date-input">
+                            <small class="form-hint">Last date for recurring bookings</small>
+                        </div>
+
+                        <div class="recurrence-preview" id="recurrencePreview" style="display: none;">
+                            <div class="preview-header">
+                                <strong>📅 Recurring Booking Summary:</strong>
+                            </div>
+                            <div class="preview-content" id="recurrencePreviewContent">
+                                <!-- Dynamically populated -->
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Notes -->
                     <div class="form-group">
                         <label for="notes">📝 Notes (Optional)</label>
@@ -125,10 +162,27 @@
                         </small>
                     </div>
 
+                    <!-- Approval Notice -->
+                    {% if resource.requires_approval %}
+                    <div class="approval-notice">
+                        <strong>📋 Approval Required</strong>
+                        <p>This resource requires staff/admin approval. Your booking will be pending until reviewed by a staff member.</p>
+                    </div>
+                    {% else %}
+                    <div class="approval-notice" style="background: #e8f5e9; border-left-color: #4caf50; color: #1b5e20;">
+                        <strong>✅ Automatic Approval</strong>
+                        <p>This resource has automatic approval. Your booking will be confirmed immediately.</p>
+                    </div>
+                    {% endif %}
+
                     <!-- Form Actions -->
                     <div class="form-actions">
                         <button type="submit" class="btn-submit">
+                            {% if resource.requires_approval %}
                             ✓ Request Booking
+                            {% else %}
+                            ✓ Confirm Booking
+                            {% endif %}
                         </button>
                         <a href="/resources/{{ resource.id }}" class="btn-cancel">
                             ✕ Cancel
@@ -962,6 +1016,112 @@
         background: #f5f5f5;
         color: #333;
     }
+
+    /* Recurrence Styles */
+    .recurrence-section {
+        background: #f8f9fa;
+        padding: 16px;
+        border-radius: 8px;
+        border-left: 4px solid #990000;
+    }
+
+    .checkbox-label {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        cursor: pointer;
+        font-weight: 500;
+        color: #333;
+    }
+
+    .checkbox-label input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        cursor: pointer;
+    }
+
+    .recurrence-options {
+        background: #fff;
+        padding: 20px;
+        border-radius: 8px;
+        border: 2px solid #e0e0e0;
+        margin-top: 16px;
+        animation: slideDown 0.3s ease;
+    }
+
+    @keyframes slideDown {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .pattern-select {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        font-size: 14px;
+        background-color: white;
+    }
+
+    .recurrence-preview {
+        margin-top: 16px;
+        padding: 16px;
+        background: #e8f4f8;
+        border-radius: 8px;
+        border-left: 4px solid #0066cc;
+    }
+
+    .preview-header {
+        color: #0066cc;
+        margin-bottom: 12px;
+        font-size: 14px;
+    }
+
+    .preview-content {
+        color: #333;
+        font-size: 13px;
+        line-height: 1.6;
+    }
+
+    .preview-content ul {
+        margin: 8px 0;
+        padding-left: 20px;
+    }
+
+    .preview-content li {
+        margin: 4px 0;
+    }
+
+    .conflict-badge {
+        display: inline-block;
+        padding: 2px 8px;
+        background: #ff5252;
+        color: white;
+        border-radius: 4px;
+        font-size: 11px;
+        margin-left: 8px;
+    }
+
+    .approval-notice {
+        background: #fff3e0;
+        border-left: 4px solid #ff9800;
+        padding: 16px;
+        border-radius: 8px;
+        margin-top: 16px;
+        font-size: 14px;
+        color: #e65100;
+    }
+
+    .approval-notice strong {
+        display: block;
+        margin-bottom: 8px;
+    }
 </style>
 
 <!-- Flatpickr JS (for date/time picker) -->
@@ -1006,6 +1166,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Character counter for notes
     document.getElementById('notes').addEventListener('input', updateCharCount);
+
+    // Recurrence checkbox
+    document.getElementById('isRecurring').addEventListener('change', toggleRecurrence);
+    
+    // Recurrence pattern and end date
+    document.getElementById('recurrencePattern').addEventListener('change', updateRecurrencePreview);
+    document.getElementById('recurrenceEndDate').addEventListener('change', updateRecurrencePreview);
 
     // Form submission
     document.getElementById('bookingForm').addEventListener('submit', submitBooking);
@@ -1365,5 +1532,147 @@ function updateUpcomingBookings() {
 
 // Update upcoming bookings on load
 setTimeout(updateUpcomingBookings, 500);
+
+// ========== RECURRENCE FUNCTIONS ==========
+
+// Toggle recurrence options visibility
+function toggleRecurrence() {
+    const isChecked = document.getElementById('isRecurring').checked;
+    const options = document.getElementById('recurrenceOptions');
+    
+    if (isChecked) {
+        options.style.display = 'block';
+        // Set minimum end date to tomorrow
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        document.getElementById('recurrenceEndDate').min = tomorrow.toISOString().split('T')[0];
+        updateRecurrencePreview();
+    } else {
+        options.style.display = 'none';
+        document.getElementById('recurrencePreview').style.display = 'none';
+    }
+}
+
+// Calculate recurrence dates
+function calculateRecurrenceDates() {
+    const pattern = document.getElementById('recurrencePattern').value;
+    const endDateStr = document.getElementById('recurrenceEndDate').value;
+    const startDateStr = document.getElementById('bookingDate').value;
+    
+    if (!startDateStr || !endDateStr) return [];
+    
+    const startDate = new Date(startDateStr);
+    const endDate = new Date(endDateStr);
+    const dates = [startDate];
+    
+    let currentDate = new Date(startDate);
+    
+    while (currentDate < endDate) {
+        switch (pattern) {
+            case 'daily':
+                currentDate.setDate(currentDate.getDate() + 1);
+                break;
+            case 'weekly':
+                currentDate.setDate(currentDate.getDate() + 7);
+                break;
+            case 'biweekly':
+                currentDate.setDate(currentDate.getDate() + 14);
+                break;
+            case 'monthly':
+                currentDate.setMonth(currentDate.getMonth() + 1);
+                break;
+        }
+        
+        if (currentDate <= endDate) {
+            dates.push(new Date(currentDate));
+        }
+    }
+    
+    return dates;
+}
+
+// Update recurrence preview
+async function updateRecurrencePreview() {
+    const preview = document.getElementById('recurrencePreview');
+    const content = document.getElementById('recurrencePreviewContent');
+    
+    const dates = calculateRecurrenceDates();
+    
+    if (dates.length === 0) {
+        preview.style.display = 'none';
+        return;
+    }
+    
+    preview.style.display = 'block';
+    
+    // Check for conflicts
+    const startTime = document.getElementById('startTime').value;
+    const endTime = document.getElementById('endTime').value;
+    
+    if (!startTime || !endTime) {
+        content.innerHTML = `
+            <p>Will create <strong>${dates.length} bookings</strong></p>
+            <small>Set start and end times to check for conflicts</small>
+        `;
+        return;
+    }
+    
+    // Check each date for conflicts
+    const conflicts = [];
+    for (const date of dates) {
+        const dateStr = date.toISOString().split('T')[0];
+        const hasConflict = await checkConflictForDate(dateStr, startTime, endTime);
+        if (hasConflict) {
+            conflicts.push(date.toLocaleDateString());
+        }
+    }
+    
+    let html = `
+        <p>Will create <strong>${dates.length} bookings</strong> from 
+        ${dates[0].toLocaleDateString()} to ${dates[dates.length-1].toLocaleDateString()}</p>
+    `;
+    
+    if (conflicts.length > 0) {
+        html += `
+            <div style="margin-top: 12px; padding: 12px; background: #ffebee; border-radius: 6px;">
+                <strong style="color: #c62828;">⚠️ ${conflicts.length} Conflict(s) Detected:</strong>
+                <ul style="margin: 8px 0 0 0;">
+                    ${conflicts.map(d => `<li>${d} <span class="conflict-badge">CONFLICT</span></li>`).join('')}
+                </ul>
+                <small style="color: #666;">These dates will be skipped during booking creation</small>
+            </div>
+        `;
+    } else {
+        html += `<p style="color: #2e7d32; margin-top: 8px;">✓ No conflicts detected</p>`;
+    }
+    
+    content.innerHTML = html;
+}
+
+// Check conflict for a specific date
+async function checkConflictForDate(date, startTime, endTime) {
+    try {
+        const response = await fetch('/api/bookings/check-conflict', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                resource_id: resourceId,
+                date: date,
+                start_time: startTime,
+                end_time: endTime
+            })
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            return data.has_conflict;
+        }
+    } catch (error) {
+        console.error('Error checking conflict:', error);
+    }
+    return false;
+}
 </script>
 {% endblock %}

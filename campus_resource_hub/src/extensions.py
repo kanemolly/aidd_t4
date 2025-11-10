@@ -6,11 +6,13 @@ Separated from app creation to avoid circular imports.
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from flask_wtf.csrf import CSRFProtect
+from flask_bcrypt import Bcrypt
 
 # Initialize extensions without binding to app
 db = SQLAlchemy()
 login_manager = LoginManager()
 csrf_protect = CSRFProtect()
+bcrypt = Bcrypt()
 
 # Configure login manager
 login_manager.login_view = 'auth.login'

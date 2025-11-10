@@ -74,6 +74,7 @@ def seed_resources():
                 'location': 'Herman B Wells Library, Level 2, 1320 E 10th St',
                 'capacity': 6,
                 'is_available': True,
+                'requires_approval': False,
                 'creator_id': admin.id,
                 'status': 'published'
             },
@@ -84,6 +85,7 @@ def seed_resources():
                 'location': 'Herman B Wells Library, Level 4, 1320 E 10th St',
                 'capacity': 4,
                 'is_available': True,
+                'requires_approval': False,
                 'creator_id': admin.id,
                 'status': 'published'
             },
@@ -94,6 +96,7 @@ def seed_resources():
                 'location': 'Herman B Wells Library, Level 3, 1320 E 10th St',
                 'capacity': 1,
                 'is_available': True,
+                'requires_approval': False,
                 'creator_id': admin.id,
                 'status': 'published'
             },
@@ -102,8 +105,9 @@ def seed_resources():
                 'description': 'High-definition portable projector with HDMI and VGA connections. Includes remote control and carrying case.',
                 'resource_type': 'equipment',
                 'location': 'Herman B Wells Library, Checkout Desk, Level 1',
-                'capacity': 1,
+                'capacity': None,
                 'is_available': True,
+                'requires_approval': False,
                 'creator_id': admin.id,
                 'status': 'published'
             },
@@ -111,11 +115,12 @@ def seed_resources():
             # LUDDY HALL
             {
                 'name': 'Luddy AI Lab',
-                'description': 'State-of-the-art AI and machine learning laboratory with high-performance computing stations. Supervised access required.',
+                'description': 'State-of-the-art AI and machine learning laboratory with high-performance computing stations. Requires staff approval.',
                 'resource_type': 'lab',
                 'location': 'Luddy Hall, Room 150, 700 N Woodlawn Ave',
                 'capacity': 20,
                 'is_available': True,
+                'requires_approval': True,
                 'creator_id': staff.id,
                 'status': 'published'
             },
@@ -126,6 +131,7 @@ def seed_resources():
                 'location': 'Luddy Hall, Room 215, 700 N Woodlawn Ave',
                 'capacity': 6,
                 'is_available': True,
+                'requires_approval': False,
                 'creator_id': staff.id,
                 'status': 'published'
             },
@@ -136,6 +142,7 @@ def seed_resources():
                 'location': 'Luddy Hall, Room 180, 700 N Woodlawn Ave',
                 'capacity': 8,
                 'is_available': True,
+                'requires_approval': True,
                 'creator_id': staff.id,
                 'status': 'published'
             },
@@ -143,31 +150,34 @@ def seed_resources():
             # INDIANA MEMORIAL UNION (IMU)
             {
                 'name': 'IMU Solarium Event Room',
-                'description': 'Beautiful event space with natural lighting and views of campus. Perfect for presentations, workshops, and gatherings.',
+                'description': 'Beautiful event space with natural lighting and views of campus. Perfect for presentations, workshops, and gatherings. Requires approval.',
                 'resource_type': 'facility',
                 'location': 'Indiana Memorial Union, 3rd Floor, 900 E 7th St',
                 'capacity': 100,
                 'is_available': True,
+                'requires_approval': True,
                 'creator_id': admin.id,
                 'status': 'published'
             },
             {
                 'name': 'IMU Georgian Room',
-                'description': 'Formal meeting room with conference table, AV equipment, and elegant décor. Ideal for professional meetings.',
+                'description': 'Formal meeting room with conference table, AV equipment, and elegant décor. Requires approval for bookings.',
                 'resource_type': 'room',
                 'location': 'Indiana Memorial Union, 2nd Floor, 900 E 7th St',
                 'capacity': 20,
                 'is_available': True,
+                'requires_approval': True,
                 'creator_id': admin.id,
                 'status': 'published'
             },
             {
                 'name': 'IMU Student Org Meeting Room A',
-                'description': 'Flexible meeting space for student organizations with chairs, tables, and presentation screen.',
+                'description': 'Flexible meeting space for student organizations with chairs, tables, and presentation screen. Requires approval.',
                 'resource_type': 'room',
                 'location': 'Indiana Memorial Union, Lower Level, 900 E 7th St',
                 'capacity': 25,
                 'is_available': True,
+                'requires_approval': True,
                 'creator_id': admin.id,
                 'status': 'published'
             },
@@ -180,6 +190,7 @@ def seed_resources():
                 'location': 'Kelley School of Business (Hodge Hall), Ground Floor, 1309 E 10th St',
                 'capacity': 6,
                 'is_available': True,
+                'requires_approval': False,
                 'creator_id': staff.id,
                 'status': 'published'
             },
@@ -190,6 +201,7 @@ def seed_resources():
                 'location': 'Kelley School of Business (Hodge Hall), Ground Floor, 1309 E 10th St',
                 'capacity': 4,
                 'is_available': True,
+                'requires_approval': False,
                 'creator_id': staff.id,
                 'status': 'published'
             },
@@ -200,6 +212,7 @@ def seed_resources():
                 'location': 'Kelley School of Business (Hodge Hall), 2nd Floor, 1309 E 10th St',
                 'capacity': 4,
                 'is_available': True,
+                'requires_approval': False,
                 'creator_id': staff.id,
                 'status': 'published'
             },
@@ -696,7 +709,142 @@ def seed_resources():
                 'location': 'Jacobs School of Music, Studio Wing',
                 'capacity': 8,
                 'is_available': True,
+                'requires_approval': False,
                 'creator_id': staff.id,
+                'status': 'published'
+            },
+            
+            # ADDITIONAL IU RESOURCES
+            {
+                'name': 'Assembly Hall Meeting Room',
+                'description': 'Professional conference room near Assembly Hall with video conferencing, seating for 15.',
+                'resource_type': 'room',
+                'location': 'Assembly Hall, 1001 E 17th St',
+                'capacity': 15,
+                'is_available': True,
+                'requires_approval': True,
+                'creator_id': admin.id,
+                'status': 'published'
+            },
+            {
+                'name': 'Eskenazi Art Museum Event Space',
+                'description': 'Beautiful museum event space perfect for receptions, presentations, and cultural gatherings. Requires approval.',
+                'resource_type': 'facility',
+                'location': 'Sidney and Lois Eskenazi Museum of Art, 1133 E 7th St',
+                'capacity': 75,
+                'is_available': True,
+                'requires_approval': True,
+                'creator_id': admin.id,
+                'status': 'published'
+            },
+            {
+                'name': 'Global and International Studies Building Conference Room',
+                'description': 'Modern conference room with international flair, smart technology, seats 12.',
+                'resource_type': 'room',
+                'location': 'Global and International Studies Building, 355 N Eagleson Ave',
+                'capacity': 12,
+                'is_available': True,
+                'requires_approval': True,
+                'creator_id': staff.id,
+                'status': 'published'
+            },
+            {
+                'name': 'Maurer School of Law Study Room',
+                'description': 'Law library study room with legal research materials, seating for 6.',
+                'resource_type': 'room',
+                'location': 'Maurer School of Law, Jerome Hall Law Library, 211 S Indiana Ave',
+                'capacity': 6,
+                'is_available': True,
+                'requires_approval': False,
+                'creator_id': staff.id,
+                'status': 'published'
+            },
+            {
+                'name': 'O Neill School Public Affairs Lab',
+                'description': 'Computer lab with policy analysis software and GIS tools, seats 18.',
+                'resource_type': 'lab',
+                'location': 'O Neill School of Public and Environmental Affairs, 1315 E 10th St',
+                'capacity': 18,
+                'is_available': True,
+                'requires_approval': True,
+                'creator_id': staff.id,
+                'status': 'published'
+            },
+            {
+                'name': 'Willkie Quad Study Lounge',
+                'description': 'Residential study lounge open to all students, comfortable seating for 8-10.',
+                'resource_type': 'space',
+                'location': 'Willkie Quadrangle, 1165 N Fee Ln',
+                'capacity': 10,
+                'is_available': True,
+                'requires_approval': False,
+                'creator_id': admin.id,
+                'status': 'published'
+            },
+            {
+                'name': 'Foster Quad Community Room',
+                'description': 'Large community space with kitchen, seating for events and group meetings.',
+                'resource_type': 'facility',
+                'location': 'Foster Quadrangle, 1200 N Fee Ln',
+                'capacity': 40,
+                'is_available': True,
+                'requires_approval': True,
+                'creator_id': admin.id,
+                'status': 'published'
+            },
+            {
+                'name': 'School of Education Collaboration Lab',
+                'description': 'Teaching lab with smart boards, recording equipment, and flexible seating for 16.',
+                'resource_type': 'lab',
+                'location': 'Wright Education Building, Room 2200, 201 N Rose Ave',
+                'capacity': 16,
+                'is_available': True,
+                'requires_approval': True,
+                'creator_id': staff.id,
+                'status': 'published'
+            },
+            {
+                'name': 'Campus Bus - Charter Service',
+                'description': 'Campus bus available for approved student org events and field trips. Seats 40 passengers.',
+                'resource_type': 'equipment',
+                'location': 'IU Transportation Services, 1011 E 10th St',
+                'capacity': None,
+                'is_available': True,
+                'requires_approval': True,
+                'creator_id': admin.id,
+                'status': 'published'
+            },
+            {
+                'name': 'AV Recording Cart',
+                'description': 'Mobile AV cart with camera, microphones, and recording equipment for events.',
+                'resource_type': 'equipment',
+                'location': 'IMU Media Services, Lower Level',
+                'capacity': None,
+                'is_available': True,
+                'requires_approval': False,
+                'creator_id': admin.id,
+                'status': 'published'
+            },
+            {
+                'name': '3D Printer - Prusa i3 MK3',
+                'description': 'High-quality 3D printer for prototyping and projects. Training required.',
+                'resource_type': 'equipment',
+                'location': 'Luddy Hall, Maker Space, 700 N Woodlawn Ave',
+                'capacity': None,
+                'is_available': True,
+                'requires_approval': True,
+                'creator_id': staff.id,
+                'status': 'published'
+            },
+            {
+                'name': 'Green Screen Studio',
+                'description': 'Professional green screen studio with lighting kit and backdrop for video production.',
+                'resource_type': 'lab',
+                'location': 'IMU Media Services, Studio B',
+                'capacity': 6,
+                'is_available': True,
+                'requires_approval': True,
+                'creator_id': admin.id,
                 'status': 'published'
             }
         ]

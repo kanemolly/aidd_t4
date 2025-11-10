@@ -16,7 +16,7 @@ except ImportError:
     pass  # python-dotenv not installed, use system env vars
 
 from src.config import config
-from src.extensions import db, login_manager, csrf_protect
+from src.extensions import db, login_manager, csrf_protect, bcrypt
 
 
 def create_app(config_name=None):
@@ -44,6 +44,7 @@ def create_app(config_name=None):
     db.init_app(app)
     login_manager.init_app(app)
     csrf_protect.init_app(app)
+    bcrypt.init_app(app)
     
     # Import models to register them with SQLAlchemy
     from src.models import User, Resource, Booking, Message, Review
@@ -85,17 +86,24 @@ def _register_blueprints(app):
 
 def _register_error_handlers(app):
     """Register error handlers for the application."""
+    from flask import request, render_template
     
     @app.errorhandler(404)
     def not_found_error(error):
         """Handle 404 errors."""
-        return {"error": "Resource not found"}, 404
+        # Return HTML for browser requests, JSON for API requests
+        if request.path.startswith('/api/') or request.accept_mimetypes.accept_json and not request.accept_mimetypes.accept_html:
+            return {"error": "Resource not found", "path": request.path}, 404
+        # For regular page requests, show a proper error page
+        return render_template('error.html', error=f"Page not found: {request.path}"), 404
     
     @app.errorhandler(500)
     def internal_error(error):
         """Handle 500 errors."""
         db.session.rollback()
-        return {"error": "Internal server error"}, 500
+        if request.path.startswith('/api/') or request.accept_mimetypes.accept_json and not request.accept_mimetypes.accept_html:
+            return {"error": "Internal server error"}, 500
+        return render_template('error.html', error="Internal server error occurred"), 500
 
 
 def _register_main_routes(app):
@@ -104,9 +112,14 @@ def _register_main_routes(app):
     
     @app.route('/')
     def home():
-        """Home route - redirects to login or resources."""
+        """Home route - redirects to role-appropriate landing page."""
         from flask_login import current_user
-        # Just redirect to resources list (will require login if needed)
+        # Redirect based on user role
+        if current_user.is_authenticated:
+            if current_user.is_admin() or current_user.is_staff():
+                return redirect(url_for('bookings.list_bookings'))
+            return redirect(url_for('resources.list_resources'))
+        # Not logged in - show resources (login required will catch them)
         return redirect(url_for('resources.list_resources'))
     
     @app.route('/health')

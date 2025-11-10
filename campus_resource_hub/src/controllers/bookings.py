@@ -3,7 +3,7 @@ Bookings blueprint - resource booking and reservation management.
 """
 
 from datetime import datetime, date
-from flask import Blueprint, request, jsonify, render_template
+from flask import Blueprint, request, jsonify, render_template, redirect, url_for
 from flask_login import login_required, current_user
 from src.data_access.booking_dal import BookingDAL
 from src.data_access.resource_dal import ResourceDAL
@@ -95,10 +95,28 @@ def list_bookings():
         return render_template('error.html', error=str(e)), 500
 
 
+@bp.route('/<int:booking_id>/view', methods=['GET'])
+@login_required
+def view_booking(booking_id):
+    """View detailed booking information in HTML page."""
+    try:
+        booking = BookingDAL.get_booking_by_id(booking_id)
+        if not booking:
+            return render_template('error.html', error='Booking not found'), 404
+        
+        # Users can only view their own bookings unless they're admin
+        if not current_user.is_admin() and booking.user_id != current_user.id:
+            return render_template('error.html', error='Unauthorized'), 403
+        
+        return render_template('bookings/detail.html', booking=booking)
+    except Exception as e:
+        return render_template('error.html', error=str(e)), 500
+
+
 @bp.route('/<int:booking_id>', methods=['GET'])
 @login_required
 def get_booking(booking_id):
-    """Get a specific booking by ID."""
+    """Get a specific booking by ID (API endpoint)."""
     try:
         booking = BookingDAL.get_booking_by_id(booking_id)
         if not booking:
@@ -150,16 +168,19 @@ def booking_form():
 @login_required
 def create_booking():
     """
-    Create a new booking.
+    Create a new booking with optional recurrence.
     
     JSON payload:
         - resource_id (int, required): ID of resource to book
         - start_datetime (str, required): ISO format datetime "YYYY-MM-DD HH:MM:SS"
         - end_datetime (str, required): ISO format datetime "YYYY-MM-DD HH:MM:SS"
         - notes (str, optional): Booking notes
+        - is_recurring (bool, optional): Whether this is a recurring booking
+        - recurrence_pattern (str, optional): Pattern (daily, weekly, biweekly, monthly)
+        - recurrence_end_date (str, optional): End date for recurrence "YYYY-MM-DD"
     
     Returns:
-        201: Created booking with ID on success
+        201: Created booking(s) with ID on success
         400: Invalid input or validation error
         404: Resource not found
         409: Time slot conflict
@@ -175,6 +196,9 @@ def create_booking():
         start_str = data.get('start_datetime')
         end_str = data.get('end_datetime')
         notes = data.get('notes', '')
+        is_recurring = data.get('is_recurring', False)
+        recurrence_pattern = data.get('recurrence_pattern', 'weekly')
+        recurrence_end_str = data.get('recurrence_end_date')
         
         if not all([resource_id, start_str, end_str]):
             return jsonify({
@@ -234,10 +258,93 @@ def create_booking():
                 'error': 'Time slot conflicts with an existing confirmed booking'
             }), 409
         
-        # Create the booking
         # Auto-approve if resource doesn't require approval
         booking_status = Booking.STATUS_PENDING if resource.requires_approval else Booking.STATUS_CONFIRMED
         
+        # Handle recurring bookings
+        if is_recurring and recurrence_end_str:
+            from dateutil.relativedelta import relativedelta
+            
+            recurrence_end_date = datetime.fromisoformat(recurrence_end_str).date()
+            booking_dates = []
+            conflicts = []
+            current_date = start_time.date()
+            
+            # Calculate all occurrence dates
+            while current_date <= recurrence_end_date:
+                booking_dates.append(current_date)
+                
+                # Increment based on pattern
+                if recurrence_pattern == 'daily':
+                    current_date += relativedelta(days=1)
+                elif recurrence_pattern == 'weekly':
+                    current_date += relativedelta(weeks=1)
+                elif recurrence_pattern == 'biweekly':
+                    current_date += relativedelta(weeks=2)
+                elif recurrence_pattern == 'monthly':
+                    current_date += relativedelta(months=1)
+                else:
+                    break
+            
+            # Create parent booking (first occurrence)
+            parent_booking = BookingDAL.create_booking(
+                user_id=current_user.id,
+                resource_id=resource_id,
+                start_time=start_time,
+                end_time=end_time,
+                status=booking_status,
+                notes=notes if notes else None
+            )
+            
+            # Update parent booking with recurrence info
+            parent_booking.is_recurring = True
+            parent_booking.recurrence_pattern = recurrence_pattern
+            parent_booking.recurrence_end_date = datetime.combine(recurrence_end_date, datetime.min.time())
+            
+            from src.extensions import db
+            db.session.commit()
+            
+            created_bookings = [parent_booking]
+            
+            # Create recurring instances (skip first date, already created)
+            for booking_date in booking_dates[1:]:
+                # Create datetime for this occurrence
+                recur_start = datetime.combine(booking_date, start_time.time())
+                recur_end = datetime.combine(booking_date, end_time.time())
+                
+                # Check for conflict
+                if check_conflict(resource_id, recur_start, recur_end):
+                    conflicts.append(booking_date.isoformat())
+                    continue
+                
+                # Create recurring instance
+                instance = BookingDAL.create_booking(
+                    user_id=current_user.id,
+                    resource_id=resource_id,
+                    start_time=recur_start,
+                    end_time=recur_end,
+                    status=booking_status,
+                    notes=notes if notes else None
+                )
+                
+                # Link to parent
+                instance.parent_booking_id = parent_booking.id
+                db.session.commit()
+                
+                created_bookings.append(instance)
+            
+            return jsonify({
+                'success': True,
+                'message': f'Created {len(created_bookings)} recurring booking(s)',
+                'booking_id': parent_booking.id,
+                'auto_approved': not resource.requires_approval,
+                'total_created': len(created_bookings),
+                'conflicts_skipped': len(conflicts),
+                'conflicted_dates': conflicts,
+                'bookings': [b.to_dict() for b in created_bookings]
+            }), 201
+        
+        # Create single booking (non-recurring)
         booking = BookingDAL.create_booking(
             user_id=current_user.id,
             resource_id=resource_id,
@@ -421,6 +528,12 @@ def confirm_booking(booking_id):
             }), 400
         
         confirmed_booking = BookingDAL.confirm_booking(booking_id)
+        
+        # Set approval tracking fields
+        confirmed_booking.approved_by_id = current_user.id
+        confirmed_booking.approved_at = datetime.utcnow()
+        from src.extensions import db
+        db.session.commit()
         
         # Send notification to student
         try:
@@ -690,6 +803,52 @@ def get_resource_availability(resource_id):
             'success': True,
             'events': events,
             'resource_id': resource_id
+        }), 200
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@bp.route('/check-conflict', methods=['POST'])
+@csrf_protect.exempt
+@login_required
+def check_booking_conflict():
+    """
+    Check if a booking time slot has conflicts.
+    
+    JSON payload:
+        - resource_id (int): Resource ID
+        - date (str): Date in YYYY-MM-DD format
+        - start_time (str): Start time in HH:MM format
+        - end_time (str): End time in HH:MM format
+    
+    Returns:
+        JSON with has_conflict boolean
+    """
+    try:
+        data = request.get_json()
+        
+        resource_id = data.get('resource_id')
+        date_str = data.get('date')
+        start_time_str = data.get('start_time')
+        end_time_str = data.get('end_time')
+        
+        if not all([resource_id, date_str, start_time_str, end_time_str]):
+            return jsonify({
+                'success': False,
+                'error': 'Missing required fields'
+            }), 400
+        
+        # Parse datetime
+        start_datetime = datetime.fromisoformat(f"{date_str} {start_time_str}:00")
+        end_datetime = datetime.fromisoformat(f"{date_str} {end_time_str}:00")
+        
+        # Check conflict
+        has_conflict = check_conflict(resource_id, start_datetime, end_datetime)
+        
+        return jsonify({
+            'success': True,
+            'has_conflict': has_conflict
         }), 200
         
     except Exception as e:
