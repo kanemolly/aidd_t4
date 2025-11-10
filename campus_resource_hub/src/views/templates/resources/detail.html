@@ -196,7 +196,7 @@
         .resource-name {
             font-size: var(--font-size-3xl);
             font-weight: 700;
-            color: #333;
+            color: var(--iu-dark);
             margin: var(--space-md) 0;
             line-height: 1.2;
         }
@@ -442,6 +442,13 @@
         .review-item {
             padding: var(--space-lg) 0;
             border-bottom: 1px solid #eee;
+            border-left: 4px solid transparent;
+            transition: all 0.2s ease;
+        }
+
+        .review-item.flagged {
+            border-left-color: #ff9800;
+            background-color: #fff8f5;
         }
 
         .review-item:last-child {
@@ -453,6 +460,131 @@
             justify-content: space-between;
             align-items: flex-start;
             margin-bottom: var(--space-sm);
+        }
+
+        .review-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: var(--space-md);
+            align-items: center;
+        }
+
+        .btn-flag-review {
+            background: none;
+            border: 1px solid #ddd;
+            color: #666;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-flag-review:hover {
+            border-color: #ff9800;
+            color: #ff9800;
+            background: #fff8f5;
+        }
+
+        .btn-flag-review.flagged {
+            background: #ffe0b2;
+            border-color: #ff9800;
+            color: #ff9800;
+        }
+
+        .flag-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .flag-modal.active {
+            display: flex;
+        }
+
+        .flag-modal-content {
+            background: white;
+            border-radius: 8px;
+            padding: var(--space-2xl);
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .flag-modal-header {
+            font-size: 18px;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: var(--space-lg);
+        }
+
+        .flag-modal-form {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-md);
+        }
+
+        .flag-reason-group {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-sm);
+        }
+
+        .flag-reason-group label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            color: #333;
+        }
+
+        .flag-reason-group input[type="radio"] {
+            cursor: pointer;
+        }
+
+        .flag-modal-buttons {
+            display: flex;
+            gap: var(--space-md);
+            margin-top: var(--space-xl);
+        }
+
+        .flag-modal-buttons button {
+            flex: 1;
+            padding: var(--space-md);
+            border: none;
+            border-radius: 4px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .flag-modal-buttons .btn-submit {
+            background: var(--iu-crimson);
+            color: white;
+        }
+
+        .flag-modal-buttons .btn-submit:hover {
+            background: #7a0000;
+        }
+
+        .flag-modal-buttons .btn-cancel {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .flag-modal-buttons .btn-cancel:hover {
+            background: #e0e0e0;
         }
 
         .review-author {
@@ -618,7 +750,7 @@
             <!-- Action Buttons -->
             <div class="action-buttons">
                 {% if current_user.is_authenticated %}
-                <a href="{{ url_for('bookings.create_booking', resource_id=resource.id) }}" class="btn-primary">
+                <a href="{{ url_for('bookings.booking_form', resource_id=resource.id) }}" class="btn-primary">
                     📅 Book This Resource
                 </a>
                 <a href="{{ url_for('bookings.list_bookings') }}" class="btn-secondary">
@@ -646,6 +778,7 @@
             <div class="review-form">
                 <h3 style="margin: 0 0 var(--space-lg) 0; color: #333;">Leave a Review</h3>
                 <form id="review-form" method="POST" action="{{ url_for('reviews.create_review') }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <input type="hidden" name="resource_id" value="{{ resource.id }}">
                     
                     <div class="form-group">
@@ -684,7 +817,7 @@
             
             {% if resource.reviews.count() > 0 %}
                 {% for review in resource.reviews.all() %}
-                <div class="review-item">
+                <div class="review-item {% if review.is_flagged %}flagged{% endif %}" data-review-id="{{ review.id }}">
                     <div class="review-header">
                         <div>
                             <div class="review-author">{{ review.reviewer.full_name or review.reviewer.username }}</div>
@@ -699,6 +832,18 @@
                         <span style="color: #999; font-size: 13px; margin-left: 8px;">{{ review.rating }} / 5</span>
                     </div>
                     <div class="review-text">{{ review.comment }}</div>
+                    {% if review.is_flagged %}
+                    <div style="margin-top: var(--space-md); padding: var(--space-sm); background: #fff3e0; border-left: 3px solid #ff9800; border-radius: 3px; font-size: 13px; color: #e65100;">
+                        ⚠️ This review has been flagged for moderation
+                    </div>
+                    {% endif %}
+                    <div class="review-actions">
+                        {% if current_user.is_authenticated %}
+                        <button type="button" class="btn-flag-review {% if review.is_flagged %}flagged{% endif %}" onclick="openFlagModal({{ review.id }})">
+                            🚩 Report
+                        </button>
+                        {% endif %}
+                    </div>
                 </div>
                 {% endfor %}
             {% else %}
@@ -765,13 +910,164 @@ document.querySelector('.rating-stars').addEventListener('mouseout', function() 
 
 // Form submission
 document.getElementById('review-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
     const rating = document.querySelector('input[name="rating"]:checked');
     if (!rating) {
-        e.preventDefault();
         alert('Please select a rating');
         return false;
     }
+    
+    const comment = document.getElementById('review-comment').value.trim();
+    if (!comment || comment.length < 5) {
+        alert('Please enter a review of at least 5 characters');
+        return false;
+    }
+    
+    // Prepare data as JSON
+    const data = {
+        resource_id: parseInt(document.querySelector('input[name="resource_id"]').value),
+        rating: parseInt(rating.value),
+        comment: comment,
+        title: document.getElementById('review-title').value.trim() || null
+    };
+    
+    // Submit via AJAX
+    fetch('{{ url_for("reviews.create_review") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('input[name="csrf_token"]').value
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.status === 'success') {
+            alert('Review submitted successfully!');
+            // Reset form
+            document.getElementById('review-form').reset();
+            // Reset star colors
+            document.querySelectorAll('.star').forEach(s => {
+                s.style.color = '#ddd';
+            });
+            // Reload page to show new review
+            location.reload();
+        } else {
+            alert('Error: ' + result.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error submitting review. Please try again.');
+    });
+});
+
+// Review flagging functionality
+let currentReviewId = null;
+
+function openFlagModal(reviewId) {
+    currentReviewId = reviewId;
+    document.getElementById('flagModal').classList.add('active');
+}
+
+function closeFlagModal() {
+    document.getElementById('flagModal').classList.remove('active');
+    currentReviewId = null;
+    document.getElementById('flagForm').reset();
+}
+
+document.getElementById('flagForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const reason = document.querySelector('input[name="flag_reason"]:checked').value;
+    const additionalInfo = document.getElementById('flag-additional-info').value;
+    
+    try {
+        const response = await fetch(`/reviews/${currentReviewId}/flag`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('input[name="csrf_token"]').value
+            },
+            body: JSON.stringify({
+                reason: reason,
+                additional_info: additionalInfo
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            alert('Thank you for reporting this review. Our moderation team will review it.');
+            closeFlagModal();
+            // Update the button to show it's flagged
+            const reviewItem = document.querySelector(`[data-review-id="${currentReviewId}"]`);
+            if (reviewItem) {
+                reviewItem.classList.add('flagged');
+                const flagBtn = reviewItem.querySelector('.btn-flag-review');
+                if (flagBtn) {
+                    flagBtn.classList.add('flagged');
+                }
+            }
+        } else {
+            alert('Error: ' + result.message);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error reporting review. Please try again.');
+    }
+});
+
+// Close modal when clicking outside
+document.getElementById('flagModal').addEventListener('click', (e) => {
+    if (e.target.id === 'flagModal') {
+        closeFlagModal();
+    }
 });
 </script>
+
+<!-- Flag Review Modal -->
+<div id="flagModal" class="flag-modal">
+    <div class="flag-modal-content">
+        <div class="flag-modal-header">Report This Review</div>
+        <form id="flagForm" class="flag-modal-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            
+            <div class="flag-reason-group">
+                <label>
+                    <input type="radio" name="flag_reason" value="inappropriate" required>
+                    Inappropriate content
+                </label>
+                <label>
+                    <input type="radio" name="flag_reason" value="spam">
+                    Spam or advertisement
+                </label>
+                <label>
+                    <input type="radio" name="flag_reason" value="off_topic">
+                    Off-topic or not a review
+                </label>
+                <label>
+                    <input type="radio" name="flag_reason" value="harassment">
+                    Harassment or abuse
+                </label>
+                <label>
+                    <input type="radio" name="flag_reason" value="misinformation">
+                    Misinformation or false claims
+                </label>
+            </div>
+            
+            <div>
+                <label for="flag-additional-info" style="font-size: 14px; color: #666; display: block; margin-bottom: 6px;">Additional details (optional)</label>
+                <textarea id="flag-additional-info" name="additional_info" placeholder="Provide any additional context..." maxlength="500" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 13px; font-family: inherit; resize: vertical; min-height: 60px;"></textarea>
+            </div>
+            
+            <div class="flag-modal-buttons">
+                <button type="button" class="btn-cancel" onclick="closeFlagModal()">Cancel</button>
+                <button type="submit" class="btn-submit">Submit Report</button>
+            </div>
+        </form>
+    </div>
+</div>
 
 {% endblock %}

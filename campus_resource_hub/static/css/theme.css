@@ -695,5 +695,53 @@ tbody tr:nth-child(even) {
 .p-xl { padding: var(--space-xl); }
 
 /* ============================================================
+   CONCIERGE PAGE - Override Global Header Styles
+   ============================================================ */
+
+.concierge-header h1,
+.concierge-header h2,
+.concierge-header h3,
+.concierge-header h4,
+.concierge-header h5,
+.concierge-header h6,
+.concierge-header p,
+.concierge-header-content h1,
+.concierge-header-content h2,
+.concierge-header-content h3,
+.concierge-header-content h4,
+.concierge-header-content h5,
+.concierge-header-content h6,
+.concierge-header-content p {
+  color: #FFFFFF !important;
+}
+
+/* ============================================================
+   NAVBAR - Ensure All Text is White
+   ============================================================ */
+
+nav {
+  color: #FFFFFF !important;
+}
+
+nav * {
+  color: #FFFFFF !important;
+}
+
+.navbar-brand,
+.navbar-links a,
+.mobile-menu a {
+  color: #FFFFFF !important;
+}
+
+/* ============================================================
+   RESOURCE CARDS - Ensure Resource Names are Readable
+   ============================================================ */
+
+.resource-card .resource-name,
+.resource-header h3 {
+  color: #FFFFFF !important;
+}
+
+/* ============================================================
    END THEME.CSS
    ============================================================ */

@@ -10,7 +10,7 @@ from src.data_access.resource_dal import ResourceDAL
 from src.models import Booking
 from src.extensions import csrf_protect
 
-bp = Blueprint('bookings', __name__)
+bp = Blueprint('bookings', __name__, url_prefix='/bookings')
 
 
 def check_conflict(resource_id: int, start_time: datetime, end_time: datetime) -> bool:
@@ -66,7 +66,11 @@ def list_bookings():
                 bookings = BookingDAL.get_all_bookings(limit=limit, offset=offset)
             is_admin_view = True
         else:
-            bookings = BookingDAL.get_bookings_by_user(current_user.id, limit=limit, offset=offset)
+            # For regular users, filter by user and status if provided
+            if status:
+                bookings = BookingDAL.get_user_bookings_by_status(current_user.id, status, limit=limit, offset=offset)
+            else:
+                bookings = BookingDAL.get_bookings_by_user(current_user.id, limit=limit, offset=offset)
             is_admin_view = False
         
         # Return JSON for API calls
@@ -231,12 +235,15 @@ def create_booking():
             }), 409
         
         # Create the booking
+        # Auto-approve if resource doesn't require approval
+        booking_status = Booking.STATUS_PENDING if resource.requires_approval else Booking.STATUS_CONFIRMED
+        
         booking = BookingDAL.create_booking(
             user_id=current_user.id,
             resource_id=resource_id,
             start_time=start_time,
             end_time=end_time,
-            status=Booking.STATUS_PENDING,
+            status=booking_status,
             notes=notes if notes else None
         )
         
@@ -244,6 +251,7 @@ def create_booking():
             'success': True,
             'message': 'Booking created successfully',
             'booking_id': booking.id,
+            'auto_approved': not resource.requires_approval,
             'booking': booking.to_dict()
         }), 201
         
@@ -389,7 +397,7 @@ def cancel_booking(booking_id):
 @login_required
 def confirm_booking(booking_id):
     """
-    Confirm a pending booking (admin only).
+    Confirm a pending booking (admin/staff only) and notify the user.
     
     Returns:
         200: Confirmed booking
@@ -401,9 +409,9 @@ def confirm_booking(booking_id):
         if not booking:
             return jsonify({'success': False, 'error': 'Booking not found'}), 404
         
-        # Only admin can confirm
-        if not current_user.is_admin():
-            return jsonify({'success': False, 'error': 'Only admins can confirm bookings'}), 403
+        # Only admin and staff can confirm
+        if not (current_user.is_admin() or current_user.is_staff()):
+            return jsonify({'success': False, 'error': 'Only admins and staff can confirm bookings'}), 403
         
         # Can only confirm pending bookings
         if booking.status != Booking.STATUS_PENDING:
@@ -413,6 +421,32 @@ def confirm_booking(booking_id):
             }), 400
         
         confirmed_booking = BookingDAL.confirm_booking(booking_id)
+        
+        # Send notification to student
+        try:
+            from src.data_access.message_dal import MessageDAL
+            notification_subject = f"Booking Approved: {booking.resource.name}"
+            notification_body = f"""
+Your booking for {booking.resource.name} has been approved!
+
+Booking Details:
+- Resource: {booking.resource.name}
+- Start: {booking.start_time.strftime('%B %d, %Y at %I:%M %p')}
+- End: {booking.end_time.strftime('%B %d, %Y at %I:%M %p')}
+- Location: {booking.resource.location if booking.resource.location else 'Not specified'}
+
+Your reservation is confirmed. Please arrive on time for your booking.
+            """.strip()
+            
+            MessageDAL.create_message(
+                sender_id=current_user.id,
+                recipient_id=booking.user_id,
+                subject=notification_subject,
+                body=notification_body
+            )
+        except Exception as e:
+            # Log error but don't fail the approval
+            print(f"Error sending notification: {str(e)}")
         
         return jsonify({
             'success': True,

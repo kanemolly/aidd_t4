@@ -36,19 +36,11 @@ if __name__ == '__main__':
         # Create WSGI server
         server = make_server('127.0.0.1', 5000, app)
         print(f"✓ Server listening on http://127.0.0.1:5000", flush=True)
-        print(f"✓ Visit http://127.0.0.1:5000/concierge to test\n", flush=True)
+        print(f"✓ Visit http://127.0.0.1:5000/resources to access the app\n", flush=True)
         sys.stdout.flush()
         
-        # Run server - handle exceptions gracefully
-        while True:
-            try:
-                server.handle_request()  # Handle one request at a time
-            except Exception as request_error:
-                print(f"Request error: {request_error}", flush=True)
-                import traceback
-                traceback.print_exc()
-                # Continue serving after error
-                continue
+        # Run server - serve_forever handles multiple requests properly
+        server.serve_forever()
         
     except KeyboardInterrupt:
         print("\n\n✗ Server stopped by user", flush=True)

@@ -5,8 +5,9 @@ Handles: creating, editing, deleting reviews, and displaying averages
 
 from flask import Blueprint, request, jsonify, redirect, url_for, flash, render_template
 from flask_login import login_required, current_user
+from flask_wtf.csrf import validate_csrf, CSRFError
 from src.models import Resource, Review, Booking
-from src.extensions import db
+from src.extensions import db, csrf_protect
 from src.data_access.review_dal import ReviewDAL
 from src.data_access.resource_dal import ResourceDAL
 
@@ -39,9 +40,31 @@ def flagged_reviews_page():
     return render_template('reviews/flagged_reviews.html')
 
 
+# ==================== CSRF VALIDATION HELPER ====================
+
+def validate_json_csrf():
+    """
+    Validate CSRF token for JSON requests.
+    Checks for token in X-CSRFToken header.
+    Raises CSRFError if validation fails.
+    """
+    token = request.headers.get('X-CSRFToken')
+    if not token:
+        token = request.form.get('csrf_token')
+    
+    if not token:
+        raise CSRFError('CSRF token is missing')
+    
+    try:
+        validate_csrf(token)
+    except CSRFError as e:
+        raise CSRFError(f'CSRF validation failed: {str(e)}')
+
+
 # ==================== CREATE / POST REVIEW ====================
 
 @bp.route('', methods=['POST'])
+@csrf_protect.exempt
 @login_required
 def create_review():
     """
@@ -55,6 +78,9 @@ def create_review():
     Returns: JSON response
     """
     try:
+        # Validate CSRF token for JSON request
+        validate_json_csrf()
+        
         # Get JSON data
         data = request.get_json()
         
@@ -65,6 +91,7 @@ def create_review():
         resource_id = data.get('resource_id')
         rating = data.get('rating')
         comment = data.get('comment', '').strip()
+        title = data.get('title', '').strip() if data.get('title') else None
         
         if not resource_id:
             return jsonify({'status': 'error', 'message': 'Resource ID is required'}), 400
@@ -99,7 +126,8 @@ def create_review():
                 user_id=current_user.id,
                 resource_id=resource_id,
                 rating=rating,
-                comment=comment if comment else None
+                comment=comment if comment else None,
+                title=title
             )
             
             return jsonify({
@@ -113,6 +141,8 @@ def create_review():
         except Exception as e:
             return jsonify({'status': 'error', 'message': f'Error creating review: {str(e)}'}), 500
     
+    except CSRFError as e:
+        return jsonify({'status': 'error', 'message': 'CSRF token validation failed'}), 403
     except Exception as e:
         return jsonify({'status': 'error', 'message': f'Server error: {str(e)}'}), 500
 

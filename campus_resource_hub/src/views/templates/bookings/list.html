@@ -80,15 +80,18 @@
     .bookings-grid {
         display: grid;
         gap: var(--space-lg);
+        grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
     }
 
     .booking-card {
         background: var(--neutral-white);
         border-radius: var(--radius-xl);
-        padding: var(--space-xl);
+        padding: var(--space-lg);
         box-shadow: var(--shadow-md);
         border: 1px solid var(--neutral-gray-200);
         transition: all var(--transition-base);
+        display: flex;
+        flex-direction: column;
     }
 
     .booking-card:hover {
@@ -99,19 +102,21 @@
     .booking-header {
         display: flex;
         justify-content: space-between;
-        align-items: start;
-        margin-bottom: var(--space-lg);
+        align-items: flex-start;
+        margin-bottom: var(--space-md);
         gap: var(--space-md);
     }
 
     .booking-title {
         flex: 1;
+        min-width: 0;
     }
 
     .booking-title h3 {
         color: var(--iu-dark);
-        font-size: var(--font-size-xl);
-        margin-bottom: var(--space-xs);
+        font-size: var(--font-size-lg);
+        margin: 0 0 var(--space-xs) 0;
+        word-break: break-word;
     }
 
     .booking-title a {
@@ -133,10 +138,11 @@
     .status-badge {
         padding: var(--space-xs) var(--space-md);
         border-radius: var(--radius-full);
-        font-size: var(--font-size-sm);
+        font-size: var(--font-size-xs);
         font-weight: 600;
         text-transform: uppercase;
         letter-spacing: 0.5px;
+        white-space: nowrap;
     }
 
     .status-pending {
@@ -161,9 +167,10 @@
 
     .booking-details {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        grid-template-columns: 1fr 1fr;
         gap: var(--space-md);
-        margin-bottom: var(--space-lg);
+        margin-bottom: var(--space-md);
+        flex-grow: 1;
     }
 
     .detail-item {
@@ -194,8 +201,9 @@
     .booking-actions {
         display: flex;
         gap: var(--space-sm);
-        padding-top: var(--space-lg);
+        padding-top: var(--space-md);
         border-top: 1px solid var(--neutral-gray-200);
+        flex-wrap: wrap;
     }
 
     .btn {
@@ -268,13 +276,27 @@
         margin-bottom: var(--space-xl);
     }
 
+    @media (max-width: 1024px) {
+        .bookings-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
     @media (max-width: 768px) {
+        .bookings-container {
+            padding: var(--space-lg) var(--space-md);
+        }
+
         .booking-header {
             flex-direction: column;
         }
 
         .booking-details {
             grid-template-columns: 1fr;
+        }
+
+        .booking-card {
+            padding: var(--space-md);
         }
 
         .filter-buttons {
@@ -571,6 +593,14 @@
                         View Resource
                     </a>
                     
+                    {% if is_admin_view and booking.status == 'pending' %}
+                        <button class="btn btn-primary" 
+                                onclick="approveBooking({{ booking.id }}, '{{ booking.resource.name }}', '{{ booking.user.full_name }}')"
+                                style="background: #10B981;">
+                            ✓ Approve
+                        </button>
+                    {% endif %}
+                    
                     {% if booking.status == 'pending' or booking.status == 'confirmed' %}
                         <button class="btn btn-danger" 
                                 onclick="cancelBooking({{ booking.id }}, '{{ booking.resource.name }}')">
@@ -605,6 +635,25 @@
     {% endif %}
 </div>
 
+<!-- Approve Booking Modal -->
+<div id="approveModal" class="cancel-modal">
+    <div class="cancel-modal-content">
+        <div class="cancel-modal-header">
+            <h2>Approve Booking</h2>
+            <button class="cancel-modal-close" onclick="closeApproveModal()">&times;</button>
+        </div>
+        <div class="cancel-modal-body">
+            <div class="cancel-icon" style="font-size: 64px;">✓</div>
+            <p>Approve booking for <strong id="approveResourceName"></strong> by <strong id="approveStudentName"></strong>?</p>
+            <p class="cancel-warning" style="color: #059669; font-size: 14px;">The student will be notified of the approval.</p>
+        </div>
+        <div class="cancel-modal-footer">
+            <button class="btn btn-secondary" onclick="closeApproveModal()">Cancel</button>
+            <button class="btn btn-primary" id="confirmApproveBtn" style="background: #10B981;">Approve Booking</button>
+        </div>
+    </div>
+</div>
+
 <!-- Cancel Booking Modal -->
 <div id="cancelModal" class="cancel-modal">
     <div class="cancel-modal-content">
@@ -626,6 +675,67 @@
 
 <script>
 let currentBookingId = null;
+let currentApprovalData = null;
+
+function approveBooking(bookingId, resourceName, studentName) {
+    currentBookingId = bookingId;
+    currentApprovalData = { bookingId, resourceName, studentName };
+    document.getElementById('approveResourceName').textContent = resourceName;
+    document.getElementById('approveStudentName').textContent = studentName;
+    document.getElementById('approveModal').style.display = 'flex';
+}
+
+function closeApproveModal() {
+    document.getElementById('approveModal').style.display = 'none';
+    currentBookingId = null;
+    currentApprovalData = null;
+}
+
+function confirmApproveBooking() {
+    if (!currentBookingId) return;
+
+    fetch(`/bookings/${currentBookingId}/confirm`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token() }}'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            closeApproveModal();
+            // Show success message
+            const successMsg = document.createElement('div');
+            successMsg.className = 'alert-success';
+            successMsg.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: #10B981;
+                color: white;
+                padding: 16px 24px;
+                border-radius: 8px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                z-index: 2000;
+                font-weight: 600;
+            `;
+            successMsg.textContent = 'Booking approved! Student notified.';
+            document.body.appendChild(successMsg);
+            
+            setTimeout(() => {
+                successMsg.remove();
+                window.location.reload();
+            }, 3000);
+        } else {
+            alert('Error approving booking: ' + data.error);
+        }
+    })
+    .catch(error => {
+        alert('Error approving booking. Please try again.');
+        console.error('Error:', error);
+    });
+}
 
 function cancelBooking(bookingId, resourceName) {
     currentBookingId = bookingId;
@@ -674,15 +784,28 @@ function confirmCancelBooking() {
 
 // Close modal when clicking outside
 window.onclick = function(event) {
-    const modal = document.getElementById('cancelModal');
-    if (event.target === modal) {
+    const approveModal = document.getElementById('approveModal');
+    const cancelModal = document.getElementById('cancelModal');
+    
+    if (event.target === approveModal) {
+        closeApproveModal();
+    }
+    if (event.target === cancelModal) {
         closeCancelModal();
     }
 }
 
-// Attach confirm handler
+// Attach confirm handlers
 document.addEventListener('DOMContentLoaded', function() {
-    document.getElementById('confirmCancelBtn').onclick = confirmCancelBooking;
+    const confirmApproveBtn = document.getElementById('confirmApproveBtn');
+    if (confirmApproveBtn) {
+        confirmApproveBtn.onclick = confirmApproveBooking;
+    }
+    
+    const confirmCancelBtn = document.getElementById('confirmCancelBtn');
+    if (confirmCancelBtn) {
+        confirmCancelBtn.onclick = confirmCancelBooking;
+    }
 });
 </script>
 {% endblock %}

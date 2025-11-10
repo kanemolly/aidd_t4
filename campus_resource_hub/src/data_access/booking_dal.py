@@ -96,6 +96,31 @@ class BookingDAL:
             raise SQLAlchemyError(f"Error fetching bookings by user: {str(e)}")
 
     @staticmethod
+    def get_user_bookings_by_status(user_id: int, status: str, limit: int = None, offset: int = 0) -> list:
+        """
+        Get bookings for a user filtered by status.
+
+        Args:
+            user_id (int): ID of user making bookings
+            status (str): Status to filter by - 'pending', 'confirmed', 'cancelled', 'completed'
+            limit (int): Maximum number of bookings to return. Optional.
+            offset (int): Number of bookings to skip. Default: 0
+
+        Returns:
+            list: List of Booking objects
+
+        Raises:
+            SQLAlchemyError: For database errors
+        """
+        try:
+            query = Booking.query.filter_by(user_id=user_id, status=status).order_by(Booking.start_time.desc()).offset(offset)
+            if limit:
+                query = query.limit(limit)
+            return query.all()
+        except SQLAlchemyError as e:
+            raise SQLAlchemyError(f"Error fetching user bookings by status: {str(e)}")
+
+    @staticmethod
     def get_bookings_by_resource(resource_id: int, limit: int = None, offset: int = 0) -> list:
         """
         Get bookings for a specific resource.

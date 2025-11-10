@@ -130,6 +130,9 @@ class Resource(db.Model):
     available_from = db.Column(db.DateTime, nullable=True)  # Available starting date
     available_until = db.Column(db.DateTime, nullable=True)  # Available until date
     
+    # Booking Approval
+    requires_approval = db.Column(db.Boolean, default=False, nullable=False)  # Require admin approval for bookings
+    
     # Resource Status (draft, published, archived)
     status = db.Column(db.String(20), default=STATUS_PUBLISHED, nullable=False)
     

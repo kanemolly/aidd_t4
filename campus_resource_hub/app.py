@@ -66,7 +66,11 @@ def create_app(config_name=None):
 
 def _register_blueprints(app):
     """Register all Flask blueprints."""
-    from src.controllers import auth, resources, bookings, messages, reviews, admin, concierge
+    from src.controllers import auth, resources, bookings, messages, reviews, admin
+    try:
+        from src.controllers import concierge
+    except ImportError:
+        concierge = None
     
     # Register blueprints (they have their own url_prefix defined)
     app.register_blueprint(auth.bp)
@@ -75,7 +79,8 @@ def _register_blueprints(app):
     app.register_blueprint(messages.bp)
     app.register_blueprint(reviews.bp)
     app.register_blueprint(admin.bp)
-    app.register_blueprint(concierge.bp)
+    if concierge:
+        app.register_blueprint(concierge.bp)
 
 
 def _register_error_handlers(app):

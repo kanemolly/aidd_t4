@@ -3,7 +3,7 @@ Admin blueprint - administrative functions and dashboard.
 """
 
 from flask import Blueprint, request, jsonify, render_template
-from flask_login import login_required
+from flask_login import login_required, current_user
 from src.models import User, Resource, Booking, Review
 from src.extensions import db
 from sqlalchemy import func, and_
@@ -11,35 +11,67 @@ from datetime import datetime, timedelta
 import os
 import json
 
-bp = Blueprint('admin', __name__)
+bp = Blueprint('admin', __name__, url_prefix='/admin')
 
 
 @bp.route('/dashboard', methods=['GET'])
 @login_required
 def dashboard():
-    """Admin dashboard with system statistics and visualizations."""
+    """Admin dashboard with comprehensive system statistics and analytics."""
     try:
-        # Get total counts
+        # Check admin permission
+        if not current_user.is_admin():
+            return jsonify({"error": "Unauthorized"}), 403
+        
+        # ============= BASIC METRICS =============
         total_users = db.session.query(User).count()
         total_resources = db.session.query(Resource).count()
         total_bookings = db.session.query(Booking).count()
         total_reviews = db.session.query(Review).count()
         
-        # Get bookings per resource type
+        # ============= ENGAGEMENT METRICS =============
+        # Active users (users with bookings in last 30 days)
+        from datetime import datetime, timedelta
+        thirty_days_ago = datetime.utcnow() - timedelta(days=30)
+        active_users = db.session.query(User).join(
+            Booking, Booking.user_id == User.id
+        ).filter(Booking.created_at >= thirty_days_ago).distinct().count()
+        
+        # Average bookings per resource
+        avg_bookings_per_resource = total_bookings / total_resources if total_resources > 0 else 0
+        
+        # Average rating (reviews)
+        avg_rating = db.session.query(func.avg(Review.rating)).scalar()
+        if avg_rating:
+            avg_rating = round(float(avg_rating), 1)
+        else:
+            avg_rating = 0
+        
+        # Flagged reviews count
+        flagged_reviews_count = db.session.query(Review).filter(Review.is_flagged == True).count()
+        
+        # ============= BOOKING STATUS BREAKDOWN =============
+        booking_statuses = db.session.query(
+            Booking.status,
+            func.count(Booking.id).label('count')
+        ).group_by(Booking.status).all()
+        
+        status_breakdown = {item[0]: item[1] for item in booking_statuses}
+        
+        # ============= BOOKINGS PER RESOURCE TYPE =============
         bookings_by_type = db.session.query(
             Resource.resource_type,
             func.count(Booking.id).label('count')
-        ).join(Booking, Booking.resource_id == Resource.id).group_by(
+        ).outerjoin(Booking, Booking.resource_id == Resource.id).group_by(
             Resource.resource_type
         ).all()
         
-        # Format for chart
         chart_data = {
             'types': [item[0] for item in bookings_by_type],
             'counts': [item[1] for item in bookings_by_type]
         }
         
-        # Get top 5 most booked resources
+        # ============= TOP 5 MOST BOOKED RESOURCES =============
         top_resources = db.session.query(
             Resource.id,
             Resource.name,
@@ -59,19 +91,156 @@ def dashboard():
             for r in top_resources
         ]
         
+        # ============= RESOURCE UTILIZATION RATES =============
+        # Resources with most reviews
+        top_reviewed_resources = db.session.query(
+            Resource.id,
+            Resource.name,
+            func.count(Review.id).label('review_count'),
+            func.avg(Review.rating).label('avg_rating')
+        ).outerjoin(Review, Review.resource_id == Resource.id).group_by(
+            Resource.id
+        ).order_by(func.count(Review.id).desc()).limit(5).all()
+        
+        top_reviewed = [
+            {
+                'id': r[0],
+                'name': r[1],
+                'reviews': r[2] or 0,
+                'avg_rating': round(float(r[3]), 1) if r[3] else 0
+            }
+            for r in top_reviewed_resources
+        ]
+        
+        # ============= PENDING BOOKINGS FOR APPROVAL =============
+        pending_for_approval = db.session.query(Booking).join(
+            Resource, Booking.resource_id == Resource.id
+        ).filter(
+            and_(
+                Booking.status == 'pending',
+                Resource.requires_approval == True
+            )
+        ).count()
+        
+        # ============= RECENT FLAGGED REVIEWS =============
+        recent_flagged_reviews = db.session.query(Review).filter(
+            Review.is_flagged == True
+        ).order_by(Review.flagged_at.desc()).limit(5).all()
+        
+        flagged_reviews_list = []
+        for review in recent_flagged_reviews:
+            flagged_reviews_list.append({
+                'id': review.id,
+                'reviewer_name': review.reviewer.full_name or review.reviewer.username,
+                'resource_name': review.resource.name,
+                'comment_preview': review.comment[:50] + ('...' if len(review.comment) > 50 else ''),
+                'flag_count': review.flag_count,
+                'reason': review.flag_reason[:100] if review.flag_reason else 'No reason specified',
+                'flagged_at': review.flagged_at.strftime('%m/%d/%Y') if review.flagged_at else 'N/A'
+            })
+        
+        # ============= WEEKLY BOOKING TREND =============
+        seven_days_ago = datetime.utcnow() - timedelta(days=7)
+        weekly_bookings = db.session.query(
+            func.date(Booking.created_at).label('date'),
+            func.count(Booking.id).label('count')
+        ).filter(Booking.created_at >= seven_days_ago).group_by(
+            func.date(Booking.created_at)
+        ).order_by(func.date(Booking.created_at)).all()
+        
+        weekly_trend = {
+            'dates': [str(item[0]) for item in weekly_bookings],
+            'counts': [item[1] for item in weekly_bookings]
+        }
+        
+        # ============= USER GROWTH (last 30 days) =============
+        users_last_30_days = db.session.query(User).filter(
+            User.created_at >= thirty_days_ago
+        ).count()
+        
+        # ============= CALCULATE KPIs =============
+        # Utilization rate (confirmed + completed vs pending + cancelled)
+        confirmed_bookings = status_breakdown.get('confirmed', 0)
+        completed_bookings = status_breakdown.get('completed', 0)
+        pending_bookings = status_breakdown.get('pending', 0)
+        cancelled_bookings = status_breakdown.get('cancelled', 0)
+        
+        total_confirmed_completed = confirmed_bookings + completed_bookings
+        utilization_rate = (total_confirmed_completed / total_bookings * 100) if total_bookings > 0 else 0
+        
         return render_template(
             'admin/dashboard.html',
+            # Basic metrics
             total_users=total_users,
             total_resources=total_resources,
             total_bookings=total_bookings,
             total_reviews=total_reviews,
+            
+            # Engagement metrics
+            active_users=active_users,
+            avg_bookings_per_resource=round(avg_bookings_per_resource, 1),
+            avg_rating=avg_rating,
+            users_last_30_days=users_last_30_days,
+            
+            # Status breakdown
+            status_breakdown=status_breakdown,
+            confirmed_bookings=confirmed_bookings,
+            completed_bookings=completed_bookings,
+            pending_bookings=pending_bookings,
+            cancelled_bookings=cancelled_bookings,
+            utilization_rate=round(utilization_rate, 1),
+            
+            # Charts and data
             chart_data=chart_data,
             top_bookings=top_bookings,
+            top_reviewed=top_reviewed,
+            weekly_trend=weekly_trend,
+            
+            # Moderation
+            flagged_reviews_count=flagged_reviews_count,
+            flagged_reviews_list=flagged_reviews_list,
+            pending_for_approval=pending_for_approval,
+            
+            # Template helpers
             enumerate=enumerate
         )
     except Exception as e:
         print(f"Dashboard error: {e}")
+        import traceback
+        traceback.print_exc()
         return jsonify({"error": "Failed to load dashboard"}), 500
+
+
+@bp.route('/bookings/pending', methods=['GET'])
+@login_required
+def pending_bookings():
+    """
+    Admin page to view and approve pending bookings.
+    Shows only bookings for resources that require approval.
+    """
+    try:
+        from src.data_access.booking_dal import BookingDAL
+        
+        # Check admin permission
+        if not current_user.is_admin():
+            return jsonify({'error': 'Unauthorized'}), 403
+        
+        # Get all pending bookings for resources that require approval
+        pending_bookings = db.session.query(Booking).join(
+            Resource, Booking.resource_id == Resource.id
+        ).filter(
+            and_(
+                Booking.status == Booking.STATUS_PENDING,
+                Resource.requires_approval == True
+            )
+        ).order_by(Booking.created_at.desc()).all()
+        
+        return render_template(
+            'admin/pending_bookings.html',
+            bookings=pending_bookings
+        )
+    except Exception as e:
+        return jsonify({'error': f'Failed to load pending bookings: {str(e)}'}), 500
 
 
 @bp.route('/users', methods=['GET'])

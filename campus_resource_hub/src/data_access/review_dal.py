@@ -14,7 +14,7 @@ class ReviewDAL:
     """Data Access Layer for Review model."""
 
     @staticmethod
-    def create_review(user_id: int, resource_id: int, rating: int, comment: str = None) -> Review:
+    def create_review(user_id: int, resource_id: int, rating: int, comment: str = None, title: str = None) -> Review:
         """
         Create a new review.
 
@@ -23,6 +23,7 @@ class ReviewDAL:
             resource_id (int): ID of resource being reviewed
             rating (int): Rating value - must be 1-5
             comment (str): Optional review comment
+            title (str): Optional review title
 
         Returns:
             Review: Created review object
@@ -36,10 +37,11 @@ class ReviewDAL:
                 raise ValueError("Rating must be between 1 and 5")
 
             review = Review(
-                user_id=user_id,
+                reviewer_id=user_id,
                 resource_id=resource_id,
                 rating=rating,
-                comment=comment
+                comment=comment,
+                title=title
             )
             db.session.add(review)
             db.session.commit()
@@ -84,7 +86,7 @@ class ReviewDAL:
             SQLAlchemyError: For database errors
         """
         try:
-            query = Review.query.filter_by(user_id=user_id).order_by(Review.created_at.desc()).offset(offset)
+            query = Review.query.filter_by(reviewer_id=user_id).order_by(Review.created_at.desc()).offset(offset)
             if limit:
                 query = query.limit(limit)
             return query.all()
@@ -364,6 +366,6 @@ class ReviewDAL:
             SQLAlchemyError: For database errors
         """
         try:
-            return Review.query.filter_by(user_id=user_id, resource_id=resource_id).count() > 0
+            return Review.query.filter_by(reviewer_id=user_id, resource_id=resource_id).count() > 0
         except SQLAlchemyError as e:
             raise SQLAlchemyError(f"Error checking user review: {str(e)}")

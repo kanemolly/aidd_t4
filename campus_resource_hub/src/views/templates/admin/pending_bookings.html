@@ -1,0 +1,275 @@
+{% extends "base.html" %}
+
+{% block title %}Pending Bookings - Admin - Campus Resource Hub{% endblock %}
+
+{% block extra_css %}
+<style>
+    .admin-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: var(--space-xl) var(--space-md);
+    }
+
+    .page-header {
+        margin-bottom: var(--space-2xl);
+    }
+
+    .page-header h1 {
+        color: var(--iu-dark);
+        font-size: var(--font-size-3xl);
+        margin-bottom: var(--space-sm);
+    }
+
+    .page-header p {
+        color: var(--neutral-gray-600);
+        font-size: var(--font-size-md);
+    }
+
+    .bookings-table {
+        width: 100%;
+        border-collapse: collapse;
+        background: var(--neutral-white);
+        border-radius: var(--radius-lg);
+        overflow: hidden;
+        box-shadow: var(--shadow-md);
+    }
+
+    .bookings-table thead {
+        background: linear-gradient(135deg, var(--iu-dark), #333);
+        color: white;
+    }
+
+    .bookings-table th {
+        padding: var(--space-md) var(--space-lg);
+        text-align: left;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: var(--font-size-xs);
+        letter-spacing: 0.5px;
+    }
+
+    .bookings-table td {
+        padding: var(--space-md) var(--space-lg);
+        border-bottom: 1px solid var(--neutral-gray-200);
+    }
+
+    .bookings-table tbody tr:hover {
+        background: var(--neutral-gray-50);
+    }
+
+    .booking-resource {
+        font-weight: 600;
+        color: var(--iu-crimson);
+    }
+
+    .booking-user {
+        color: var(--iu-dark);
+    }
+
+    .booking-time {
+        color: var(--neutral-gray-600);
+        font-size: var(--font-size-sm);
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: var(--space-sm);
+    }
+
+    .btn-approve {
+        background: #10B981;
+        color: white;
+        padding: var(--space-xs) var(--space-md);
+        border: none;
+        border-radius: var(--radius-lg);
+        cursor: pointer;
+        font-weight: 600;
+        font-size: var(--font-size-sm);
+        transition: all var(--transition-fast);
+    }
+
+    .btn-approve:hover {
+        background: #059669;
+        box-shadow: var(--shadow-lg);
+    }
+
+    .btn-reject {
+        background: #EF4444;
+        color: white;
+        padding: var(--space-xs) var(--space-md);
+        border: none;
+        border-radius: var(--radius-lg);
+        cursor: pointer;
+        font-weight: 600;
+        font-size: var(--font-size-sm);
+        transition: all var(--transition-fast);
+    }
+
+    .btn-reject:hover {
+        background: #DC2626;
+        box-shadow: var(--shadow-lg);
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: var(--space-3xl);
+        background: var(--neutral-white);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-md);
+    }
+
+    .empty-state-icon {
+        font-size: 64px;
+        margin-bottom: var(--space-lg);
+    }
+
+    .empty-state h2 {
+        color: var(--iu-dark);
+        font-size: var(--font-size-2xl);
+        margin-bottom: var(--space-md);
+    }
+
+    .empty-state p {
+        color: var(--neutral-gray-600);
+        font-size: var(--font-size-md);
+    }
+
+    @media (max-width: 768px) {
+        .admin-container {
+            padding: var(--space-lg) var(--space-md);
+        }
+
+        .bookings-table {
+            font-size: var(--font-size-sm);
+        }
+
+        .bookings-table th,
+        .bookings-table td {
+            padding: var(--space-sm) var(--space-md);
+        }
+
+        .action-buttons {
+            flex-direction: column;
+        }
+
+        .btn-approve,
+        .btn-reject {
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="admin-container">
+    <!-- Page Header -->
+    <div class="page-header">
+        <h1>⏳ Pending Booking Approvals</h1>
+        <p>Review and approve bookings for resources that require manual approval</p>
+    </div>
+
+    {% if bookings %}
+        <table class="bookings-table">
+            <thead>
+                <tr>
+                    <th>Resource</th>
+                    <th>User</th>
+                    <th>Start Time</th>
+                    <th>End Time</th>
+                    <th>Requested</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for booking in bookings %}
+                <tr>
+                    <td>
+                        <div class="booking-resource">{{ booking.resource.name }}</div>
+                        <div class="booking-time">{{ booking.resource.resource_type }}</div>
+                    </td>
+                    <td class="booking-user">
+                        <strong>{{ booking.user.full_name or booking.user.username }}</strong><br>
+                        <span style="color: var(--neutral-gray-600); font-size: var(--font-size-sm);">{{ booking.user.email }}</span>
+                    </td>
+                    <td class="booking-time">
+                        {{ booking.start_time.strftime('%b %d, %Y %I:%M %p') }}
+                    </td>
+                    <td class="booking-time">
+                        {{ booking.end_time.strftime('%I:%M %p') }}
+                    </td>
+                    <td class="booking-time">
+                        {{ booking.created_at.strftime('%b %d, %Y') }}
+                    </td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn-approve" onclick="approveBooking({{ booking.id }})">
+                                ✓ Approve
+                            </button>
+                            <button class="btn-reject" onclick="rejectBooking({{ booking.id }})">
+                                ✕ Reject
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <div class="empty-state">
+            <div class="empty-state-icon">✓</div>
+            <h2>All Caught Up!</h2>
+            <p>No pending bookings to review. All booking approvals are current.</p>
+        </div>
+    {% endif %}
+</div>
+
+<script>
+function approveBooking(bookingId) {
+    if (confirm('Approve this booking?')) {
+        fetch(`/bookings/${bookingId}/confirm`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Booking approved!');
+                location.reload();
+            } else {
+                alert('Error: ' + (data.error || data.message));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error approving booking');
+        });
+    }
+}
+
+function rejectBooking(bookingId) {
+    if (confirm('Reject this booking?')) {
+        fetch(`/bookings/${bookingId}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Booking rejected and deleted!');
+                location.reload();
+            } else {
+                alert('Error: ' + (data.error || data.message));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error rejecting booking');
+        });
+    }
+}
+</script>
+{% endblock %}

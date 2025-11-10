@@ -78,51 +78,122 @@ def build_resource_context():
     """
     Build a summary of available resources from the database.
     This provides real-time context for the AI to reference.
+    
+    STRATEGY:
+    - Include TOP RESOURCES PER TYPE (most booked, highest rated)
+    - Limit total resources to reduce token usage
+    - Highlight popular resources to AI for better recommendations
     """
     try:
+        from sqlalchemy import func
+        
         # Get all published resources
         resources = Resource.query.filter_by(status='published', is_available=True).all()
         
-        # Create a reference table at the top for easy lookup
-        context = "# RESOURCE REFERENCE TABLE\n"
-        context += "Use these exact URLs when mentioning resources:\n\n"
-        context += "| Resource Name | ID | URL |\n"
-        context += "|---|---|---|\n"
+        if not resources:
+            return "# No Resources Available\nNo published resources found in database.\n"
         
+        context = "# RESOURCE CONTEXT FOR AI\n"
+        context += "## INSTRUCTIONS FOR AI:\n"
+        context += "- PRIORITIZE resources below (they are most popular/highly rated)\n"
+        context += "- Avoid listing ALL resources; recommend only 2-4 top matches per query\n"
+        context += "- If user question is vague, suggest our most popular options first\n"
+        context += "- Include booking link when mentioning specific resources\n\n"
+        
+        # Get booking stats for each resource
+        booking_stats = {}
         for res in resources:
-            resource_url = f"http://127.0.0.1:5000/resources/{res.id}"
-            context += f"| {res.name} | {res.id} | {resource_url} |\n"
+            booking_count = Booking.query.filter_by(
+                resource_id=res.id, 
+                status='confirmed'
+            ).count()
+            booking_stats[res.id] = booking_count
         
-        context += "\n---\n\n"
-        context += "# Available Campus Resources:\n\n"
+        # Get average rating for each resource
+        review_stats = {}
+        for res in resources:
+            avg_rating = db.session.query(func.avg(Review.rating)).filter_by(
+                resource_id=res.id
+            ).scalar() or 0
+            review_count = Review.query.filter_by(resource_id=res.id).count()
+            review_stats[res.id] = (avg_rating, review_count)
         
-        # Group resources by type
+        # Group resources by type and sort by popularity
         resources_by_type = {}
         for resource in resources:
             if resource.resource_type not in resources_by_type:
                 resources_by_type[resource.resource_type] = []
             resources_by_type[resource.resource_type].append(resource)
         
-        # Format resource information WITH CLICKABLE LINKS
-        for resource_type, type_resources in resources_by_type.items():
-            context += f"## {resource_type.title()}\n"
-            for res in type_resources[:10]:  # Limit to 10 per type to avoid token limits
-                # Include resource ID and URL for linking
+        # Sort each type by booking count (most popular first)
+        for resource_type in resources_by_type:
+            resources_by_type[resource_type].sort(
+                key=lambda r: booking_stats.get(r.id, 0),
+                reverse=True
+            )
+        
+        context += "# MOST POPULAR RESOURCES BY TYPE\n\n"
+        
+        # Format ONLY the top resources per type (max 4 per type)
+        total_resources_included = 0
+        max_per_type = 4
+        
+        for resource_type, type_resources in sorted(resources_by_type.items()):
+            # Only include the top 4 most booked/rated resources per type
+            top_resources = type_resources[:max_per_type]
+            
+            if not top_resources:
+                continue
+            
+            context += f"## {resource_type.upper()}\n"
+            
+            for res in top_resources:
+                total_resources_included += 1
                 resource_url = f"http://127.0.0.1:5000/resources/{res.id}"
-                context += f"- **{res.name}** (ID: {res.id})"
-                context += f"\n  📍 Location: {res.location}"
-                context += f"\n  🔗 View & Book: {resource_url}"
-                if res.capacity:
-                    context += f"\n  👥 Capacity: {res.capacity}"
-                if res.description:
-                    context += f"\n  📝 Description: {res.description}"
+                booking_cnt = booking_stats.get(res.id, 0)
+                avg_rating, review_cnt = review_stats.get(res.id, (0, 0))
+                
+                context += f"### ⭐ {res.name}"
+                
+                # Show popularity/rating badge
+                if booking_cnt > 0:
+                    context += f" — {booking_cnt} active bookings"
+                if avg_rating > 0:
+                    context += f" — {avg_rating:.1f}★ ({review_cnt} reviews)"
                 context += "\n"
+                
+                context += f"📍 **Location:** {res.location}\n"
+                
+                if res.capacity:
+                    context += f"👥 **Capacity:** {res.capacity}\n"
+                
+                if res.description:
+                    context += f"📝 **About:** {res.description}\n"
+                
+                context += f"🔗 **Book here:** {resource_url}\n\n"
+            
             context += "\n"
         
-        # Add booking statistics
+        # Add summary section
+        context += "---\n\n"
+        context += "# ALTERNATIVE OPTIONS\n"
+        context += f"- Total resources available: {len(resources)}\n"
+        context += f"- Resources shown above (top {max_per_type} per category): {total_resources_included}\n"
+        context += "- If user asks for something specific not in top list, mention there are more options\n"
+        context += "- Always provide alternative suggestions if first choice isn't available\n\n"
+        
+        # Add overall statistics
         total_bookings = Booking.query.filter_by(status='confirmed').count()
-        context += f"\n## Usage Statistics:\n"
-        context += f"- Total Active Bookings: {total_bookings}\n"
+        active_resources = len(resources)
+        avg_overall_rating = db.session.query(func.avg(Review.rating)).scalar() or 0
+        
+        context += f"## Database Statistics\n"
+        context += f"- Active resources: {active_resources}\n"
+        context += f"- Total confirmed bookings: {total_bookings}\n"
+        context += f"- Average rating across all resources: {avg_overall_rating:.1f}★\n\n"
+        
+        context += "IMPORTANT: When user asks 'What resources are available?', DO NOT list all resources.\n"
+        context += "Instead, present the most relevant/popular options and ask what they need specifically.\n"
         
         return context
     except Exception as e:
@@ -223,6 +294,20 @@ def get_ai_response(question, persona_context, resource_context, user_preference
 
 YOUR CORE PURPOSE:
 Help students find and use campus resources by understanding their needs and matching them to specific facilities.
+
+⚠️ CRITICAL: BE SELECTIVE WITH RECOMMENDATIONS
+- NEVER list all available resources
+- NEVER say things like "We have X different resources of that type"
+- Instead, identify the user's ACTUAL NEED and recommend only the top 2-4 best matches
+- Show off your intelligence by filtering, not by listing everything
+- Example: If asked "What resources are available?" respond with "I'd love to help! To give you the best suggestions, could you tell me what you're looking for? Are you studying, collaborating, or something else?"
+
+SELECTIVE RECOMMENDATIONS STRATEGY:
+1. User asks vague question → Ask clarifying question about their specific need
+2. User asks specific question → Recommend only the most relevant resources
+3. If multiple good options exist → Present 2-3 top choices (ranked by popularity/ratings)
+4. Always explain WHY you picked those specific resources
+5. Mention "We also have other options" if there are alternatives, but don't list them all
 
 INFERENCE GUIDELINES:
 When users ask general questions, map them to specific resources:
