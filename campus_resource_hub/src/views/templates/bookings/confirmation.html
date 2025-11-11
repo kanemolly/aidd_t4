@@ -100,10 +100,51 @@
             </div>
         </div>
 
+        <!-- Calendar Export Card -->
+        <div class="actions-card">
+            <h3>📅 Add to Calendar</h3>
+            <p style="margin-bottom: 20px; color: #666;">Save this booking to your calendar so you don't forget!</p>
+            <div class="action-buttons calendar-buttons">
+                <!-- Download .ics -->
+                <a href="{{ url_for('bookings.export_calendar', booking_id=booking.id) }}" 
+                   class="action-btn btn-calendar"
+                   download
+                   title="Download .ics file for any calendar app">
+                    📥 Download .ics File
+                </a>
+                
+                <!-- Google Calendar -->
+                <a href="{{ url_for('bookings.export_google_calendar', booking_id=booking.id) }}" 
+                   class="action-btn btn-calendar"
+                   target="_blank"
+                   title="Add to Google Calendar">
+                    📆 Add to Google Calendar
+                </a>
+                
+                <!-- Outlook Calendar -->
+                <a href="{{ url_for('bookings.export_outlook_calendar', booking_id=booking.id) }}" 
+                   class="action-btn btn-calendar"
+                   target="_blank"
+                   title="Add to Outlook Calendar">
+                    📧 Add to Outlook
+                </a>
+            </div>
+            <p style="margin-top: 15px; font-size: 0.9rem; color: #888;">
+                💡 The .ics file works with Apple Calendar, Google Calendar, Outlook, and most other calendar apps
+            </p>
+        </div>
+
         <!-- Actions Card -->
         <div class="actions-card">
             <h3>Next Steps</h3>
             <div class="action-buttons">
+                <!-- View Booking Details -->
+                <a href="{{ url_for('bookings.view_booking', booking_id=booking.id) }}" 
+                   class="action-btn btn-secondary"
+                   title="View full booking details">
+                    📋 View Booking Details
+                </a>
+                
                 <!-- Back to Resources -->
                 <a href="/resources" 
                    class="action-btn btn-primary"
@@ -333,6 +374,7 @@
 
 .btn-primary:hover {
     background: #7a1a28;
+    color: white;
     border-color: #7a1a28;
     transform: translateY(-2px);
     box-shadow: var(--shadow-lg);
@@ -346,8 +388,43 @@
 
 .btn-secondary:hover {
     background: var(--iu-cream);
+    color: var(--iu-crimson);
     transform: translateY(-2px);
     box-shadow: var(--shadow-md);
+}
+
+/* Calendar Buttons */
+.calendar-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: flex-start;
+}
+
+.btn-calendar {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    font-size: 0.85rem;
+    white-space: nowrap;
+    flex: 0 1 auto;
+}
+
+.btn-calendar:hover {
+    background: linear-gradient(135deg, #5568d3 0%, #663a91 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+@media (max-width: 768px) {
+    .calendar-buttons {
+        flex-direction: column;
+    }
+    
+    .btn-calendar {
+        width: 100%;
+    }
 }
 
 /* Reminder Card */

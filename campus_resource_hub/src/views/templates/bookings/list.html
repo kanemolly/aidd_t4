@@ -227,6 +227,7 @@
 
     .btn-primary:hover {
         background: #4B0000;
+        color: white;
         transform: translateY(-2px);
         box-shadow: var(--shadow-lg);
     }
@@ -238,6 +239,7 @@
 
     .btn-secondary:hover {
         background: var(--neutral-gray-300);
+        color: var(--iu-dark);
     }
 
     .btn-danger {
@@ -433,6 +435,7 @@
 
     .btn-secondary:hover {
         background: var(--neutral-gray-300);
+        color: var(--iu-dark);
     }
 
     .btn-danger {
@@ -442,6 +445,7 @@
 
     .btn-danger:hover {
         background: #7A0000;
+        color: white;
         transform: translateY(-1px);
         box-shadow: var(--shadow-md);
     }
@@ -599,9 +603,11 @@
                                 style="background: #10B981;">
                             ✓ Approve
                         </button>
-                    {% endif %}
-                    
-                    {% if booking.status == 'pending' or booking.status == 'confirmed' %}
+                        <button class="btn btn-danger" 
+                                onclick="denyBooking({{ booking.id }}, '{{ booking.user.full_name }}', '{{ booking.resource.name }}', '{{ booking.start_time.strftime('%b %d, %Y at %I:%M %p') }}')">
+                            ✕ Deny
+                        </button>
+                    {% elif booking.status == 'pending' or booking.status == 'confirmed' %}
                         <button class="btn btn-danger" 
                                 onclick="cancelBooking({{ booking.id }}, '{{ booking.resource.name }}')">
                             Cancel Booking
@@ -669,6 +675,40 @@
         <div class="cancel-modal-footer">
             <button class="btn btn-secondary" onclick="closeCancelModal()">Keep Booking</button>
             <button class="btn btn-danger" id="confirmCancelBtn">Cancel Booking</button>
+        </div>
+    </div>
+</div>
+
+<div id="denyModal" class="cancel-modal">
+    <div class="cancel-modal-content">
+        <div class="cancel-modal-header">
+            <h2>Deny Booking</h2>
+            <button class="cancel-modal-close" onclick="closeDenyModal()">&times;</button>
+        </div>
+        <div class="cancel-modal-body">
+            <div style="background: #f0f4f8; padding: 1.25rem; border-radius: 8px; margin-bottom: 1.5rem; border-left: 4px solid #dc3545;">
+                <div style="margin-bottom: 0.75rem;">
+                    <div style="font-size: 0.85rem; color: #666; margin-bottom: 0.25rem;">BOOKING DETAILS</div>
+                    <div style="font-weight: 600; color: #333; font-size: 1.1rem;" id="denyResourceName"></div>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
+                    <div>
+                        <div style="font-size: 0.75rem; color: #666; text-transform: uppercase; font-weight: 600; margin-bottom: 0.35rem;">Student</div>
+                        <div style="color: #333;" id="denyUserName"></div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.75rem; color: #666; text-transform: uppercase; font-weight: 600; margin-bottom: 0.35rem;">Scheduled</div>
+                        <div style="color: #333;" id="denyDateTime"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <p style="margin-bottom: 1rem; font-weight: 600; color: #333;">Reason for Denial</p>
+            <textarea id="denyReason" class="form-control" rows="3" placeholder="Enter reason for denying this booking..." style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 6px; font-family: inherit;"></textarea>
+        </div>
+        <div class="cancel-modal-footer">
+            <button class="btn btn-secondary" onclick="closeDenyModal()">Cancel</button>
+            <button class="btn btn-danger" id="confirmDenyBtn">✕ Deny Booking</button>
         </div>
     </div>
 </div>
@@ -782,16 +822,78 @@ function confirmCancelBooking() {
     });
 }
 
+function denyBooking(bookingId, userName, resourceName, dateTime) {
+    currentBookingId = bookingId;
+    
+    // Populate modal with booking details
+    document.getElementById('denyResourceName').textContent = resourceName;
+    document.getElementById('denyUserName').textContent = userName;
+    document.getElementById('denyDateTime').textContent = dateTime;
+    document.getElementById('denyReason').value = '';
+    
+    document.getElementById('denyModal').style.display = 'flex';
+}
+
+function closeDenyModal() {
+    document.getElementById('denyModal').style.display = 'none';
+    currentBookingId = null;
+}
+
+function confirmDenyBooking() {
+    if (!currentBookingId) return;
+    
+    const reason = document.getElementById('denyReason').value.trim();
+    if (!reason) {
+        alert('Please provide a reason for denying the booking.');
+        return;
+    }
+
+    fetch(`/bookings/${currentBookingId}/cancel`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token() }}'
+        },
+        body: JSON.stringify({ reason: reason })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            closeDenyModal();
+            // Show success message
+            const successMsg = document.createElement('div');
+            successMsg.className = 'alert-success';
+            successMsg.textContent = 'Booking denied successfully!';
+            document.body.appendChild(successMsg);
+            
+            // Reload page after a short delay
+            setTimeout(() => {
+                location.reload();
+            }, 1500);
+        } else {
+            alert('Error denying booking: ' + (data.error || 'Unknown error'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error denying booking. Please try again.');
+    });
+}
+
 // Close modal when clicking outside
 window.onclick = function(event) {
     const approveModal = document.getElementById('approveModal');
     const cancelModal = document.getElementById('cancelModal');
+    const denyModal = document.getElementById('denyModal');
     
     if (event.target === approveModal) {
         closeApproveModal();
     }
     if (event.target === cancelModal) {
         closeCancelModal();
+    }
+    if (event.target === denyModal) {
+        closeDenyModal();
     }
 }
 
@@ -805,6 +907,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const confirmCancelBtn = document.getElementById('confirmCancelBtn');
     if (confirmCancelBtn) {
         confirmCancelBtn.onclick = confirmCancelBooking;
+    }
+    
+    const confirmDenyBtn = document.getElementById('confirmDenyBtn');
+    if (confirmDenyBtn) {
+        confirmDenyBtn.onclick = confirmDenyBooking;
     }
 });
 </script>

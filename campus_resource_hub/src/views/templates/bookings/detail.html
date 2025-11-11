@@ -101,6 +101,8 @@
         gap: var(--space-md);
         padding-top: var(--space-lg);
         border-top: 2px solid var(--neutral-gray-200);
+        justify-content: center;
+        flex-wrap: wrap;
     }
 
     .btn {
@@ -111,7 +113,11 @@
         cursor: pointer;
         transition: all var(--transition-fast);
         text-decoration: none;
-        display: inline-block;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 44px;
+        white-space: nowrap;
     }
 
     .btn-primary {
@@ -120,7 +126,8 @@
     }
 
     .btn-primary:hover {
-        background: var(--iu-dark);
+        background: #7a1a28;
+        color: white;
     }
 
     .btn-success {
@@ -130,6 +137,7 @@
 
     .btn-success:hover {
         background: #218838;
+        color: white;
     }
 
     .btn-danger {
@@ -139,6 +147,7 @@
 
     .btn-danger:hover {
         background: #C82333;
+        color: white;
     }
 
     .btn-secondary {
@@ -148,6 +157,7 @@
 
     .btn-secondary:hover {
         background: var(--neutral-gray-300);
+        color: var(--iu-dark);
     }
 
     .approval-notice {
@@ -228,17 +238,15 @@
             <h2>Booking Details</h2>
             <div class="detail-grid">
                 <div class="detail-field">
-                    <div class="detail-label">Date</div>
-                    <div class="detail-value">{{ booking.start_date.strftime('%A, %B %d, %Y') }}</div>
+                    <div class="detail-label">Start Date & Time</div>
+                    <div class="detail-value">
+                        {{ booking.start_time.strftime('%A, %B %d, %Y at %I:%M %p') }}
+                    </div>
                 </div>
                 <div class="detail-field">
-                    <div class="detail-label">Time</div>
+                    <div class="detail-label">End Date & Time</div>
                     <div class="detail-value">
-                        {% if booking.start_time and booking.end_time %}
-                        {{ booking.start_time.strftime('%I:%M %p') }} - {{ booking.end_time.strftime('%I:%M %p') }}
-                        {% else %}
-                        All Day
-                        {% endif %}
+                        {{ booking.end_time.strftime('%A, %B %d, %Y at %I:%M %p') }}
                     </div>
                 </div>
                 <div class="detail-field">
@@ -300,6 +308,33 @@
                     <div class="detail-value">{{ booking.approved_at.strftime('%b %d, %Y at %I:%M %p') }}</div>
                 </div>
             </div>
+        </div>
+        {% endif %}
+
+        <!-- Calendar Export Options -->
+        {% if booking.status in ['confirmed', 'pending'] %}
+        <div class="detail-section">
+            <h2>📅 Add to Calendar</h2>
+            <div style="display: flex; gap: var(--space-md); flex-wrap: wrap;">
+                <a href="{{ url_for('bookings.export_calendar', booking_id=booking.id) }}" 
+                   class="btn btn-primary" 
+                   download="booking-{{ booking.id }}.ics">
+                    <i class="bi bi-download"></i> Download .ics File
+                </a>
+                <a href="{{ url_for('bookings.export_google_calendar', booking_id=booking.id) }}" 
+                   class="btn btn-primary" 
+                   target="_blank">
+                    <i class="bi bi-google"></i> Add to Google Calendar
+                </a>
+                <a href="{{ url_for('bookings.export_outlook_calendar', booking_id=booking.id) }}" 
+                   class="btn btn-primary" 
+                   target="_blank">
+                    <i class="bi bi-microsoft"></i> Add to Outlook
+                </a>
+            </div>
+            <p style="color: var(--neutral-gray-600); font-size: var(--font-size-sm); margin-top: var(--space-sm);">
+                The .ics file works with Google Calendar, Apple Calendar, Outlook, and most calendar apps.
+            </p>
         </div>
         {% endif %}
 

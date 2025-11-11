@@ -46,6 +46,10 @@ def create_app(config_name=None):
     csrf_protect.init_app(app)
     bcrypt.init_app(app)
     
+    # Initialize email service
+    from src.services.email_service import email_service
+    email_service.init_app(app)
+    
     # Import models to register them with SQLAlchemy
     from src.models import User, Resource, Booking, Message, Review
     
@@ -117,7 +121,7 @@ def _register_main_routes(app):
         # Redirect based on user role
         if current_user.is_authenticated:
             if current_user.is_admin() or current_user.is_staff():
-                return redirect(url_for('bookings.list_bookings'))
+                return redirect(url_for('bookings.dashboard'))
             return redirect(url_for('resources.list_resources'))
         # Not logged in - show resources (login required will catch them)
         return redirect(url_for('resources.list_resources'))

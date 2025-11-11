@@ -135,9 +135,9 @@ def login():
                     if next_page and next_page.startswith('/'):
                         return redirect(next_page)
                     
-                    # Admins and staff go to bookings list, students to resources
+                    # Admins and staff go to dashboard, students to resources
                     if user.is_admin() or user.is_staff():
-                        return redirect(url_for('bookings.list_bookings'))
+                        return redirect(url_for('bookings.dashboard'))
                     return redirect(url_for('resources.list_resources'))
             
             flash('Invalid username or password.', 'error')

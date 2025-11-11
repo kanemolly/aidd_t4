@@ -1,0 +1,1170 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block extra_css %}
+<style>
+    .dashboard-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 2rem 1rem;
+    }
+    
+    .dashboard-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        background: white;
+        padding: 1.5rem 2rem;
+        border-radius: var(--radius-xl);
+        box-shadow: var(--shadow-lg);
+        border-left: 5px solid var(--iu-crimson);
+    }
+    
+    .dashboard-title {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: var(--iu-dark);
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .dashboard-title i {
+        color: var(--iu-crimson);
+    }
+    
+    .dashboard-meta {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    .time-badge {
+        background: var(--iu-light);
+        padding: 0.65rem 1.25rem;
+        border-radius: var(--radius-full);
+        font-size: 0.875rem;
+        color: var(--neutral-gray-700);
+        font-weight: 600;
+        border: 1px solid var(--neutral-gray-300);
+    }
+    
+    /* Stats Cards */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .stat-card {
+        position: relative;
+        background: white;
+        border-radius: var(--radius-xl);
+        padding: 1.75rem;
+        box-shadow: var(--shadow-md);
+        transition: all var(--transition-base);
+        border-left: 4px solid;
+    }
+    
+    .stat-card.danger {
+        border-left-color: #dc3545;
+    }
+    
+    .stat-card.success {
+        border-left-color: #28a745;
+    }
+    
+    .stat-card.info {
+        border-left-color: var(--iu-crimson);
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--shadow-xl);
+    }
+    
+    .stat-icon-inline {
+        font-size: 2rem;
+        margin-bottom: 1rem;
+        display: block;
+    }
+    
+    .stat-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+        line-height: 1.2;
+        margin-bottom: 0.5rem;
+        color: var(--iu-dark);
+        font-family: var(--font-family-base);
+    }
+    
+    .stat-label {
+        font-size: var(--font-size-sm);
+        color: var(--neutral-gray-600);
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-family: var(--font-family-base);
+    }
+    
+    /* Section Cards */
+    .section-card {
+        background: white;
+        border-radius: var(--radius-xl);
+        box-shadow: var(--shadow-md);
+        margin-bottom: 2rem;
+        overflow: hidden;
+        transition: all var(--transition-base);
+    }
+    
+    .section-card:hover {
+        box-shadow: var(--shadow-lg);
+    }
+    
+    .section-header {
+        padding: 1.25rem 1.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: var(--iu-crimson);
+        border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    }
+    
+    .section-header.danger {
+        background: #dc3545;
+    }
+    
+    .section-header.success {
+        background: #28a745;
+    }
+    
+    .section-header.info {
+        background: var(--iu-crimson);
+    }
+    
+    .section-header.primary {
+        background: var(--iu-crimson);
+    }
+    
+    .section-title {
+        font-size: var(--font-size-xl);
+        font-weight: 700;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        color: white;
+        font-family: var(--font-family-base);
+    }
+    
+    .section-header .btn {
+        background: transparent;
+        border: 2px solid rgba(255, 255, 255, 0.8);
+        color: white;
+        font-weight: 600;
+        border-radius: var(--radius-md);
+        padding: 0.5rem 1rem;
+        transition: all var(--transition-base);
+        font-size: var(--font-size-sm);
+        font-family: var(--font-family-base);
+    }
+    
+    .section-header .btn:hover {
+        background: rgba(255, 255, 255, 0.15);
+        border-color: white;
+        color: white;
+        transform: translateY(-2px);
+    }
+    
+    .section-body {
+        padding: 0;
+    }
+    
+    /* Modern Table Styles */
+    .dashboard-table {
+        width: 100%;
+        font-size: var(--font-size-sm);
+        font-family: var(--font-family-base);
+        border-spacing: 0 0.5rem;
+        border-collapse: separate;
+    }
+    
+    .dashboard-table thead th {
+        background: var(--iu-light);
+        padding: 1rem 1.25rem;
+        font-weight: 700;
+        color: var(--iu-dark);
+        border: none;
+        text-transform: uppercase;
+        font-size: var(--font-size-xs);
+        letter-spacing: 0.5px;
+        font-family: var(--font-family-base);
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+    
+    .dashboard-table thead th:first-child {
+        border-radius: var(--radius-lg) 0 0 var(--radius-lg);
+    }
+    
+    .dashboard-table thead th:last-child {
+        border-radius: 0 var(--radius-lg) var(--radius-lg) 0;
+    }
+    
+    .dashboard-table tbody td {
+        padding: 1rem 1.25rem;
+        border: none;
+        vertical-align: middle;
+        background: white;
+        font-family: var(--font-family-base);
+    }
+    
+    .dashboard-table tbody tr {
+        box-shadow: var(--shadow-sm);
+        transition: all var(--transition-base);
+    }
+    
+    .dashboard-table tbody tr td:first-child {
+        border-radius: var(--radius-lg) 0 0 var(--radius-lg);
+    }
+    
+    .dashboard-table tbody tr td:last-child {
+        border-radius: 0 var(--radius-lg) var(--radius-lg) 0;
+    }
+    
+    .dashboard-table tbody tr:hover {
+        transform: translateX(4px);
+        box-shadow: var(--shadow-md);
+    }
+    
+    .dashboard-table tbody tr.warning-row {
+        background: var(--warning-light);
+    }
+    
+    /* Activity Items */
+    .activity-list {
+        padding: 0;
+        margin: 0;
+    }
+    
+    .activity-item {
+        padding: 1.5rem 2rem;
+        border-bottom: 1px solid var(--neutral-gray-200);
+        display: flex;
+        justify-content: space-between;
+        align-items: start;
+        transition: all var(--transition-base);
+        position: relative;
+    }
+    
+    .activity-item::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 4px;
+        background: var(--iu-crimson);
+        opacity: 0;
+        transition: opacity var(--transition-base);
+    }
+    
+    .activity-item:hover::before {
+        opacity: 1;
+    }
+    
+    .activity-item:hover {
+        background: var(--iu-light);
+        transform: translateX(8px);
+    }
+    
+    .activity-item:last-child {
+        border-bottom: none;
+    }
+    
+    .activity-content {
+        flex: 1;
+    }
+    
+    .activity-title {
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+        color: var(--iu-dark);
+        font-size: var(--font-size-base);
+        font-family: var(--font-family-base);
+    }
+    
+    .activity-meta {
+        font-size: var(--font-size-sm);
+        color: var(--neutral-gray-600);
+        margin-bottom: 0.25rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-family: var(--font-family-base);
+    }
+    
+    .activity-time {
+        font-size: var(--font-size-xs);
+        color: var(--neutral-gray-500);
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+        font-family: var(--font-family-base);
+    }
+    
+    /* Modern Resource Cards */
+    .resource-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 1.5rem;
+        padding: 2rem;
+    }
+    
+    .mini-resource-card {
+        background: white;
+        border-radius: var(--radius-xl);
+        padding: 1.5rem;
+        border: none;
+        box-shadow: var(--shadow-sm);
+        transition: all var(--transition-base);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .mini-resource-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: var(--iu-crimson);
+        transform: scaleX(0);
+        transition: transform var(--transition-base);
+    }
+    
+    .mini-resource-card:hover::before {
+        transform: scaleX(1);
+    }
+    
+    .mini-resource-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--shadow-lg);
+    }
+    
+    .mini-resource-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: start;
+        margin-bottom: 1rem;
+    }
+    
+    .mini-resource-name {
+        font-weight: 700;
+        font-size: var(--font-size-base);
+        color: var(--iu-dark);
+        margin: 0;
+        font-family: var(--font-family-base);
+    }
+    
+    .mini-resource-meta {
+        font-size: var(--font-size-sm);
+        color: var(--neutral-gray-600);
+        display: flex;
+        flex-direction: column;
+        gap: 0.35rem;
+        font-family: var(--font-family-base);
+    }
+    
+    /* Empty State */
+    .empty-state {
+        padding: 4rem 2rem;
+        text-align: center;
+    }
+    
+    .empty-state i {
+        font-size: 4rem;
+        margin-bottom: 1.5rem;
+        color: var(--neutral-gray-400);
+        opacity: 0.5;
+    }
+    
+    .empty-state p {
+        margin: 0;
+        font-size: var(--font-size-base);
+        color: var(--neutral-gray-600);
+        font-weight: 500;
+        font-family: var(--font-family-base);
+    }
+    
+    /* Quick Links */
+    .quick-links {
+        background: white;
+        border-radius: var(--radius-xl);
+        padding: 2rem;
+        box-shadow: var(--shadow-md);
+    }
+    
+    .quick-links-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 1.25rem;
+    }
+    
+    .quick-link-btn {
+        background: var(--iu-light);
+        border: 2px solid var(--neutral-gray-200);
+        border-radius: var(--radius-lg);
+        padding: 1.5rem 1rem;
+        text-align: center;
+        text-decoration: none;
+        color: var(--iu-dark);
+        transition: all var(--transition-base);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.75rem;
+        font-weight: 600;
+        font-family: var(--font-family-base);
+    }
+    
+    .quick-link-btn:hover {
+        border-color: var(--iu-crimson);
+        color: var(--iu-crimson);
+        transform: translateY(-4px);
+        box-shadow: var(--shadow-md);
+        background: white;
+    }
+    
+    .quick-link-btn i {
+        font-size: 1.75rem;
+        position: relative;
+        z-index: 1;
+    }
+    
+    .quick-link-btn span {
+        position: relative;
+        z-index: 1;
+    }
+    
+    /* Badges */
+    .status-badge {
+        padding: 0.4rem 0.9rem;
+        border-radius: var(--radius-full);
+        font-size: var(--font-size-xs);
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        box-shadow: var(--shadow-sm);
+        font-family: var(--font-family-base);
+    }
+    
+    /* Buttons */
+    .btn-action-group {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+        justify-content: center;
+        align-items: center;
+    }
+    
+    .btn-icon {
+        width: 36px;
+        height: 36px;
+        padding: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: var(--radius-md);
+        transition: all var(--transition-base);
+    }
+    
+    .btn-icon:hover {
+        transform: scale(1.1);
+    }
+    
+    .btn-sm {
+        border-radius: var(--radius-md);
+        font-weight: 600;
+        padding: 0.5rem 1rem;
+        transition: all var(--transition-base);
+        font-size: 0.875rem;
+        min-width: 110px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.4rem;
+    }
+    
+    .btn-success {
+        background: #28a745;
+        border: none;
+        color: white !important;
+    }
+    
+    .btn-success:hover {
+        background: #218838;
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md);
+        color: white !important;
+    }
+    
+    .btn-danger {
+        background: #dc3545;
+        border: none;
+        color: white !important;
+    }
+    
+    .btn-danger:hover {
+        background: #c82333;
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md);
+        color: white !important;
+    }
+    
+    /* Custom Modal Styles */
+    .custom-modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 1000;
+    }
+    
+    .custom-modal:not(.hidden) {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .custom-modal.hidden {
+        display: none;
+    }
+    
+    .custom-modal-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(2px);
+    }
+    
+    .custom-modal-content {
+        position: relative;
+        z-index: 10;
+        background: white;
+        border-radius: var(--radius-xl);
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        max-width: 450px;
+        width: 90%;
+        animation: modalSlideIn 0.3s ease-out;
+    }
+    
+    @keyframes modalSlideIn {
+        from {
+            opacity: 0;
+            transform: scale(0.95) translateY(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+        }
+    }
+    
+    .custom-modal-header {
+        padding: 1.75rem;
+        border-bottom: 1px solid var(--neutral-gray-200);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .custom-modal-header h3 {
+        margin: 0;
+        font-size: 1.35rem;
+        font-weight: 700;
+        color: var(--iu-dark);
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .modal-close-btn {
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        color: var(--neutral-gray-600);
+        cursor: pointer;
+        transition: all var(--transition-base);
+        padding: 0;
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: var(--radius-md);
+    }
+    
+    .modal-close-btn:hover {
+        background: var(--neutral-gray-100);
+        color: var(--iu-dark);
+    }
+    
+    .custom-modal-body {
+        padding: 1.75rem;
+        color: var(--neutral-gray-700);
+        font-size: var(--font-size-base);
+        line-height: 1.6;
+    }
+    
+    .custom-modal-body p {
+        margin: 0.5rem 0;
+    }
+    
+    .text-muted {
+        color: var(--neutral-gray-600) !important;
+    }
+    
+    .text-center {
+        text-align: center;
+    }
+    
+    .custom-modal-footer {
+        padding: 1.25rem 1.75rem;
+        border-top: 1px solid var(--neutral-gray-200);
+        display: flex;
+        gap: 1rem;
+        justify-content: flex-end;
+    }
+    
+    .custom-modal-footer .btn {
+        flex: 0 1 auto;
+        min-width: 120px;
+    }
+    
+    .modal-result .custom-modal-body {
+        padding: 3rem 1.75rem;
+    }
+    
+    .modal-result .custom-modal-footer {
+        display: none;
+    }
+    
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <!-- Header -->
+    <div class="dashboard-header">
+        <h1 class="dashboard-title">
+            <i class="bi bi-speedometer2"></i> Dashboard
+        </h1>
+        <div class="dashboard-meta">
+            <span class="time-badge">
+                <i class="bi bi-clock"></i> {{ now.strftime('%b %d, %Y - %I:%M %p') }}
+            </span>
+            <a href="{{ url_for('bookings.analytics') }}" class="btn btn-outline-primary">
+                <i class="bi bi-graph-up"></i> Analytics
+            </a>
+        </div>
+    </div>
+    
+    <!-- Stats Overview -->
+    <div class="stats-grid">
+        <div class="stat-card danger">
+            <i class="bi bi-exclamation-triangle-fill stat-icon-inline text-danger"></i>
+            <div class="stat-value text-danger">{{ action_counts.pending }}</div>
+            <div class="stat-label">Pending Approvals</div>
+        </div>
+        
+        <div class="stat-card success">
+            <i class="bi bi-play-circle-fill stat-icon-inline text-success"></i>
+            <div class="stat-value text-success">{{ action_counts.active_now }}</div>
+            <div class="stat-label">Active Now</div>
+        </div>
+        
+        <div class="stat-card info">
+            <i class="bi bi-calendar-check stat-icon-inline" style="color: var(--iu-crimson);"></i>
+            <div class="stat-value" style="color: var(--iu-crimson);">{{ action_counts.upcoming_today }}</div>
+            <div class="stat-label">Upcoming Today</div>
+        </div>
+    </div>
+
+    <!-- Pending Approvals Section -->
+    <div class="section-card">
+        <div class="section-header danger">
+            <h2 class="section-title">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+                Pending Approvals
+            </h2>
+            <a href="{{ url_for('bookings.list_bookings') }}?status=pending" 
+               class="btn btn-sm btn-light">
+                View All
+            </a>
+        </div>
+        <div class="section-body">
+            {% if pending_bookings %}
+                <table class="dashboard-table">
+                    <thead>
+                        <tr>
+                            <th>Resource</th>
+                            <th>User</th>
+                            <th>Time Slot</th>
+                            <th>Duration</th>
+                            <th>Waiting</th>
+                            <th class="text-center">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for booking in pending_bookings %}
+                        <tr class="{% if (now - booking.created_at).total_seconds() > 86400 %}warning-row{% endif %}">
+                            <td>
+                                <a href="{{ url_for('bookings.view_booking', booking_id=booking.id) }}" 
+                                   class="text-decoration-none">
+                                    <div class="activity-title text-primary">{{ booking.resource.name }}</div>
+                                </a>
+                                <div class="activity-meta">
+                                    <i class="bi bi-tag"></i> {{ booking.resource.resource_type|capitalize }}
+                                </div>
+                            </td>
+                            <td>
+                                <div class="activity-title">{{ booking.user.full_name }}</div>
+                                <div class="activity-meta">{{ booking.user.email }}</div>
+                            </td>
+                            <td>
+                                <div class="activity-title">{{ booking.start_time.strftime('%b %d, %Y') }}</div>
+                                <div class="activity-meta">
+                                    {{ booking.start_time.strftime('%I:%M %p') }} - {{ booking.end_time.strftime('%I:%M %p') }}
+                                </div>
+                            </td>
+                            <td>
+                                {% set duration = (booking.end_time - booking.start_time).total_seconds() / 3600 %}
+                                <span class="fw-semibold">{{ "%.1f"|format(duration) }} hrs</span>
+                            </td>
+                            <td>
+                                {% set wait_hours = ((now - booking.created_at).total_seconds() / 3600)|int %}
+                                {% if wait_hours < 1 %}
+                                    <span class="status-badge bg-secondary text-white">Just now</span>
+                                {% elif wait_hours < 24 %}
+                                    <span class="status-badge bg-warning text-dark">{{ wait_hours }} hrs</span>
+                                {% else %}
+                                    <span class="status-badge bg-danger text-white">{{ (wait_hours / 24)|int }} days</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-action-group justify-content-center">
+                                    <button type="button" 
+                                            class="btn btn-sm btn-success text-white" 
+                                            onclick="confirmBooking({{ booking.id }})"
+                                            title="Approve">
+                                        <i class="bi bi-check-lg"></i> Approve
+                                    </button>
+                                    <button type="button" 
+                                            class="btn btn-sm btn-danger text-white" 
+                                            onclick="cancelBooking({{ booking.id }}, '{{ booking.user.full_name }}', '{{ booking.resource.name }}', '{{ booking.start_time.strftime('%b %d, %Y at %I:%M %p') }}')"
+                                            title="Deny">
+                                        <i class="bi bi-x-lg"></i> Deny
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <div class="empty-state">
+                    <i class="bi bi-check-circle-fill text-success"></i>
+                    <p><strong>All caught up!</strong> No pending approvals.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Active and Upcoming Grid -->
+    <div class="row mb-4">
+        <!-- Currently Active -->
+        <div class="col-lg-6 mb-3 mb-lg-0">
+            <div class="section-card h-100">
+                <div class="section-header success">
+                    <h2 class="section-title">
+                        <i class="bi bi-play-circle-fill"></i>
+                        Active Now
+                    </h2>
+                </div>
+                <div class="section-body">
+                    {% if active_bookings %}
+                        <div class="activity-list">
+                            {% for booking in active_bookings %}
+                            <div class="activity-item">
+                                <div class="activity-content">
+                                    <div class="activity-title">
+                                        <span class="status-badge bg-success text-white me-2">
+                                            <i class="bi bi-circle-fill" style="font-size: 0.5rem;"></i> LIVE
+                                        </span>
+                                        {{ booking.resource.name }}
+                                    </div>
+                                    <div class="activity-meta">
+                                        <i class="bi bi-person"></i> {{ booking.user.full_name }}
+                                    </div>
+                                    <div class="activity-time">
+                                        <i class="bi bi-clock"></i>
+                                        {{ booking.start_time.strftime('%I:%M %p') }} - {{ booking.end_time.strftime('%I:%M %p') }}
+                                        {% set minutes_left = ((booking.end_time - now).total_seconds() / 60)|int %}
+                                        <span class="status-badge bg-info text-white ms-2">
+                                            {{ minutes_left }} min left
+                                        </span>
+                                    </div>
+                                </div>
+                                <a href="{{ url_for('bookings.view_booking', booking_id=booking.id) }}" 
+                                   class="btn btn-sm btn-outline-secondary btn-icon">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="empty-state">
+                            <i class="bi bi-pause-circle"></i>
+                            <p>No active bookings right now</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Upcoming Today -->
+        <div class="col-lg-6">
+            <div class="section-card h-100">
+                <div class="section-header info">
+                    <h2 class="section-title">
+                        <i class="bi bi-calendar-check"></i>
+                        Upcoming Today
+                    </h2>
+                </div>
+                <div class="section-body">
+                    {% if upcoming_today %}
+                        <div class="activity-list">
+                            {% for booking in upcoming_today %}
+                            <div class="activity-item">
+                                <div class="activity-content">
+                                    <div class="activity-title">{{ booking.resource.name }}</div>
+                                    <div class="activity-meta">
+                                        <i class="bi bi-person"></i> {{ booking.user.full_name }}
+                                    </div>
+                                    <div class="activity-time">
+                                        <i class="bi bi-clock"></i>
+                                        {{ booking.start_time.strftime('%I:%M %p') }} - {{ booking.end_time.strftime('%I:%M %p') }}
+                                        {% set minutes_until = ((booking.start_time - now).total_seconds() / 60)|int %}
+                                        {% if minutes_until < 60 %}
+                                            <span class="status-badge bg-warning text-dark ms-2">
+                                                in {{ minutes_until }} min
+                                            </span>
+                                        {% else %}
+                                            <span class="status-badge bg-secondary text-white ms-2">
+                                                in {{ (minutes_until / 60)|int }} hrs
+                                            </span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <a href="{{ url_for('bookings.view_booking', booking_id=booking.id) }}" 
+                                   class="btn btn-sm btn-outline-secondary btn-icon">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="empty-state">
+                            <i class="bi bi-calendar-x"></i>
+                            <p>No more bookings today</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Popular Resources -->
+    <div class="section-card">
+        <div class="section-header primary">
+            <h2 class="section-title">
+                <i class="bi bi-trophy-fill"></i>
+                Most Booked This Week
+            </h2>
+        </div>
+        <div class="section-body">
+            {% if popular_resources %}
+                <div class="resource-grid">
+                    {% for resource, count in popular_resources %}
+                    <div class="mini-resource-card">
+                        <div class="mini-resource-header">
+                            <h3 class="mini-resource-name">{{ resource.name }}</h3>
+                            <span class="status-badge bg-primary text-white">
+                                {{ count }}
+                            </span>
+                        </div>
+                        <div class="mini-resource-meta">
+                            <span><i class="bi bi-tag"></i> {{ resource.resource_type|capitalize }}</span>
+                            <span><i class="bi bi-geo-alt"></i> {{ resource.location }}</span>
+                        </div>
+                        <a href="{{ url_for('resources.detail_resource', resource_id=resource.id) }}" 
+                           class="btn btn-sm btn-outline-primary mt-3 w-100">
+                            View Resource
+                        </a>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <i class="bi bi-graph-down"></i>
+                    <p>No bookings recorded this week</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="quick-links">
+        <div class="quick-links-grid">
+            <a href="{{ url_for('bookings.list_bookings') }}" class="quick-link-btn">
+                <i class="bi bi-calendar3"></i>
+                <span>All Bookings</span>
+            </a>
+            <a href="{{ url_for('resources.list_resources') }}" class="quick-link-btn">
+                <i class="bi bi-building"></i>
+                <span>All Resources</span>
+            </a>
+            <a href="{{ url_for('bookings.analytics') }}" class="quick-link-btn">
+                <i class="bi bi-graph-up"></i>
+                <span>Analytics</span>
+            </a>
+            <a href="{{ url_for('resources.create_resource') }}" class="quick-link-btn">
+                <i class="bi bi-plus-circle"></i>
+                <span>Add Resource</span>
+            </a>
+        </div>
+    </div>
+</div>
+</div>
+
+<!-- Modal Dialogs -->
+<div id="confirmModal" class="custom-modal hidden">
+    <div class="custom-modal-overlay" onclick="closeConfirmModal()"></div>
+    <div class="custom-modal-content">
+        <div class="custom-modal-header">
+            <h3><i class="bi bi-check-circle"></i> Approve Booking</h3>
+            <button class="modal-close-btn" onclick="closeConfirmModal()"><i class="bi bi-x"></i></button>
+        </div>
+        <div class="custom-modal-body">
+            <p>Are you sure you want to approve this booking?</p>
+            <p class="text-muted" style="font-size: 0.9rem;">The student will be notified via email and in-app message.</p>
+        </div>
+        <div class="custom-modal-footer">
+            <button class="btn btn-secondary" onclick="closeConfirmModal()">Cancel</button>
+            <button class="btn btn-success" onclick="confirmAction()">
+                <i class="bi bi-check-lg"></i> Approve
+            </button>
+        </div>
+    </div>
+</div>
+
+<div id="denyModal" class="custom-modal hidden">
+    <div class="custom-modal-overlay" onclick="closeDenyModal()"></div>
+    <div class="custom-modal-content">
+        <div class="custom-modal-header">
+            <h3><i class="bi bi-x-circle"></i> Deny Booking</h3>
+            <button class="modal-close-btn" onclick="closeDenyModal()"><i class="bi bi-x"></i></button>
+        </div>
+        <div class="custom-modal-body">
+            <div style="background: var(--iu-light); padding: 1.25rem; border-radius: 8px; margin-bottom: 1.5rem; border-left: 4px solid var(--iu-crimson);">
+                <div style="margin-bottom: 0.75rem;">
+                    <div style="font-size: 0.85rem; color: var(--neutral-gray-600); margin-bottom: 0.25rem;">BOOKING DETAILS</div>
+                    <div style="font-weight: 600; color: var(--iu-dark); font-size: 1.1rem;" id="denyModalResourceName"></div>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
+                    <div>
+                        <div style="font-size: 0.75rem; color: var(--neutral-gray-600); text-transform: uppercase; font-weight: 600; margin-bottom: 0.35rem;">Student</div>
+                        <div style="color: var(--iu-dark);" id="denyModalUserName"></div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.75rem; color: var(--neutral-gray-600); text-transform: uppercase; font-weight: 600; margin-bottom: 0.35rem;">Scheduled</div>
+                        <div style="color: var(--iu-dark);" id="denyModalDateTime"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <p style="margin-bottom: 1rem; font-weight: 600; color: var(--iu-dark);">Reason for Denial</p>
+            <textarea id="denyReason" class="form-control" rows="3" placeholder="Enter reason for denying this booking..." style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 6px; font-family: inherit;"></textarea>
+        </div>
+        <div class="custom-modal-footer">
+            <button class="btn btn-secondary" onclick="closeDenyModal()">Cancel</button>
+            <button class="btn btn-danger" onclick="denyAction()">
+                <i class="bi bi-x-lg"></i> Deny Booking
+            </button>
+        </div>
+    </div>
+</div>
+
+<div id="resultModal" class="custom-modal hidden">
+    <div class="custom-modal-overlay"></div>
+    <div class="custom-modal-content modal-result">
+        <div class="custom-modal-body text-center">
+            <div id="resultIcon" style="font-size: 3rem; margin-bottom: 1rem;"></div>
+            <h3 id="resultTitle"></h3>
+            <p id="resultMessage" class="text-muted" style="margin-top: 0.5rem;"></p>
+        </div>
+    </div>
+</div>
+
+<!-- Inline JavaScript for Quick Actions -->
+<script>
+let pendingBookingId = null;
+
+function confirmBooking(bookingId) {
+    pendingBookingId = bookingId;
+    document.getElementById('confirmModal').classList.remove('hidden');
+}
+
+function closeConfirmModal() {
+    document.getElementById('confirmModal').classList.add('hidden');
+    pendingBookingId = null;
+}
+
+function confirmAction() {
+    closeConfirmModal();
+    const bookingId = pendingBookingId;
+    
+    // Show loading state
+    const modal = document.getElementById('resultModal');
+    modal.classList.remove('hidden');
+    document.getElementById('resultIcon').innerHTML = '<i class="bi bi-hourglass-split" style="color: #667eea;"></i>';
+    document.getElementById('resultTitle').textContent = 'Approving...';
+    document.getElementById('resultMessage').textContent = 'Please wait...';
+    
+    fetch(`/bookings/${bookingId}/confirm`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.text().then(text => {
+                throw new Error('Server returned: ' + response.status);
+            });
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success || data.message) {
+            document.getElementById('resultIcon').innerHTML = '<i class="bi bi-check-circle-fill" style="color: #28a745;"></i>';
+            document.getElementById('resultTitle').textContent = 'Booking Approved!';
+            document.getElementById('resultMessage').textContent = 'The student has been notified.';
+            
+            setTimeout(() => {
+                location.reload();
+            }, 2000);
+        } else {
+            throw new Error(data.error || 'Failed to approve booking');
+        }
+    })
+    .catch(error => {
+        document.getElementById('resultIcon').innerHTML = '<i class="bi bi-exclamation-circle-fill" style="color: #dc3545;"></i>';
+        document.getElementById('resultTitle').textContent = 'Error';
+        document.getElementById('resultMessage').textContent = error.message;
+        
+        setTimeout(() => {
+            modal.classList.add('hidden');
+        }, 3500);
+    });
+}
+
+function cancelBooking(bookingId, userName, resourceName, dateTime) {
+    pendingBookingId = bookingId;
+    
+    // Populate modal with booking details
+    document.getElementById('denyModalResourceName').textContent = resourceName;
+    document.getElementById('denyModalUserName').textContent = userName;
+    document.getElementById('denyModalDateTime').textContent = dateTime;
+    
+    document.getElementById('denyModal').classList.remove('hidden');
+}
+
+function closeDenyModal() {
+    document.getElementById('denyModal').classList.add('hidden');
+    document.getElementById('denyReason').value = '';
+    pendingBookingId = null;
+}
+
+function denyAction() {
+    const reason = document.getElementById('denyReason').value.trim();
+    
+    if (!reason) {
+        alert('Please provide a reason for denying the booking.');
+        return;
+    }
+    
+    closeDenyModal();
+    const bookingId = pendingBookingId;
+    
+    // Show loading state
+    const modal = document.getElementById('resultModal');
+    modal.classList.remove('hidden');
+    document.getElementById('resultIcon').innerHTML = '<i class="bi bi-hourglass-split" style="color: #667eea;"></i>';
+    document.getElementById('resultTitle').textContent = 'Denying...';
+    document.getElementById('resultMessage').textContent = 'Please wait...';
+    
+    fetch(`/bookings/${bookingId}/cancel`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ reason: reason })
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.text().then(text => {
+                throw new Error('Server returned: ' + response.status);
+            });
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success || data.message) {
+            document.getElementById('resultIcon').innerHTML = '<i class="bi bi-check-circle-fill" style="color: #28a745;"></i>';
+            document.getElementById('resultTitle').textContent = 'Booking Denied';
+            document.getElementById('resultMessage').textContent = 'The student has been notified of the denial.';
+            
+            setTimeout(() => {
+                location.reload();
+            }, 2000);
+        } else {
+            throw new Error(data.error || 'Failed to deny booking');
+        }
+    })
+    .catch(error => {
+        document.getElementById('resultIcon').innerHTML = '<i class="bi bi-exclamation-circle-fill" style="color: #dc3545;"></i>';
+        document.getElementById('resultTitle').textContent = 'Error';
+        document.getElementById('resultMessage').textContent = error.message;
+        
+        setTimeout(() => {
+            modal.classList.add('hidden');
+        }, 3500);
+    });
+}
+</script>
+{% endblock %}

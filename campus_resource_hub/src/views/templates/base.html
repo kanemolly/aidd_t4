@@ -253,9 +253,9 @@
                 {% if current_user.is_authenticated %}
                     <!-- Admin Navigation -->
                     {% if current_user.is_admin() %}
-                        <li><a href="{{ url_for('resources.list_resources') }}">📚 All Resources</a></li>
-                        <li><a href="{{ url_for('bookings.list_bookings') }}">📅 All Bookings</a></li>
-                        <li><a href="{{ url_for('reviews.flagged_reviews_page') }}">🚩 Flagged Reviews</a></li>
+                        <li><a href="{{ url_for('bookings.dashboard') }}">🏠 Dashboard</a></li>
+                        <li><a href="{{ url_for('resources.list_resources') }}">� All Resources</a></li>
+                        <li><a href="{{ url_for('bookings.list_bookings') }}">� All Bookings</a></li>
                         <li><a href="{{ url_for('bookings.analytics') }}">📊 Analytics</a></li>
                         <li><a href="{{ url_for('concierge.index') }}">🧠 Concierge</a></li>
                         <li><a href="{{ url_for('auth.profile') }}" style="color: var(--iu-crimson); font-weight: 600;">👤 {{ current_user.full_name }}</a></li>
@@ -263,10 +263,10 @@
                     
                     <!-- Staff Navigation -->
                     {% elif current_user.is_staff() %}
+                        <li><a href="{{ url_for('bookings.dashboard') }}">🏠 Dashboard</a></li>
                         <li><a href="{{ url_for('resources.list_resources') }}">📚 Resources</a></li>
                         <li><a href="{{ url_for('resources.create_resource') }}">➕ Add Resource</a></li>
-                        <li><a href="{{ url_for('bookings.list_bookings') }}">📅 All Bookings</a></li>
-                        <li><a href="{{ url_for('reviews.flagged_reviews_page') }}">🚩 Flagged Reviews</a></li>
+                        <li><a href="{{ url_for('bookings.list_bookings') }}">� All Bookings</a></li>
                         <li><a href="{{ url_for('concierge.index') }}">🧠 Concierge</a></li>
                         <li><a href="{{ url_for('auth.profile') }}">{{ current_user.full_name }}</a></li>
                         <li><a href="{{ url_for('auth.logout') }}">Logout</a></li>
@@ -299,9 +299,9 @@
             {% if current_user.is_authenticated %}
                 <!-- Admin Mobile Menu -->
                 {% if current_user.is_admin() %}
-                    <a href="{{ url_for('resources.list_resources') }}">📚 All Resources</a>
-                    <a href="{{ url_for('bookings.list_bookings') }}">📅 All Bookings</a>
-                    <a href="{{ url_for('reviews.flagged_reviews_page') }}">🚩 Flagged Reviews</a>
+                    <a href="{{ url_for('bookings.dashboard') }}">🏠 Dashboard</a>
+                    <a href="{{ url_for('resources.list_resources') }}">� All Resources</a>
+                    <a href="{{ url_for('bookings.list_bookings') }}">� All Bookings</a>
                     <a href="{{ url_for('bookings.analytics') }}">📊 Analytics</a>
                     <a href="{{ url_for('concierge.index') }}">🧠 Concierge</a>
                     <a href="{{ url_for('auth.profile') }}">👤 Profile (Admin)</a>
@@ -309,10 +309,10 @@
                 
                 <!-- Staff Mobile Menu -->
                 {% elif current_user.is_staff() %}
+                    <a href="{{ url_for('bookings.dashboard') }}">🏠 Dashboard</a>
                     <a href="{{ url_for('resources.list_resources') }}">📚 Resources</a>
                     <a href="{{ url_for('resources.create_resource') }}">➕ Add Resource</a>
-                    <a href="{{ url_for('bookings.list_bookings') }}">📅 All Bookings</a>
-                    <a href="{{ url_for('reviews.flagged_reviews_page') }}">🚩 Flagged Reviews</a>
+                    <a href="{{ url_for('bookings.list_bookings') }}">� All Bookings</a>
                     <a href="{{ url_for('concierge.index') }}">🧠 Concierge</a>
                     <a href="{{ url_for('auth.profile') }}">Profile (Staff)</a>
                     <a href="{{ url_for('auth.logout') }}">Logout</a>

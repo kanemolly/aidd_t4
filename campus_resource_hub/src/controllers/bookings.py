@@ -3,12 +3,14 @@ Bookings blueprint - resource booking and reservation management.
 """
 
 from datetime import datetime, date
-from flask import Blueprint, request, jsonify, render_template, redirect, url_for
+from flask import Blueprint, request, jsonify, render_template, redirect, url_for, Response, current_app
 from flask_login import login_required, current_user
 from src.data_access.booking_dal import BookingDAL
 from src.data_access.resource_dal import ResourceDAL
 from src.models import Booking
 from src.extensions import csrf_protect
+from src.services.email_service import email_service
+from src.services.calendar_service import calendar_service
 
 bp = Blueprint('bookings', __name__, url_prefix='/bookings')
 
@@ -40,7 +42,102 @@ def check_conflict(resource_id: int, start_time: datetime, end_time: datetime) -
         return False
 
 
-@bp.route('/', methods=['GET'])
+@bp.route('/dashboard', methods=['GET'])
+@login_required
+def dashboard():
+    """
+    Admin dashboard - action-oriented view showing what needs attention NOW.
+    Focus: Pending approvals, active bookings, and current activity.
+    """
+    # Only admins and staff can access
+    if not current_user.is_admin() and not current_user.is_staff():
+        from flask import flash
+        flash('Access denied. Admin or staff access required.', 'error')
+        return redirect(url_for('resources.list_resources'))
+    
+    try:
+        from src.models import Resource, Booking
+        from src.extensions import db
+        from flask import flash
+        from sqlalchemy import func, desc
+        from datetime import timedelta
+        
+        now = datetime.now()
+        
+        # ACTION REQUIRED: Pending bookings (needs approval)
+        pending_bookings = BookingDAL.get_bookings_by_status('pending') or []
+        pending_bookings.sort(key=lambda b: b.created_at)  # Oldest first
+        
+        # CURRENTLY ACTIVE: Bookings happening right now
+        active_bookings = Booking.query.filter(
+            Booking.status == 'confirmed',
+            Booking.start_time <= now,
+            Booking.end_time >= now
+        ).order_by(Booking.start_time).all()
+        
+        # UPCOMING TODAY: Next bookings happening today
+        today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+        today_end = today_start + timedelta(days=1)
+        upcoming_today = Booking.query.filter(
+            Booking.status == 'confirmed',
+            Booking.start_time > now,
+            Booking.start_time < today_end
+        ).order_by(Booking.start_time).limit(5).all()
+        
+        # POPULAR THIS WEEK: Resources with most bookings in last 7 days
+        week_ago = now - timedelta(days=7)
+        popular_resources = db.session.query(
+            Resource,
+            func.count(Booking.id).label('booking_count')
+        ).join(
+            Booking, Resource.id == Booking.resource_id
+        ).filter(
+            Booking.created_at >= week_ago,
+            Booking.status.in_(['confirmed', 'pending', 'completed'])
+        ).group_by(
+            Resource.id
+        ).order_by(
+            desc('booking_count')
+        ).limit(5).all()
+        
+        # Quick action counts
+        action_counts = {
+            'pending': len(pending_bookings),
+            'active_now': len(active_bookings),
+            'upcoming_today': len(upcoming_today),
+        }
+        
+        return render_template(
+            'bookings/dashboard.html',
+            pending_bookings=pending_bookings[:15],  # Show top 15 oldest
+            active_bookings=active_bookings,
+            upcoming_today=upcoming_today,
+            popular_resources=popular_resources,
+            action_counts=action_counts,
+            now=now
+        )
+        
+    except Exception as e:
+        import traceback
+        from flask import flash
+        print(f"=== DASHBOARD ERROR ===")
+        print(f"Error: {str(e)}")
+        traceback.print_exc()
+        print(f"======================")
+        flash(f'Dashboard error: {str(e)}', 'error')
+        return redirect(url_for('resources.list_resources'))
+
+
+@bp.route('/')
+@login_required
+def index():
+    """Redirect admin/staff to dashboard, others to list."""
+    if current_user.is_admin() or current_user.is_staff():
+        return redirect(url_for('bookings.dashboard'))
+    return redirect(url_for('bookings.list_bookings'))
+
+
+@bp.route('/list', methods=['GET'])
 @login_required
 def list_bookings():
     """
@@ -99,6 +196,7 @@ def list_bookings():
 @login_required
 def view_booking(booking_id):
     """View detailed booking information in HTML page."""
+    import traceback
     try:
         booking = BookingDAL.get_booking_by_id(booking_id)
         if not booking:
@@ -108,8 +206,11 @@ def view_booking(booking_id):
         if not current_user.is_admin() and booking.user_id != current_user.id:
             return render_template('error.html', error='Unauthorized'), 403
         
-        return render_template('bookings/detail.html', booking=booking)
+        return render_template('bookings/detail.html', booking=booking, current_user=current_user)
     except Exception as e:
+        # Log the full traceback for debugging
+        print(f"Error in view_booking: {str(e)}")
+        traceback.print_exc()
         return render_template('error.html', error=str(e)), 500
 
 
@@ -354,6 +455,17 @@ def create_booking():
             notes=notes if notes else None
         )
         
+        # Send email notification
+        if current_app.config.get('EMAIL_NOTIFICATIONS_ENABLED', True):
+            try:
+                if booking.status == 'confirmed':
+                    email_service.send_booking_confirmation(booking, current_user)
+                else:
+                    email_service.send_booking_created(booking, current_user)
+            except Exception as e:
+                # Log error but don't fail the booking
+                print(f"Error sending booking email: {str(e)}")
+        
         return jsonify({
             'success': True,
             'message': 'Booking created successfully',
@@ -490,6 +602,13 @@ def cancel_booking(booking_id):
         
         cancelled_booking = BookingDAL.cancel_booking(booking_id)
         
+        # Send email notification
+        if current_app.config.get('EMAIL_NOTIFICATIONS_ENABLED', True):
+            try:
+                email_service.send_booking_cancelled(cancelled_booking, cancelled_booking.user, current_user)
+            except Exception as e:
+                print(f"Error sending cancellation email: {str(e)}")
+        
         return jsonify({
             'success': True,
             'message': 'Booking cancelled successfully',
@@ -535,7 +654,7 @@ def confirm_booking(booking_id):
         from src.extensions import db
         db.session.commit()
         
-        # Send notification to student
+        # Send in-app notification to student
         try:
             from src.data_access.message_dal import MessageDAL
             notification_subject = f"Booking Approved: {booking.resource.name}"
@@ -559,7 +678,14 @@ Your reservation is confirmed. Please arrive on time for your booking.
             )
         except Exception as e:
             # Log error but don't fail the approval
-            print(f"Error sending notification: {str(e)}")
+            print(f"Error sending in-app notification: {str(e)}")
+        
+        # Send email notification
+        if current_app.config.get('EMAIL_NOTIFICATIONS_ENABLED', True):
+            try:
+                email_service.send_booking_confirmation(confirmed_booking, confirmed_booking.user)
+            except Exception as e:
+                print(f"Error sending booking confirmation email: {str(e)}")
         
         return jsonify({
             'success': True,
@@ -568,6 +694,86 @@ Your reservation is confirmed. Please arrive on time for your booking.
         }), 200
         
     except Exception as e:
+        return jsonify({'success': False, 'error': f'Server error: {str(e)}'}), 500
+
+
+
+
+@bp.route('/<int:booking_id>/cancel', methods=['POST'])
+@login_required
+def cancel_booking_with_reason(booking_id):
+    """
+    Cancel a booking with a reason (admin/staff only).
+    
+    Returns:
+        200: Cancelled booking
+        403: Unauthorized
+        404: Booking not found
+    """
+    try:
+        booking = BookingDAL.get_booking_by_id(booking_id)
+        if not booking:
+            return jsonify({'success': False, 'error': 'Booking not found'}), 404
+        
+        # Only admin and staff can deny/cancel pending bookings
+        if not (current_user.is_admin() or current_user.is_staff()):
+            return jsonify({'success': False, 'error': 'Only admins and staff can cancel pending bookings'}), 403
+        
+        data = request.get_json() or {}
+        reason = data.get('reason', 'No reason provided')
+        
+        # Cancel the booking
+        cancelled_booking = BookingDAL.cancel_booking(booking_id)
+        
+        # Store denial reason
+        cancelled_booking.cancellation_reason = reason
+        cancelled_booking.cancelled_by_id = current_user.id
+        from src.extensions import db
+        db.session.commit()
+        
+        # Send in-app notification to student
+        try:
+            from src.data_access.message_dal import MessageDAL
+            notification_subject = f"Booking Denied: {booking.resource.name}"
+            notification_body = f"""
+Your booking for {booking.resource.name} has been denied.
+
+Booking Details:
+- Resource: {booking.resource.name}
+- Date: {booking.start_time.strftime('%B %d, %Y')}
+- Time: {booking.start_time.strftime('%I:%M %p')} - {booking.end_time.strftime('%I:%M %p')}
+
+Reason for denial: {reason}
+
+Please contact the resource administrator if you have questions.
+            """.strip()
+            
+            MessageDAL.create_message(
+                sender_id=current_user.id,
+                recipient_id=booking.user_id,
+                subject=notification_subject,
+                body=notification_body
+            )
+        except Exception as e:
+            # Log error but don't fail the cancellation
+            print(f"Error sending in-app notification: {str(e)}")
+        
+        # Send email notification
+        if current_app.config.get('EMAIL_NOTIFICATIONS_ENABLED', True):
+            try:
+                email_service.send_booking_cancelled(cancelled_booking, cancelled_booking.user, current_user)
+            except Exception as e:
+                print(f"Error sending cancellation email: {str(e)}")
+        
+        return jsonify({
+            'success': True,
+            'message': 'Booking denied successfully',
+            'booking': cancelled_booking.to_dict()
+        }), 200
+        
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
         return jsonify({'success': False, 'error': f'Server error: {str(e)}'}), 500
 
 
@@ -977,3 +1183,98 @@ def analytics():
         from flask import flash, redirect, url_for
         flash(f'Error loading analytics: {str(e)}', 'error')
         return redirect(url_for('bookings.list_bookings'))
+
+
+# ============================================================
+# Calendar Export Endpoints
+# ============================================================
+
+@bp.route('/<int:booking_id>/calendar', methods=['GET'])
+@login_required
+def export_calendar(booking_id):
+    """
+    Export booking as iCalendar (.ics) file.
+    Can be imported into Google Calendar, Outlook, Apple Calendar, etc.
+    
+    Returns:
+        .ics file download
+        403: Unauthorized
+        404: Booking not found
+    """
+    try:
+        booking = BookingDAL.get_booking_by_id(booking_id)
+        if not booking:
+            return jsonify({'success': False, 'error': 'Booking not found'}), 404
+        
+        # Only owner or admin can export
+        if not current_user.is_admin() and booking.user_id != current_user.id:
+            return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+        
+        # Generate iCal content
+        ical_content = calendar_service.generate_ical(booking, base_url=request.host_url.rstrip('/'))
+        
+        # Create response with appropriate headers
+        filename = f"booking-{booking.id}-{booking.resource.name.replace(' ', '-')}.ics"
+        response = Response(ical_content, mimetype='text/calendar')
+        response.headers['Content-Disposition'] = f'attachment; filename="{filename}"'
+        
+        return response
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': f'Server error: {str(e)}'}), 500
+
+
+@bp.route('/<int:booking_id>/calendar/google', methods=['GET'])
+@login_required
+def export_google_calendar(booking_id):
+    """
+    Get Google Calendar add event URL for this booking.
+    
+    Returns:
+        Redirect to Google Calendar with pre-filled event data
+        403: Unauthorized
+        404: Booking not found
+    """
+    try:
+        booking = BookingDAL.get_booking_by_id(booking_id)
+        if not booking:
+            return jsonify({'success': False, 'error': 'Booking not found'}), 404
+        
+        # Only owner or admin can export
+        if not current_user.is_admin() and booking.user_id != current_user.id:
+            return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+        
+        # Generate Google Calendar URL and redirect
+        google_url = calendar_service.generate_google_calendar_url(booking)
+        return redirect(google_url)
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': f'Server error: {str(e)}'}), 500
+
+
+@bp.route('/<int:booking_id>/calendar/outlook', methods=['GET'])
+@login_required
+def export_outlook_calendar(booking_id):
+    """
+    Get Outlook.com calendar add event URL for this booking.
+    
+    Returns:
+        Redirect to Outlook.com calendar with pre-filled event data
+        403: Unauthorized
+        404: Booking not found
+    """
+    try:
+        booking = BookingDAL.get_booking_by_id(booking_id)
+        if not booking:
+            return jsonify({'success': False, 'error': 'Booking not found'}), 404
+        
+        # Only owner or admin can export
+        if not current_user.is_admin() and booking.user_id != current_user.id:
+            return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+        
+        # Generate Outlook URL and redirect
+        outlook_url = calendar_service.generate_outlook_url(booking)
+        return redirect(outlook_url)
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': f'Server error: {str(e)}'}), 500

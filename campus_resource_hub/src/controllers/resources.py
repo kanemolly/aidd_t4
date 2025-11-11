@@ -415,14 +415,22 @@ def list_resources():
         )
     
     except Exception as e:
+        import traceback
+        print(f'=== RESOURCES ERROR ===')
         print(f'Error loading resources: {str(e)}')
-        flash(f'Error loading resources', 'error')
+        traceback.print_exc()
+        print(f'======================')
+        flash(f'Error loading resources: {str(e)}', 'error')
         return render_template(
             'resources/list.html',
             resources=[],
+            recommendations=[],
             keyword='',
             resource_type='',
             location='',
+            min_capacity='',
+            available_date='',
+            sort_by='recent',
             types=[],
             locations=[],
             page=1,

@@ -20,6 +20,10 @@ class Config:
     
     # Session configuration
     PERMANENT_SESSION_LIFETIME = 1800  # 30 minutes
+    
+    # Email configuration
+    EMAIL_SIMULATE_MODE = True  # Set to False to use real email service
+    EMAIL_NOTIFICATIONS_ENABLED = True  # Enable/disable email notifications
 
 
 class DevelopmentConfig(Config):
