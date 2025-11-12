@@ -778,7 +778,7 @@
                     View Details
                 </a>
                 {% if resource.is_available and current_user.is_authenticated %}
-                <button class="btn-book" onclick="openBookingModal({{ resource.id }}, {{ resource.name|tojson }}, {{ resource.location|tojson }}, {{ resource.resource_type|tojson }}, {{ resource.capacity or 'null' }})">
+                <button type="button" class="btn-book" onclick="openBookingModal({{ resource.id }}, {{ resource.name|tojson }}, {{ resource.location|tojson }}, {{ resource.resource_type|tojson }}, {{ resource.capacity if resource.capacity else 'null' }})">
                     Book Now
                 </button>
                 {% endif %}

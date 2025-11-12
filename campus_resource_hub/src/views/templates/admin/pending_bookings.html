@@ -224,19 +224,31 @@
 </div>
 
 <script>
+// Global CSRF Token - loaded at page initialization
+const CSRF_TOKEN = '{{ csrf_token() }}';
+console.log('[GLOBAL] CSRF Token loaded on admin/pending_bookings:', CSRF_TOKEN ? `✅ Present (${CSRF_TOKEN.length} chars)` : '❌ Missing');
+
 function approveBooking(bookingId) {
     if (confirm('Approve this booking?')) {
-        // Get CSRF token from meta tag
-        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
-        
         fetch(`/bookings/${bookingId}/confirm`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRFToken': csrfToken
-            }
+                'X-CSRFToken': CSRF_TOKEN
+            },
+            body: JSON.stringify({
+                csrf_token: CSRF_TOKEN
+            })
         })
-        .then(response => response.json())
+        .then(response => {
+            // Check if response is OK first
+            if (!response.ok) {
+                return response.text().then(text => {
+                    throw new Error(`HTTP ${response.status}: ${text}`);
+                });
+            }
+            return response.json();
+        })
         .then(data => {
             if (data.success) {
                 alert('Booking approved!');
@@ -247,24 +259,29 @@ function approveBooking(bookingId) {
         })
         .catch(error => {
             console.error('Error:', error);
-            alert('Error approving booking');
+            alert('Error approving booking: ' + error.message);
         });
     }
 }
 
 function rejectBooking(bookingId) {
     if (confirm('Reject this booking?')) {
-        // Get CSRF token from meta tag
-        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
-        
         fetch(`/bookings/${bookingId}`, {
             method: 'DELETE',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRFToken': csrfToken
+                'X-CSRFToken': CSRF_TOKEN
             }
         })
-        .then(response => response.json())
+        .then(response => {
+            // Check if response is OK first
+            if (!response.ok) {
+                return response.text().then(text => {
+                    throw new Error(`HTTP ${response.status}: ${text}`);
+                });
+            }
+            return response.json();
+        })
         .then(data => {
             if (data.success) {
                 alert('Booking rejected and deleted!');
@@ -275,7 +292,7 @@ function rejectBooking(bookingId) {
         })
         .catch(error => {
             console.error('Error:', error);
-            alert('Error rejecting booking');
+            alert('Error rejecting booking: ' + error.message);
         });
     }
 }

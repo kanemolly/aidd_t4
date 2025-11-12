@@ -714,6 +714,13 @@
 </div>
 
 <script>
+// CSRF token is defined globally in base.html on window object
+// If for some reason it's not available, read from meta tag as fallback
+const BOOKING_CSRF_TOKEN = window.CSRF_TOKEN || 
+    document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+
+console.log('[BOOKINGS] CSRF Token status:', BOOKING_CSRF_TOKEN ? `✅ Found (${BOOKING_CSRF_TOKEN.length} chars)` : '❌ MISSING');
+
 let currentBookingId = null;
 let currentApprovalData = null;
 
@@ -734,17 +741,31 @@ function closeApproveModal() {
 function confirmApproveBooking() {
     if (!currentBookingId) return;
 
-    // Get CSRF token from meta tag
-    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+    console.log('[APPROVE] Starting approval for booking:', currentBookingId);
+    console.log('[APPROVE] CSRF Token:', BOOKING_CSRF_TOKEN ? `Present (${BOOKING_CSRF_TOKEN.length} chars)` : 'MISSING!');
+    
+    if (!BOOKING_CSRF_TOKEN) {
+        console.error('[APPROVE] ERROR: CSRF token is empty!');
+        alert('Error: CSRF token not found. Please refresh the page.');
+        return;
+    }
 
     fetch(`/bookings/${currentBookingId}/confirm`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'X-CSRFToken': csrfToken
-        }
+            'X-CSRFToken': BOOKING_CSRF_TOKEN
+        },
+        body: JSON.stringify({})
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) {
+            return response.text().then(text => {
+                throw new Error(`HTTP ${response.status}: ${text}`);
+            });
+        }
+        return response.json();
+    })
     .then(data => {
         if (data.success) {
             closeApproveModal();
@@ -768,14 +789,15 @@ function confirmApproveBooking() {
             
             setTimeout(() => {
                 successMsg.remove();
-                window.location.reload();
-            }, 3000);
+                // Reload the current page to refresh bookings list
+                location.reload();
+            }, 2000);
         } else {
             alert('Error approving booking: ' + data.error);
         }
     })
     .catch(error => {
-        alert('Error approving booking. Please try again.');
+        alert('Error approving booking: ' + error.message);
         console.error('Error:', error);
     });
 }
@@ -794,17 +816,22 @@ function closeCancelModal() {
 function confirmCancelBooking() {
     if (!currentBookingId) return;
 
-    // Get CSRF token from meta tag
-    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
-
     fetch(`/bookings/${currentBookingId}/cancel`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'X-CSRFToken': csrfToken
-        }
+            'X-CSRFToken': BOOKING_CSRF_TOKEN
+        },
+        body: JSON.stringify({})
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) {
+            return response.text().then(text => {
+                throw new Error(`HTTP ${response.status}: ${text}`);
+            });
+        }
+        return response.json();
+    })
     .then(data => {
         if (data.success) {
             closeCancelModal();
@@ -836,7 +863,7 @@ function confirmCancelBooking() {
         }
     })
     .catch(error => {
-        showErrorToast('Error cancelling booking. Please try again.');
+        showErrorToast('Error cancelling booking: ' + error.message);
         console.error('Error:', error);
     });
 }
@@ -890,19 +917,33 @@ function confirmDenyBooking() {
         return;
     }
 
-    // Get CSRF token from meta tag
-    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+    console.log('[DENY] Starting denial for booking:', currentBookingId);
+    console.log('[DENY] Reason:', reason);
+    console.log('[DENY] CSRF Token:', BOOKING_CSRF_TOKEN ? `Present (${BOOKING_CSRF_TOKEN.length} chars)` : 'MISSING!');
+    console.log('[DENY] Target URL:', `/bookings/${currentBookingId}/cancel`);
 
     fetch(`/bookings/${currentBookingId}/cancel`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'X-CSRFToken': csrfToken
+            'X-CSRFToken': BOOKING_CSRF_TOKEN
         },
-        body: JSON.stringify({ reason: reason })
+        body: JSON.stringify({ 
+            reason: reason
+        })
     })
-    .then(response => response.json())
+    .then(response => {
+        console.log('[DENY] Response status:', response.status, response.statusText);
+        if (!response.ok) {
+            return response.text().then(text => {
+                console.error('[DENY] Error response body:', text);
+                throw new Error(`HTTP ${response.status}: ${text}`);
+            });
+        }
+        return response.json();
+    })
     .then(data => {
+        console.log('[DENY] Success response:', data);
         if (data.success) {
             closeDenyModal();
             // Show success message
@@ -911,7 +952,7 @@ function confirmDenyBooking() {
             successMsg.textContent = 'Booking denied successfully!';
             document.body.appendChild(successMsg);
             
-            // Reload page after a short delay
+            // Reload the current page to refresh bookings list
             setTimeout(() => {
                 location.reload();
             }, 1500);
@@ -920,8 +961,8 @@ function confirmDenyBooking() {
         }
     })
     .catch(error => {
-        console.error('Error:', error);
-        alert('Error denying booking. Please try again.');
+        console.error('[DENY] Error:', error);
+        alert('Error denying booking: ' + error.message);
     });
 }
 

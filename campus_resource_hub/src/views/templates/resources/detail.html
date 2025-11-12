@@ -1335,6 +1335,10 @@
 <script src="{{ url_for('static', filename='js/resource-images.js') }}"></script>
 
 <script>
+// Global CSRF Token - loaded at page initialization
+const CSRF_TOKEN = '{{ csrf_token() }}';
+console.log('[GLOBAL] CSRF Token loaded on resources/detail:', CSRF_TOKEN ? `✅ Present (${CSRF_TOKEN.length} chars)` : '❌ Missing');
+
 // Star rating selector
 document.querySelectorAll('.star').forEach(star => {
     star.addEventListener('click', function() {
@@ -1413,7 +1417,7 @@ document.getElementById('review-form').addEventListener('submit', function(e) {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'X-CSRFToken': document.querySelector('input[name="csrf_token"]').value
+            'X-CSRFToken': CSRF_TOKEN
         },
         body: JSON.stringify(data)
     })
@@ -1524,9 +1528,6 @@ async function sendResourceMessage() {
         return;
     }
     
-    // Get CSRF token from meta tag
-    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
-    
     // Disable button and show status
     sendBtn.disabled = true;
     statusDiv.textContent = '⏳ Sending message...';
@@ -1537,7 +1538,7 @@ async function sendResourceMessage() {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRFToken': csrfToken
+                'X-CSRFToken': CSRF_TOKEN
             },
             body: JSON.stringify({
                 recipient_id: parseInt(creatorId),
@@ -1730,19 +1731,11 @@ async function submitReportToServer(reviewId, reason) {
     }
 
     try {
-        const csrfTokenElement = document.querySelector('input[name="csrf_token"]');
-        if (!csrfTokenElement) {
-            showErrorToast('Error: CSRF token not found. Please refresh the page and try again.');
-            console.error('CSRF token element not found');
-            closeReportModal();
-            return;
-        }
-
         const response = await fetch(`/reviews/${reviewId}/flag`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRFToken': csrfTokenElement.value
+                'X-CSRFToken': CSRF_TOKEN
             },
             body: JSON.stringify({ reason: reason })
         });
@@ -1800,7 +1793,7 @@ document.getElementById('flagForm').addEventListener('submit', async (e) => {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRFToken': document.querySelector('input[name="csrf_token"]').value
+                'X-CSRFToken': CSRF_TOKEN
             },
             body: JSON.stringify({
                 reason: reason,

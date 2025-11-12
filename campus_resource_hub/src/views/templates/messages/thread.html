@@ -892,6 +892,10 @@
 </style>
 
 <script>
+// Global CSRF Token - loaded at page initialization
+const CSRF_TOKEN = '{{ csrf_token() }}';
+console.log('[GLOBAL] CSRF Token loaded on messages/thread:', CSRF_TOKEN ? `✅ Present (${CSRF_TOKEN.length} chars)` : '❌ Missing');
+
 // Thread Configuration
 const threadId = {{ thread_id }};
 const currentUserId = {{ current_user.id }};
@@ -962,14 +966,11 @@ async function sendMessage(e) {
     statusDiv.className = 'message-status';
 
     try {
-        // Get CSRF token from meta tag
-        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-        
         const response = await fetch('/messages/', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRFToken': csrfToken
+                'X-CSRFToken': CSRF_TOKEN
             },
             body: JSON.stringify({
                 recipient_id: otherUserId,
@@ -1007,7 +1008,6 @@ async function sendMessage(e) {
 // Mark messages as read
 async function markMessagesAsRead() {
     const messageElements = document.querySelectorAll('.message-group.received');
-    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
     
     for (let element of messageElements) {
         const messageId = element.dataset.messageId;
@@ -1017,7 +1017,7 @@ async function markMessagesAsRead() {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-CSRFToken': csrfToken
+                        'X-CSRFToken': CSRF_TOKEN
                     }
                 });
             } catch (error) {

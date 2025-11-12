@@ -210,12 +210,17 @@ class Booking(db.Model):
     approved_by_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)  # Staff/admin who approved
     approved_at = db.Column(db.DateTime, nullable=True)  # When approved
     
+    # Cancellation tracking
+    cancellation_reason = db.Column(db.Text, nullable=True)  # Reason for cancellation/denial
+    cancelled_by_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)  # Who cancelled/denied
+    
     # Timestamps
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
     
     # Relationships
     approved_by = db.relationship('User', foreign_keys=[approved_by_id], lazy='joined')
+    cancelled_by = db.relationship('User', foreign_keys=[cancelled_by_id], lazy='joined')
     recurring_instances = db.relationship('Booking', backref=db.backref('parent_booking', remote_side=[id]), lazy='dynamic')
     
     def to_dict(self):

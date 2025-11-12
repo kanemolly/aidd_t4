@@ -17,6 +17,8 @@ class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-secret-key-change-in-production'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     WTF_CSRF_ENABLED = True
+    WTF_CSRF_CHECK_DEFAULT = True  # Enable CSRF protection on all POST/PUT/PATCH/DELETE requests by default
+    WTF_CSRF_TIME_LIMIT = None  # No time limit for CSRF tokens
     
     # Session configuration
     PERMANENT_SESSION_LIFETIME = 1800  # 30 minutes

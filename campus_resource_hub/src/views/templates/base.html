@@ -1207,6 +1207,11 @@
     </style>
 
     <script>
+        // Global CSRF Token - loaded at page initialization
+        // Assign to window object to make it truly global across all script blocks
+        window.CSRF_TOKEN = '{{ csrf_token() }}';
+        console.log('[GLOBAL] CSRF Token loaded on base.html:', window.CSRF_TOKEN ? `✅ Present (${window.CSRF_TOKEN.length} chars)` : '❌ Missing');
+
         // Chatbot Widget JavaScript
         (function() {
             const widget = document.getElementById('chatbotWidget');
@@ -1670,12 +1675,11 @@
              * Mark single notification as read (fire and forget)
              */
             function markNotificationAsRead(notificationId) {
-                const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
                 fetch(`/api/notifications/${notificationId}/read`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-CSRFToken': csrfToken
+                        'X-CSRFToken': CSRF_TOKEN
                     }
                 }).then(response => {
                     if (response.ok) {
@@ -1694,14 +1698,13 @@
             async function markNotificationAsReadAndWait(notificationId) {
                 try {
                     console.log('🔄 Sending POST request to mark notification', notificationId, 'as read...');
-                    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-                    console.log('🔑 CSRF Token:', csrfToken ? 'Found' : 'MISSING!');
+                    console.log('🔑 CSRF Token:', CSRF_TOKEN ? `Found (${CSRF_TOKEN.length} chars)` : 'MISSING!');
                     
                     const response = await fetch(`/api/notifications/${notificationId}/read`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
-                            'X-CSRFToken': csrfToken
+                            'X-CSRFToken': CSRF_TOKEN
                         }
                     });
 
@@ -1727,12 +1730,11 @@
              */
             async function markAllAsRead() {
                 try {
-                    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
                     const response = await fetch('/api/notifications/read-all', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
-                            'X-CSRFToken': csrfToken
+                            'X-CSRFToken': CSRF_TOKEN
                         }
                     });
 

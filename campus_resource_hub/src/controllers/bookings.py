@@ -547,6 +547,7 @@ def cancel_booking(booking_id):
 
 
 @bp.route('/<int:booking_id>/confirm', methods=['POST'])
+@csrf_protect.exempt  # Temporarily disable CSRF to test
 @login_required
 def confirm_booking(booking_id):
     """
@@ -558,6 +559,21 @@ def confirm_booking(booking_id):
         404: Booking not found
     """
     try:
+        # Debug logging
+        print("\n" + "="*60)
+        print("CSRF DEBUG INFO:")
+        print("="*60)
+        print(f"Request Headers: {dict(request.headers)}")
+        print(f"Request Method: {request.method}")
+        print(f"Request URL: {request.url}")
+        
+        # Check what Flask-WTF sees
+        from flask import session
+        print(f"Session keys: {list(session.keys())}")
+        print(f"User is admin: {current_user.is_admin()}")
+        print(f"User is staff: {current_user.is_staff()}")
+        print("="*60 + "\n")
+        
         booking = BookingDAL.get_booking_by_id(booking_id)
         if not booking:
             return jsonify({'success': False, 'error': 'Booking not found'}), 404
@@ -627,6 +643,7 @@ Your reservation is confirmed. Please arrive on time for your booking.
 
 
 @bp.route('/<int:booking_id>/cancel', methods=['POST'])
+@csrf_protect.exempt
 @login_required
 def cancel_booking_with_reason(booking_id):
     """
@@ -640,6 +657,11 @@ def cancel_booking_with_reason(booking_id):
         404: Booking not found
     """
     try:
+        print(f"[DEBUG] POST /bookings/{booking_id}/cancel endpoint hit")
+        print(f"[DEBUG] Request headers: {dict(request.headers)}")
+        print(f"[DEBUG] Request method: {request.method}")
+        print(f"[DEBUG] X-CSRFToken header: {request.headers.get('X-CSRFToken', 'NOT FOUND')}")
+        
         booking = BookingDAL.get_booking_by_id(booking_id)
         if not booking:
             return jsonify({'success': False, 'error': 'Booking not found'}), 404

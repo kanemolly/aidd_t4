@@ -50,6 +50,20 @@ def create_app(config_name=None):
     csrf_protect.init_app(app)
     bcrypt.init_app(app)
     
+    # Explicitly make csrf_token available in templates
+    # Flask-WTF should do this automatically, but we'll make sure
+    @app.context_processor
+    def inject_csrf_token():
+        from flask_wtf.csrf import generate_csrf
+        return {'csrf_token': generate_csrf}
+    
+    # Ensure session is created for CSRF token generation
+    @app.before_request
+    def before_request():
+        from flask import session
+        # Access session to ensure it's created
+        _ = session
+    
     # Initialize email service
     from src.services.email_service import email_service
     email_service.init_app(app)

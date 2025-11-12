@@ -1038,6 +1038,10 @@
 
 <!-- Inline JavaScript for Quick Actions -->
 <script>
+// Global CSRF Token - loaded at page initialization
+const CSRF_TOKEN = '{{ csrf_token() }}';
+console.log('[GLOBAL] CSRF Token loaded on bookings/dashboard:', CSRF_TOKEN ? `✅ Present (${CSRF_TOKEN.length} chars)` : '❌ Missing');
+
 let pendingBookingId = null;
 
 function confirmBooking(bookingId) {
@@ -1066,14 +1070,11 @@ function confirmAction() {
     document.getElementById('resultTitle').textContent = 'Approving...';
     document.getElementById('resultMessage').textContent = 'Please wait...';
     
-    // Get CSRF token from meta tag
-    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
-    
     fetch(`/bookings/${bookingId}/confirm`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'X-CSRFToken': csrfToken
+            'X-CSRFToken': CSRF_TOKEN
         }
     })
     .then(response => {
@@ -1148,7 +1149,7 @@ function denyAction() {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'X-CSRFToken': '{{ csrf_token() }}'
+            'X-CSRFToken': CSRF_TOKEN
         },
         body: JSON.stringify({ reason: reason })
     })
