@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Message Thread - {{ other_user.name }} - Campus Resource Hub{% endblock %}
+{% block title %}Message Thread - {{ other_user.full_name }} - Campus Resource Hub{% endblock %}
 
 {% block content %}
 <div class="messaging-container">
@@ -12,10 +12,14 @@
             </a>
             <div class="thread-title">
                 <div class="avatar-circle">
-                    {{ other_user.name[0]|upper }}
+                    {% if other_user.profile_image %}
+                        <img src="{{ url_for('static', filename=other_user.profile_image) }}" alt="{{ other_user.full_name }}" class="avatar-img">
+                    {% else %}
+                        {{ other_user.full_name[0]|upper }}
+                    {% endif %}
                 </div>
                 <div class="title-info">
-                    <h1>{{ other_user.name }}</h1>
+                    <h1>{{ other_user.full_name }}</h1>
                     <p class="user-email">{{ other_user.email }}</p>
                 </div>
             </div>
@@ -26,7 +30,28 @@
     <div class="messages-wrapper">
         <div class="messages-container" id="messagesContainer">
             <!-- Messages will be rendered here -->
-            {% for message in messages %}
+            {% for message in messages|sort(attribute='created_at') %}
+                {% if message.booking and loop.first %}
+                    <!-- Booking Context Card -->
+                    <div class="booking-context-card">
+                        <div class="booking-header">
+                            <span class="booking-label">📦 Related to Booking</span>
+                            <span class="booking-id">#{{ message.booking.id }}</span>
+                        </div>
+                        <div class="booking-details">
+                            <div class="booking-resource">
+                                <strong>Resource:</strong> {{ message.booking.resource.name }}
+                            </div>
+                            <div class="booking-dates">
+                                <strong>Dates:</strong> {{ message.booking.start_datetime.strftime('%b %d') }} - {{ message.booking.end_datetime.strftime('%b %d, %Y') }}
+                            </div>
+                            <div class="booking-status">
+                                <strong>Status:</strong> <span class="status-badge status-{{ message.booking.status }}">{{ message.booking.status|upper }}</span>
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+                
                 <div class="message-group {% if message.sender_id == current_user.id %}sent{% else %}received{% endif %}" 
                      data-message-id="{{ message.id }}">
                     
@@ -34,16 +59,21 @@
                         <!-- Received Message (Left - Cream) -->
                         <div class="message-bubble received">
                             <div class="bubble-avatar">
-                                {{ message.sender.name[0]|upper }}
+                                {% if message.sender.profile_image %}
+                                    <img src="{{ url_for('static', filename=message.sender.profile_image) }}" alt="{{ message.sender.full_name }}" class="avatar-img">
+                                {% else %}
+                                    {{ message.sender.full_name[0]|upper }}
+                                {% endif %}
                             </div>
                             <div class="bubble-content">
+                                <div class="bubble-name">{{ message.sender.full_name }}</div>
                                 <div class="bubble-text">
                                     {{ message.body }}
                                 </div>
                                 <div class="bubble-meta">
                                     <span class="timestamp">{{ message.created_at.strftime('%b %d, %H:%M') }}</span>
                                     {% if message.is_read %}
-                                        <span class="read-indicator">✓ Read</span>
+                                        <span class="read-indicator">✓ Seen</span>
                                     {% endif %}
                                 </div>
                             </div>
@@ -60,12 +90,16 @@
                                     {% if message.is_read %}
                                         <span class="read-indicator">✓✓ Read</span>
                                     {% else %}
-                                        <span class="delivery-indicator">✓ Sent</span>
+                                        <span class="delivery-indicator">✓ Delivered</span>
                                     {% endif %}
                                 </div>
                             </div>
                             <div class="bubble-avatar-sent">
-                                {{ current_user.name[0]|upper }}
+                                {% if current_user.profile_image %}
+                                    <img src="{{ url_for('static', filename=current_user.profile_image) }}" alt="{{ current_user.full_name }}" class="avatar-img">
+                                {% else %}
+                                    {{ current_user.full_name[0]|upper }}
+                                {% endif %}
                             </div>
                         </div>
                     {% endif %}
@@ -174,6 +208,14 @@
         justify-content: center;
         font-weight: 700;
         font-size: 18px;
+        overflow: hidden;
+        flex-shrink: 0;
+    }
+
+    .avatar-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
     }
 
     .title-info h1 {
@@ -253,6 +295,101 @@
         margin: 0;
     }
 
+    /* Booking Context Card */
+    .booking-context-card {
+        background: linear-gradient(135deg, #f8f9fa 0%, #fff 100%);
+        border-left: 4px solid #990000;
+        border-radius: 8px;
+        padding: 16px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        animation: slideDown 0.3s ease;
+    }
+
+    @keyframes slideDown {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .booking-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+    }
+
+    .booking-label {
+        font-size: 12px;
+        font-weight: 700;
+        color: #990000;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .booking-id {
+        font-size: 12px;
+        color: #999;
+        font-weight: 600;
+    }
+
+    .booking-details {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+    }
+
+    .booking-resource,
+    .booking-dates,
+    .booking-status {
+        font-size: 13px;
+        color: #333;
+    }
+
+    .booking-resource strong,
+    .booking-dates strong,
+    .booking-status strong {
+        color: #666;
+        font-weight: 600;
+        display: block;
+        margin-bottom: 4px;
+        font-size: 12px;
+    }
+
+    .status-badge {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 4px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+    }
+
+    .status-pending {
+        background-color: #fff3cd;
+        color: #856404;
+    }
+
+    .status-confirmed {
+        background-color: #d4edda;
+        color: #155724;
+    }
+
+    .status-completed {
+        background-color: #d1ecf1;
+        color: #0c5460;
+    }
+
+    .status-cancelled {
+        background-color: #f8d7da;
+        color: #721c24;
+    }
+
     /* Message Groups */
     .message-group {
         display: flex;
@@ -319,17 +456,31 @@
         font-size: 12px;
         font-weight: 700;
         flex-shrink: 0;
-        border: 1px solid transparent;
+        border: 2px solid transparent;
+        overflow: hidden;
+        position: relative;
     }
 
     .bubble-avatar {
         background-color: #E8E7E3;
         color: #333;
+        border-color: #E8E7E3;
     }
 
     .bubble-avatar-sent {
         background-color: #990000;
         color: #EEEDEB;
+        border-color: #990000;
+    }
+
+    .bubble-avatar .avatar-img,
+    .bubble-avatar-sent .avatar-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        position: absolute;
+        top: 0;
+        left: 0;
     }
 
     /* Bubble Content */
@@ -337,6 +488,13 @@
         display: flex;
         flex-direction: column;
         gap: 4px;
+    }
+
+    .bubble-name {
+        font-size: 12px;
+        font-weight: 600;
+        color: #666;
+        margin-bottom: 2px;
     }
 
     /* Received Bubble (Left - Cream) */
@@ -347,8 +505,9 @@
         border-radius: 16px 16px 16px 4px;
         word-wrap: break-word;
         box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
-        line-height: 1.4;
+        line-height: 1.45;
         font-size: 14px;
+        font-weight: 400;
     }
 
     .message-bubble.received .bubble-text:hover {
@@ -363,13 +522,14 @@
         padding: 12px 14px;
         border-radius: 16px 16px 4px 16px;
         word-wrap: break-word;
-        box-shadow: 0 1px 4px rgba(153, 0, 0, 0.2);
-        line-height: 1.4;
+        box-shadow: 0 1px 4px rgba(153, 0, 0, 0.25);
+        line-height: 1.45;
         font-size: 14px;
+        font-weight: 400;
     }
 
     .message-bubble.sent .bubble-text:hover {
-        background-color: #660000;
+        background-color: #770000;
         transition: background-color 0.2s ease;
     }
 
@@ -802,10 +962,14 @@ async function sendMessage(e) {
     statusDiv.className = 'message-status';
 
     try {
+        // Get CSRF token from meta tag
+        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        
         const response = await fetch('/messages/', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
             },
             body: JSON.stringify({
                 recipient_id: otherUserId,
@@ -843,6 +1007,7 @@ async function sendMessage(e) {
 // Mark messages as read
 async function markMessagesAsRead() {
     const messageElements = document.querySelectorAll('.message-group.received');
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
     
     for (let element of messageElements) {
         const messageId = element.dataset.messageId;
@@ -852,6 +1017,7 @@ async function markMessagesAsRead() {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken
                     }
                 });
             } catch (error) {

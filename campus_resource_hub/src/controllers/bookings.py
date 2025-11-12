@@ -46,86 +46,13 @@ def check_conflict(resource_id: int, start_time: datetime, end_time: datetime) -
 @login_required
 def dashboard():
     """
-    Admin dashboard - action-oriented view showing what needs attention NOW.
-    Focus: Pending approvals, active bookings, and current activity.
+    Redirect to the unified admin dashboard.
+    This route is deprecated in favor of /admin/dashboard which combines
+    all admin, bookings, and moderation functionality in one place.
     """
-    # Only admins and staff can access
-    if not current_user.is_admin() and not current_user.is_staff():
-        from flask import flash
-        flash('Access denied. Admin or staff access required.', 'error')
-        return redirect(url_for('resources.list_resources'))
-    
-    try:
-        from src.models import Resource, Booking
-        from src.extensions import db
-        from flask import flash
-        from sqlalchemy import func, desc
-        from datetime import timedelta
-        
-        now = datetime.now()
-        
-        # ACTION REQUIRED: Pending bookings (needs approval)
-        pending_bookings = BookingDAL.get_bookings_by_status('pending') or []
-        pending_bookings.sort(key=lambda b: b.created_at)  # Oldest first
-        
-        # CURRENTLY ACTIVE: Bookings happening right now
-        active_bookings = Booking.query.filter(
-            Booking.status == 'confirmed',
-            Booking.start_time <= now,
-            Booking.end_time >= now
-        ).order_by(Booking.start_time).all()
-        
-        # UPCOMING TODAY: Next bookings happening today
-        today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
-        today_end = today_start + timedelta(days=1)
-        upcoming_today = Booking.query.filter(
-            Booking.status == 'confirmed',
-            Booking.start_time > now,
-            Booking.start_time < today_end
-        ).order_by(Booking.start_time).limit(5).all()
-        
-        # POPULAR THIS WEEK: Resources with most bookings in last 7 days
-        week_ago = now - timedelta(days=7)
-        popular_resources = db.session.query(
-            Resource,
-            func.count(Booking.id).label('booking_count')
-        ).join(
-            Booking, Resource.id == Booking.resource_id
-        ).filter(
-            Booking.created_at >= week_ago,
-            Booking.status.in_(['confirmed', 'pending', 'completed'])
-        ).group_by(
-            Resource.id
-        ).order_by(
-            desc('booking_count')
-        ).limit(5).all()
-        
-        # Quick action counts
-        action_counts = {
-            'pending': len(pending_bookings),
-            'active_now': len(active_bookings),
-            'upcoming_today': len(upcoming_today),
-        }
-        
-        return render_template(
-            'bookings/dashboard.html',
-            pending_bookings=pending_bookings[:15],  # Show top 15 oldest
-            active_bookings=active_bookings,
-            upcoming_today=upcoming_today,
-            popular_resources=popular_resources,
-            action_counts=action_counts,
-            now=now
-        )
-        
-    except Exception as e:
-        import traceback
-        from flask import flash
-        print(f"=== DASHBOARD ERROR ===")
-        print(f"Error: {str(e)}")
-        traceback.print_exc()
-        print(f"======================")
-        flash(f'Dashboard error: {str(e)}', 'error')
-        return redirect(url_for('resources.list_resources'))
+    if current_user.is_admin() or current_user.is_staff():
+        return redirect(url_for('admin.dashboard'))
+    return redirect(url_for('bookings.list_bookings'))
 
 
 @bp.route('/')
@@ -703,7 +630,9 @@ Your reservation is confirmed. Please arrive on time for your booking.
 @login_required
 def cancel_booking_with_reason(booking_id):
     """
-    Cancel a booking with a reason (admin/staff only).
+    Cancel a booking with a reason.
+    - Students can cancel their own bookings
+    - Admins/staff can cancel any booking with a denial reason
     
     Returns:
         200: Cancelled booking
@@ -715,27 +644,38 @@ def cancel_booking_with_reason(booking_id):
         if not booking:
             return jsonify({'success': False, 'error': 'Booking not found'}), 404
         
-        # Only admin and staff can deny/cancel pending bookings
-        if not (current_user.is_admin() or current_user.is_staff()):
-            return jsonify({'success': False, 'error': 'Only admins and staff can cancel pending bookings'}), 403
+        # Check authorization: allow owner or admin/staff
+        is_owner = booking.user_id == current_user.id
+        is_admin_or_staff = current_user.is_admin() or current_user.is_staff()
         
-        data = request.get_json() or {}
+        if not (is_owner or is_admin_or_staff):
+            return jsonify({'success': False, 'error': 'You can only cancel your own bookings'}), 403
+        
+        # Get JSON data (optional for student cancellations)
+        try:
+            data = request.get_json(force=False, silent=True) or {}
+        except Exception:
+            data = {}
         reason = data.get('reason', 'No reason provided')
         
         # Cancel the booking
         cancelled_booking = BookingDAL.cancel_booking(booking_id)
         
-        # Store denial reason
+        # Store cancellation reason and who cancelled it
         cancelled_booking.cancellation_reason = reason
         cancelled_booking.cancelled_by_id = current_user.id
         from src.extensions import db
         db.session.commit()
         
-        # Send in-app notification to student
+        # Send in-app notification
         try:
             from src.data_access.message_dal import MessageDAL
-            notification_subject = f"Booking Denied: {booking.resource.name}"
-            notification_body = f"""
+            
+            # Different notification based on who cancelled
+            if is_admin_or_staff and not is_owner:
+                # Admin/staff denying a booking
+                notification_subject = f"Booking Denied: {booking.resource.name}"
+                notification_body = f"""
 Your booking for {booking.resource.name} has been denied.
 
 Booking Details:
@@ -746,7 +686,20 @@ Booking Details:
 Reason for denial: {reason}
 
 Please contact the resource administrator if you have questions.
-            """.strip()
+                """.strip()
+            else:
+                # Student cancelling their own booking
+                notification_subject = f"Booking Cancelled: {booking.resource.name}"
+                notification_body = f"""
+You have successfully cancelled your booking for {booking.resource.name}.
+
+Booking Details:
+- Resource: {booking.resource.name}
+- Date: {booking.start_time.strftime('%B %d, %Y')}
+- Time: {booking.start_time.strftime('%I:%M %p')} - {booking.end_time.strftime('%I:%M %p')}
+
+The resource is now available for other students to book.
+                """.strip()
             
             MessageDAL.create_message(
                 sender_id=current_user.id,

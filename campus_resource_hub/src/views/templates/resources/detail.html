@@ -13,6 +13,430 @@
             padding: var(--space-2xl);
         }
 
+        /* Report Modal Styles */
+        .report-modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .report-modal-overlay.active {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideUp {
+            from { 
+                transform: translateY(30px);
+                opacity: 0;
+            }
+            to { 
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .report-modal {
+            background: white;
+            border-radius: var(--radius-xl);
+            padding: var(--space-2xl);
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            animation: slideUp 0.3s ease;
+        }
+
+        .report-modal h2 {
+            color: var(--iu-crimson);
+            margin: 0 0 var(--space-md) 0;
+            font-size: 24px;
+        }
+
+        .report-modal p {
+            color: #666;
+            margin: 0 0 var(--space-lg) 0;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .report-modal textarea {
+            width: 100%;
+            min-height: 120px;
+            padding: var(--space-md);
+            border: 2px solid #e0e0e0;
+            border-radius: var(--radius-md);
+            font-family: inherit;
+            font-size: 14px;
+            resize: vertical;
+            box-sizing: border-box;
+            transition: border-color 0.3s ease;
+        }
+
+        .report-modal textarea:focus {
+            outline: none;
+            border-color: var(--iu-crimson);
+        }
+
+        .report-modal-actions {
+            display: flex;
+            gap: var(--space-md);
+            margin-top: var(--space-xl);
+            justify-content: flex-end;
+        }
+
+        .report-modal button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: var(--radius-md);
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .report-modal .btn-cancel {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .report-modal .btn-cancel:hover {
+            background: #e0e0e0;
+        }
+
+        .report-modal .btn-submit {
+            background: var(--iu-crimson);
+            color: white;
+        }
+
+        .report-modal .btn-submit:hover:not(:disabled) {
+            background: #8b2635;
+        }
+
+        .report-modal .btn-submit:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Review Success Modal Styles */
+        .review-success-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 1001;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .review-success-modal.active {
+            display: flex;
+        }
+
+        .review-success-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            cursor: pointer;
+        }
+
+        .review-success-content {
+            position: relative;
+            background: white;
+            border-radius: var(--radius-2xl);
+            padding: 60px 40px;
+            max-width: 420px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
+            animation: slideUp 0.4s ease-out;
+        }
+
+        .review-success-icon {
+            font-size: 64px;
+            margin-bottom: var(--space-lg);
+            animation: scaleIn 0.5s ease-out;
+        }
+
+        @keyframes scaleIn {
+            from {
+                transform: scale(0);
+                opacity: 0;
+            }
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .review-success-content h2 {
+            color: var(--iu-crimson);
+            font-size: 28px;
+            margin: 0 0 var(--space-md) 0;
+            font-weight: 700;
+        }
+
+        .review-success-content > p {
+            color: #333;
+            font-size: 16px;
+            margin: 0 0 var(--space-lg) 0;
+            font-weight: 500;
+        }
+
+        .review-success-message {
+            background: #f0f8ff;
+            border-left: 4px solid var(--iu-crimson);
+            padding: var(--space-md) var(--space-lg);
+            border-radius: var(--radius-md);
+            margin-bottom: var(--space-xl);
+            text-align: left;
+        }
+
+        .review-success-message p {
+            margin: 0;
+            color: #555;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--iu-crimson) 0%, #8b2635 100%);
+            color: white;
+            padding: 12px 32px;
+            border: none;
+            border-radius: var(--radius-lg);
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 150px;
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(153, 0, 0, 0.3);
+        }
+
+        /* Message Modal Styles */
+        .message-modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1001;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .message-modal-overlay.active {
+            display: flex;
+        }
+
+        .message-modal {
+            background: white;
+            border-radius: var(--radius-xl);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            max-width: 500px;
+            width: 90%;
+            display: flex;
+            flex-direction: column;
+            max-height: 80vh;
+            animation: slideUp 0.3s ease;
+        }
+
+        .message-modal-header {
+            padding: var(--space-lg);
+            border-bottom: 1px solid #f0f0f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .message-modal-header h2 {
+            margin: 0;
+            color: var(--iu-crimson);
+            font-size: 20px;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: #999;
+            cursor: pointer;
+            padding: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+
+        .close-btn:hover {
+            background-color: #f0f0f0;
+            color: #333;
+        }
+
+        .message-modal-body {
+            padding: var(--space-lg);
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .recipient-info {
+            display: flex;
+            gap: var(--space-md);
+            margin-bottom: var(--space-xl);
+            padding: var(--space-md);
+            background: #f9f9f9;
+            border-radius: var(--radius-md);
+            align-items: center;
+        }
+
+        .recipient-avatar {
+            width: 48px;
+            height: 48px;
+            min-width: 48px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--iu-crimson), #cc0000);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 18px;
+        }
+
+        .recipient-name {
+            font-weight: 600;
+            color: #333;
+            font-size: 14px;
+        }
+
+        .recipient-resource {
+            color: #999;
+            font-size: 12px;
+            margin-top: 2px;
+        }
+
+        .form-group {
+            margin-bottom: var(--space-lg);
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: var(--space-sm);
+            font-weight: 600;
+            color: #333;
+            font-size: 14px;
+        }
+
+        .form-group textarea {
+            width: 100%;
+            padding: var(--space-md);
+            border: 2px solid #e0e0e0;
+            border-radius: var(--radius-md);
+            font-family: inherit;
+            font-size: 14px;
+            resize: vertical;
+            box-sizing: border-box;
+            transition: all 0.2s ease;
+        }
+
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--iu-crimson);
+            box-shadow: 0 0 0 3px rgba(153, 0, 0, 0.1);
+        }
+
+        .char-count {
+            font-size: 12px;
+            color: #999;
+            margin-top: 4px;
+            text-align: right;
+        }
+
+        .message-modal-footer {
+            padding: var(--space-lg);
+            border-top: 1px solid #f0f0f0;
+            display: flex;
+            gap: var(--space-md);
+            justify-content: flex-end;
+        }
+
+        .btn-cancel, .btn-send {
+            padding: 10px 20px;
+            border: none;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-cancel {
+            background-color: #f0f0f0;
+            color: #333;
+        }
+
+        .btn-cancel:hover {
+            background-color: #e0e0e0;
+        }
+
+        .btn-send {
+            background: linear-gradient(135deg, var(--iu-crimson) 0%, #8b2635 100%);
+            color: white;
+            min-width: 120px;
+        }
+
+        .btn-send:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(153, 0, 0, 0.3);
+        }
+
+        .btn-send:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .message-status {
+            padding: 0 var(--space-lg) var(--space-sm);
+            font-size: 13px;
+            min-height: 16px;
+            text-align: center;
+        }
+
+        .message-status.success {
+            color: #28a745;
+        }
+
+        .message-status.error {
+            color: #dc3545;
+        }
+
         /* Breadcrumb */
         .breadcrumb {
             display: flex;
@@ -446,11 +870,6 @@
             transition: all 0.2s ease;
         }
 
-        .review-item.flagged {
-            border-left-color: #ff9800;
-            background-color: #fff8f5;
-        }
-
         .review-item:last-child {
             border-bottom: none;
         }
@@ -753,6 +1172,9 @@
                 <a href="{{ url_for('bookings.booking_form', resource_id=resource.id) }}" class="btn-primary">
                     📅 Book This Resource
                 </a>
+                <button onclick="openMessageModal({{ resource.creator_id }}, '{{ resource.creator.full_name }}', '{{ resource.name }}')" class="btn-secondary" style="background: white; border: 2px solid var(--iu-crimson); color: var(--iu-crimson); cursor: pointer;">
+                    💬 Message Owner
+                </button>
                 <a href="{{ url_for('bookings.list_bookings') }}" class="btn-secondary">
                     View My Bookings
                 </a>
@@ -765,6 +1187,59 @@
                 </p>
                 {% endif %}
             </div>
+        </div>
+    </div>
+
+    <!-- Message Owner Modal -->
+    <div id="messageModal" class="message-modal-overlay">
+        <div class="message-modal">
+            <div class="message-modal-header">
+                <h2>Message Resource Owner</h2>
+                <button onclick="closeMessageModal()" class="close-btn">✕</button>
+            </div>
+            <div class="message-modal-body">
+                <div class="recipient-info">
+                    <span class="recipient-avatar" id="recipientAvatar">A</span>
+                    <div>
+                        <div class="recipient-name" id="recipientName">Resource Owner</div>
+                        <div class="recipient-resource" id="recipientResource">Resource Name</div>
+                    </div>
+                </div>
+                <form id="messageForm">
+                    <div class="form-group">
+                        <label for="messageText">Your Message</label>
+                        <textarea 
+                            id="messageText" 
+                            name="body" 
+                            placeholder="Type your message here..." 
+                            rows="5"
+                            maxlength="5000"
+                            required></textarea>
+                        <div class="char-count">
+                            <span id="charCount">0</span>/5000
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="message-modal-footer">
+                <button onclick="closeMessageModal()" class="btn-cancel">Cancel</button>
+                <button onclick="sendResourceMessage()" class="btn-send">Send Message</button>
+            </div>
+            <div class="message-status" id="messageStatus"></div>
+        </div>
+    </div>
+
+    <!-- Review Success Modal -->
+    <div id="reviewSuccessModal" class="review-success-modal">
+        <div class="review-success-overlay" onclick="closeReviewSuccessModal()"></div>
+        <div class="review-success-content">
+            <div class="review-success-icon">✓</div>
+            <h2>Thank You!</h2>
+            <p>Your review has been submitted successfully.</p>
+            <div class="review-success-message">
+                <p>We appreciate your feedback! Your review helps other students and faculty find the best resources.</p>
+            </div>
+            <button class="btn btn-success" onclick="closeReviewSuccessModal()">Great!</button>
         </div>
     </div>
 
@@ -832,14 +1307,15 @@
                         <span style="color: #999; font-size: 13px; margin-left: 8px;">{{ review.rating }} / 5</span>
                     </div>
                     <div class="review-text">{{ review.comment }}</div>
-                    {% if review.is_flagged %}
-                    <div style="margin-top: var(--space-md); padding: var(--space-sm); background: #fff3e0; border-left: 3px solid #ff9800; border-radius: 3px; font-size: 13px; color: #e65100;">
-                        ⚠️ This review has been flagged for moderation
+                    {% if review.is_flagged and current_user.is_authenticated and current_user.is_admin %}
+                    <div style="margin-top: var(--space-md); padding: 12px 16px; background: linear-gradient(135deg, #fff3e0 0%, #ffebee 100%); border-left: 4px solid #ff9800; border-radius: 6px; font-size: 13px; color: #e65100; font-weight: 500; display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 16px;">⚠️</span>
+                        <span>This review has been flagged for moderation and is pending review</span>
                     </div>
                     {% endif %}
                     <div class="review-actions">
                         {% if current_user.is_authenticated %}
-                        <button type="button" class="btn-flag-review {% if review.is_flagged %}flagged{% endif %}" onclick="openFlagModal({{ review.id }})">
+                        <button type="button" class="btn-flag-review" onclick="reportReview({{ review.id }}); return false;">
                             🚩 Report
                         </button>
                         {% endif %}
@@ -914,13 +1390,13 @@ document.getElementById('review-form').addEventListener('submit', function(e) {
     
     const rating = document.querySelector('input[name="rating"]:checked');
     if (!rating) {
-        alert('Please select a rating');
+        showErrorToast('Please select a rating');
         return false;
     }
     
     const comment = document.getElementById('review-comment').value.trim();
     if (!comment || comment.length < 5) {
-        alert('Please enter a review of at least 5 characters');
+        showErrorToast('Please enter a review of at least 5 characters');
         return false;
     }
     
@@ -944,39 +1420,375 @@ document.getElementById('review-form').addEventListener('submit', function(e) {
     .then(response => response.json())
     .then(result => {
         if (result.status === 'success') {
-            alert('Review submitted successfully!');
+            // Show success modal
+            showReviewSuccessModal();
+            
             // Reset form
             document.getElementById('review-form').reset();
             // Reset star colors
             document.querySelectorAll('.star').forEach(s => {
                 s.style.color = '#ddd';
             });
-            // Reload page to show new review
-            location.reload();
+            
+            // Reload page after modal is closed (3 seconds)
+            setTimeout(() => {
+                location.reload();
+            }, 3000);
         } else {
-            alert('Error: ' + result.message);
+            showErrorToast('Error: ' + result.message);
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('Error submitting review. Please try again.');
+        showErrorToast('Error submitting review. Please try again.');
     });
 });
+
+// Review Success Modal Functions
+function showReviewSuccessModal() {
+    const modal = document.getElementById('reviewSuccessModal');
+    if (modal) {
+        modal.classList.add('active');
+    }
+}
+
+function closeReviewSuccessModal() {
+    const modal = document.getElementById('reviewSuccessModal');
+    if (modal) {
+        modal.classList.remove('active');
+    }
+}
+
+// Message Modal Functions
+function openMessageModal(creatorId, creatorName, resourceName) {
+    const modal = document.getElementById('messageModal');
+    const textarea = document.getElementById('messageText');
+    const charCount = document.getElementById('charCount');
+    
+    // Set recipient info
+    document.getElementById('recipientAvatar').textContent = creatorName[0].toUpperCase();
+    document.getElementById('recipientName').textContent = creatorName;
+    document.getElementById('recipientResource').textContent = 'About: ' + resourceName;
+    
+    // Store creator ID for later
+    modal.dataset.creatorId = creatorId;
+    
+    // Reset form
+    textarea.value = '';
+    charCount.textContent = '0';
+    document.getElementById('messageStatus').textContent = '';
+    document.getElementById('messageStatus').className = 'message-status';
+    
+    // Show modal
+    if (modal) {
+        modal.classList.add('active');
+    }
+}
+
+function closeMessageModal() {
+    const modal = document.getElementById('messageModal');
+    if (modal) {
+        modal.classList.remove('active');
+    }
+}
+
+// Message form character counter
+document.addEventListener('DOMContentLoaded', function() {
+    const textarea = document.getElementById('messageText');
+    if (textarea) {
+        textarea.addEventListener('input', function() {
+            document.getElementById('charCount').textContent = this.value.length;
+        });
+    }
+});
+
+// Send message from modal
+async function sendResourceMessage() {
+    const modal = document.getElementById('messageModal');
+    const textarea = document.getElementById('messageText');
+    const statusDiv = document.getElementById('messageStatus');
+    const sendBtn = event.target;
+    const creatorId = modal.dataset.creatorId;
+    const message = textarea.value.trim();
+    
+    // Validation
+    if (!message) {
+        statusDiv.textContent = '❌ Message cannot be empty';
+        statusDiv.className = 'message-status error';
+        return;
+    }
+    
+    if (!creatorId) {
+        statusDiv.textContent = '❌ Error: Creator ID not found';
+        statusDiv.className = 'message-status error';
+        return;
+    }
+    
+    // Get CSRF token from meta tag
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+    
+    // Disable button and show status
+    sendBtn.disabled = true;
+    statusDiv.textContent = '⏳ Sending message...';
+    statusDiv.className = 'message-status';
+    
+    try {
+        const response = await fetch('/messages/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify({
+                recipient_id: parseInt(creatorId),
+                body: message,
+                subject: 'Message about a resource'
+            })
+        });
+        
+        if (response.ok) {
+            const result = await response.json();
+            statusDiv.textContent = '✓ Message sent successfully!';
+            statusDiv.className = 'message-status success';
+            
+            // Close modal after a short delay
+            setTimeout(() => {
+                closeMessageModal();
+                showSuccessToast('Your message has been sent to the resource owner');
+            }, 1000);
+        } else {
+            const error = await response.json();
+            statusDiv.textContent = '❌ Failed to send: ' + (error.error || 'Unknown error');
+            statusDiv.className = 'message-status error';
+            sendBtn.disabled = false;
+        }
+    } catch (error) {
+        console.error('Error sending message:', error);
+        statusDiv.textContent = '❌ Network error. Please try again.';
+        statusDiv.className = 'message-status error';
+        sendBtn.disabled = false;
+    }
+}
+
+// Close modal when clicking outside
+document.addEventListener('click', function(e) {
+    const modal = document.getElementById('messageModal');
+    if (modal && e.target === modal) {
+        closeMessageModal();
+    }
+});
+
+// Toast Notification Functions
+function showSuccessToast(message) {
+    const toast = document.createElement('div');
+    toast.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+        padding: 16px 24px;
+        border-radius: 8px;
+        box-shadow: 0 10px 25px rgba(16, 185, 129, 0.3);
+        z-index: 9999;
+        font-size: 14px;
+        font-weight: 500;
+        max-width: 400px;
+        opacity: 0;
+        transform: translateX(400px);
+        transition: all 0.3s ease;
+    `;
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.style.opacity = '1';
+        toast.style.transform = 'translateX(0)';
+    }, 10);
+    
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(400px)';
+        setTimeout(() => toast.remove(), 300);
+    }, 4000);
+}
+
+function showErrorToast(message) {
+    const toast = document.createElement('div');
+    toast.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        color: white;
+        padding: 16px 24px;
+        border-radius: 8px;
+        box-shadow: 0 10px 25px rgba(239, 68, 68, 0.3);
+        z-index: 9999;
+        font-size: 14px;
+        font-weight: 500;
+        max-width: 400px;
+        opacity: 0;
+        transform: translateX(400px);
+        transition: all 0.3s ease;
+    `;
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.style.opacity = '1';
+        toast.style.transform = 'translateX(0)';
+    }, 10);
+    
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(400px)';
+        setTimeout(() => toast.remove(), 300);
+    }, 4000);
+}
+
+// Report Modal Management
+let currentReportReviewId = null;
+
+function openReportModal(reviewId) {
+    if (!reviewId) {
+        showErrorToast('Error: Could not identify the review. Please refresh the page and try again.');
+        console.error('openReportModal called with invalid reviewId:', reviewId);
+        return;
+    }
+    
+    currentReportReviewId = reviewId;
+    const modal = document.querySelector('.report-modal-overlay');
+    
+    if (!modal) {
+        showErrorToast('Error: Report modal not found on page.');
+        console.error('Report modal overlay not found');
+        return;
+    }
+    
+    const textarea = document.querySelector('#report-reason-textarea');
+    const checkboxes = document.querySelectorAll('.report-reason-checkbox');
+    
+    // Reset form
+    if (textarea) textarea.value = '';
+    checkboxes.forEach(cb => cb.checked = false);
+    
+    modal.classList.add('active');
+    if (textarea) textarea.focus();
+}
+
+function closeReportModal() {
+    const modal = document.querySelector('.report-modal-overlay');
+    if (modal) {
+        modal.classList.remove('active');
+    }
+    // Don't reset currentReportReviewId here - it might still be needed
+}
+
+function submitReport() {
+    // Validate that we have a review ID
+    if (!currentReportReviewId) {
+        showErrorToast('Error: Review ID not found. Please try again.');
+        closeReportModal();
+        return;
+    }
+    
+    // Get selected checkboxes
+    const checkboxes = document.querySelectorAll('.report-reason-checkbox:checked');
+    const selectedReasons = Array.from(checkboxes).map(cb => cb.value);
+    const textarea = document.querySelector('#report-reason-textarea');
+    const additionalDetails = textarea.value.trim();
+    
+    // Must select at least one reason
+    if (selectedReasons.length === 0) {
+        showErrorToast('Please select at least one reason for reporting this review');
+        return;
+    }
+    
+    // Build the reason string
+    let reason = selectedReasons.join(', ');
+    if (additionalDetails) {
+        reason += ' | ' + additionalDetails;
+    }
+    
+    // Store reviewId before closing modal (don't close yet - let submitReportToServer close it)
+    const reviewId = currentReportReviewId;
+    submitReportToServer(reviewId, reason);
+}
+
+// Report Review Function
+async function reportReview(reviewId) {
+    openReportModal(reviewId);
+}
+
+async function submitReportToServer(reviewId, reason) {
+    if (!reviewId) {
+        showErrorToast('Error: Review ID is missing. Please try again.');
+        console.error('submitReportToServer called with invalid reviewId:', reviewId);
+        closeReportModal();
+        return;
+    }
+
+    try {
+        const csrfTokenElement = document.querySelector('input[name="csrf_token"]');
+        if (!csrfTokenElement) {
+            showErrorToast('Error: CSRF token not found. Please refresh the page and try again.');
+            console.error('CSRF token element not found');
+            closeReportModal();
+            return;
+        }
+
+        const response = await fetch(`/reviews/${reviewId}/flag`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfTokenElement.value
+            },
+            body: JSON.stringify({ reason: reason })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            showSuccessToast('👍 Thanks for letting us know! This comment has been sent to an administrator for review.');
+            closeReportModal();
+            
+            // Update button state
+            const reviewElement = document.querySelector(`[data-review-id="${reviewId}"]`);
+            if (reviewElement) {
+                const reportBtn = reviewElement.querySelector('.btn-flag-review');
+                if (reportBtn) {
+                    reportBtn.disabled = true;
+                    reportBtn.textContent = '✓ Reported';
+                    reportBtn.style.opacity = '0.5';
+                }
+            }
+        } else {
+            showErrorToast(data.message || 'Failed to report review');
+            closeReportModal();
+        }
+    } catch (error) {
+        console.error('Error reporting review:', error);
+        showErrorToast('An error occurred while reporting the review. Please try again.');
+        closeReportModal();
+    }
+}
 
 // Review flagging functionality
 let currentReviewId = null;
 
+// Old flag modal functions - replaced with direct reportReview() function above
 function openFlagModal(reviewId) {
-    currentReviewId = reviewId;
-    document.getElementById('flagModal').classList.add('active');
+    // No longer used - reportReview() is called directly instead
 }
 
 function closeFlagModal() {
-    document.getElementById('flagModal').classList.remove('active');
-    currentReviewId = null;
-    document.getElementById('flagForm').reset();
+    // No longer used
 }
 
+// Old flagForm submit handler - replaced with reportReview() function
+// (keeping this commented out for reference, but it's no longer needed)
+/*
 document.getElementById('flagForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     
@@ -999,7 +1811,7 @@ document.getElementById('flagForm').addEventListener('submit', async (e) => {
         const result = await response.json();
         
         if (result.success) {
-            alert('Thank you for reporting this review. Our moderation team will review it.');
+            showSuccessToast('👍 Thanks for letting us know! This comment has been sent to an administrator for review.');
             closeFlagModal();
             // Update the button to show it's flagged
             const reviewItem = document.querySelector(`[data-review-id="${currentReviewId}"]`);
@@ -1019,55 +1831,72 @@ document.getElementById('flagForm').addEventListener('submit', async (e) => {
     }
 });
 
+
+
 // Close modal when clicking outside
-document.getElementById('flagModal').addEventListener('click', (e) => {
-    if (e.target.id === 'flagModal') {
-        closeFlagModal();
+document.querySelector('.report-modal-overlay').addEventListener('click', (e) => {
+    if (e.target.classList.contains('report-modal-overlay')) {
+        closeReportModal();
     }
 });
+
+// Handle Enter key to submit
+document.querySelector('#report-reason-textarea').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && e.ctrlKey) {
+        submitReport();
+    }
+});
+*/
 </script>
 
-<!-- Flag Review Modal -->
-<div id="flagModal" class="flag-modal">
-    <div class="flag-modal-content">
-        <div class="flag-modal-header">Report This Review</div>
-        <form id="flagForm" class="flag-modal-form">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<!-- Report Review Modal -->
+<div class="report-modal-overlay" id="reportModalOverlay">
+    <div class="report-modal">
+        <h2>Report This Review</h2>
+        <p>Help us keep our community positive. Select one or more reasons below and optionally add details.</p>
+        
+        <div style="margin-bottom: var(--space-lg);">
+            <p style="font-weight: 600; color: #333; margin-bottom: var(--space-md); font-size: 14px;">What's wrong with this review?</p>
             
-            <div class="flag-reason-group">
-                <label>
-                    <input type="radio" name="flag_reason" value="inappropriate" required>
-                    Inappropriate content
+            <div style="display: flex; flex-direction: column; gap: var(--space-md);">
+                <label style="display: flex; align-items: center; gap: var(--space-md); cursor: pointer; font-size: 14px;">
+                    <input type="checkbox" class="report-reason-checkbox" value="inappropriate" style="cursor: pointer;">
+                    <span>Inappropriate or offensive content</span>
                 </label>
-                <label>
-                    <input type="radio" name="flag_reason" value="spam">
-                    Spam or advertisement
+                
+                <label style="display: flex; align-items: center; gap: var(--space-md); cursor: pointer; font-size: 14px;">
+                    <input type="checkbox" class="report-reason-checkbox" value="spam" style="cursor: pointer;">
+                    <span>Spam or advertisement</span>
                 </label>
-                <label>
-                    <input type="radio" name="flag_reason" value="off_topic">
-                    Off-topic or not a review
+                
+                <label style="display: flex; align-items: center; gap: var(--space-md); cursor: pointer; font-size: 14px;">
+                    <input type="checkbox" class="report-reason-checkbox" value="harassment" style="cursor: pointer;">
+                    <span>Harassment or bullying</span>
                 </label>
-                <label>
-                    <input type="radio" name="flag_reason" value="harassment">
-                    Harassment or abuse
+                
+                <label style="display: flex; align-items: center; gap: var(--space-md); cursor: pointer; font-size: 14px;">
+                    <input type="checkbox" class="report-reason-checkbox" value="misinformation" style="cursor: pointer;">
+                    <span>False or misleading information</span>
                 </label>
-                <label>
-                    <input type="radio" name="flag_reason" value="misinformation">
-                    Misinformation or false claims
+                
+                <label style="display: flex; align-items: center; gap: var(--space-md); cursor: pointer; font-size: 14px;">
+                    <input type="checkbox" class="report-reason-checkbox" value="off_topic" style="cursor: pointer;">
+                    <span>Off-topic or not a real review</span>
                 </label>
             </div>
-            
-            <div>
-                <label for="flag-additional-info" style="font-size: 14px; color: #666; display: block; margin-bottom: 6px;">Additional details (optional)</label>
-                <textarea id="flag-additional-info" name="additional_info" placeholder="Provide any additional context..." maxlength="500" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 13px; font-family: inherit; resize: vertical; min-height: 60px;"></textarea>
-            </div>
-            
-            <div class="flag-modal-buttons">
-                <button type="button" class="btn-cancel" onclick="closeFlagModal()">Cancel</button>
-                <button type="submit" class="btn-submit">Submit Report</button>
-            </div>
-        </form>
+        </div>
+        
+        <div style="margin-bottom: var(--space-lg);">
+            <p style="font-weight: 600; color: #333; margin-bottom: var(--space-md); font-size: 14px;">Additional details (optional)</p>
+            <textarea id="report-reason-textarea" placeholder="Add any extra context that might help the moderation team..." maxlength="500" style="resize: vertical; min-height: 80px;"></textarea>
+        </div>
+        
+        <div class="report-modal-actions">
+            <button type="button" class="btn-cancel" onclick="closeReportModal()">Cancel</button>
+            <button type="button" class="btn-submit" onclick="submitReport()">Submit Report</button>
+        </div>
     </div>
 </div>
 
 {% endblock %}
+

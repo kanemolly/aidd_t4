@@ -135,9 +135,9 @@ def login():
                     if next_page and next_page.startswith('/'):
                         return redirect(next_page)
                     
-                    # Admins and staff go to dashboard, students to resources
+                    # Admins and staff go to unified admin dashboard, students to resources
                     if user.is_admin() or user.is_staff():
-                        return redirect(url_for('bookings.dashboard'))
+                        return redirect(url_for('admin.dashboard'))
                     return redirect(url_for('resources.list_resources'))
             
             flash('Invalid username or password.', 'error')
@@ -166,6 +166,22 @@ def logout():
 @login_required
 def profile():
     """View user profile."""
+    from src.extensions import db
+    from sqlalchemy import text
+    
+    # Debug: Check what's in the database
+    result = db.session.execute(
+        text("SELECT id, username, profile_image FROM users WHERE id = :user_id"),
+        {"user_id": current_user.id}
+    ).fetchone()
+    print(f"[PROFILE VIEW] Database has for user {current_user.id}: profile_image = {result[2] if result else 'None'}")
+    
+    # Refresh current_user to get latest data from database
+    db.session.expire_all()
+    db.session.refresh(current_user)
+    
+    print(f"[PROFILE VIEW] current_user.profile_image after refresh: {current_user.profile_image}")
+    
     return render_template('auth/profile.html', user=current_user)
 
 
@@ -249,15 +265,9 @@ def upload_profile_picture():
     """Upload profile picture."""
     import os
     from werkzeug.utils import secure_filename
-    from flask_wtf.csrf import validate_csrf
-    from wtforms import ValidationError
+    from flask import current_app
     
-    # Manually validate CSRF token for multipart/form-data
-    try:
-        validate_csrf(request.form.get('csrf_token'))
-    except ValidationError:
-        flash('Invalid CSRF token. Please try again.', 'error')
-        return redirect(url_for('auth.profile'))
+    # CSRF is automatically validated by Flask-WTF for POST requests
     
     if 'profile_picture' not in request.files:
         flash('No file selected.', 'error')
@@ -276,29 +286,89 @@ def upload_profile_picture():
         flash('Invalid file type. Please upload a PNG, JPG, JPEG, or GIF image.', 'error')
         return redirect(url_for('auth.profile'))
     
-    # Create uploads directory if it doesn't exist
-    upload_folder = os.path.join('static', 'uploads', 'profiles')
-    os.makedirs(upload_folder, exist_ok=True)
-    
-    # Generate unique filename
-    ext = filename.rsplit('.', 1)[1].lower()
-    new_filename = f"user_{current_user.id}_{datetime.utcnow().strftime('%Y%m%d%H%M%S')}.{ext}"
-    filepath = os.path.join(upload_folder, new_filename)
+    # Validate file size (5MB max)
+    file.seek(0, os.SEEK_END)
+    file_length = file.tell()
+    if file_length > 5 * 1024 * 1024:  # 5MB in bytes
+        flash('File too large. Maximum size is 5MB.', 'error')
+        return redirect(url_for('auth.profile'))
+    file.seek(0)  # Reset file pointer
     
     try:
+        # Get the absolute path to the static folder
+        static_folder = current_app.static_folder
+        upload_folder = os.path.join(static_folder, 'uploads', 'profiles')
+        
+        print(f"[PROFILE PIC UPLOAD] Current working directory: {os.getcwd()}")
+        print(f"[PROFILE PIC UPLOAD] App root path: {current_app.root_path}")
+        print(f"[PROFILE PIC UPLOAD] Static folder: {static_folder}")
+        print(f"[PROFILE PIC UPLOAD] Upload folder: {upload_folder}")
+        print(f"[PROFILE PIC UPLOAD] Upload folder exists: {os.path.exists(upload_folder)}")
+        
+        # Create uploads directory if it doesn't exist
+        os.makedirs(upload_folder, exist_ok=True)
+        print(f"[PROFILE PIC UPLOAD] Upload folder created/verified")
+        
+        # Generate unique filename
+        ext = filename.rsplit('.', 1)[1].lower()
+        new_filename = f"user_{current_user.id}_{datetime.utcnow().strftime('%Y%m%d%H%M%S')}.{ext}"
+        filepath = os.path.join(upload_folder, new_filename)
+        
+        print(f"[PROFILE PIC UPLOAD] Full file path: {filepath}")
+        print(f"[PROFILE PIC UPLOAD] File path is absolute: {os.path.isabs(filepath)}")
+        
         # Save file
         file.save(filepath)
+        print(f"[PROFILE PIC UPLOAD] File.save() completed")
         
-        # Update user profile
+        # Verify file was saved
+        if os.path.exists(filepath):
+            file_size = os.path.getsize(filepath)
+            print(f"[PROFILE PIC UPLOAD] ✓ File saved successfully! Size: {file_size} bytes")
+            print(f"[PROFILE PIC UPLOAD] ✓ File exists at: {filepath}")
+        else:
+            print(f"[PROFILE PIC UPLOAD] ✗ File NOT found at: {filepath}")
+            raise Exception("File was not saved to disk")
+        
+        # Update user profile (store relative path from static folder)
         profile_image_path = f"uploads/profiles/{new_filename}"
-        UserDAL.update_user(user_id=current_user.id, profile_image=profile_image_path)
+        print(f"[PROFILE PIC UPLOAD] Updating user {current_user.id} with path: {profile_image_path}")
         
-        flash('Profile picture updated successfully!', 'success')
+        from src.extensions import db
+        
+        try:
+            # Update via DAL
+            updated_user = UserDAL.update_user(user_id=current_user.id, profile_image=profile_image_path)
+            print(f"[PROFILE PIC UPLOAD] UserDAL.update_user returned successfully")
+            print(f"[PROFILE PIC UPLOAD] Updated user profile_image in DB: {updated_user.profile_image}")
+            
+            # Force commit to ensure changes are saved
+            db.session.commit()
+            print(f"[PROFILE PIC UPLOAD] Session committed")
+            
+            # Verify in database
+            from sqlalchemy import text
+            result = db.session.execute(
+                text("SELECT profile_image FROM users WHERE id = :user_id"),
+                {"user_id": current_user.id}
+            ).fetchone()
+            print(f"[PROFILE PIC UPLOAD] Direct DB query result: {result[0] if result else 'None'}")
+            
+        except Exception as dal_error:
+            print(f"[PROFILE PIC UPLOAD ERROR] UserDAL.update_user failed: {dal_error}")
+            import traceback
+            traceback.print_exc()
+            raise
+        
+        flash('Profile picture updated successfully! Refresh the page to see your new picture.', 'success')
         return redirect(url_for('auth.profile'))
     
     except Exception as e:
-        print(f"Error uploading profile picture: {type(e).__name__}: {str(e)}")
-        flash(f'An error occurred while uploading your picture: {str(e)}', 'error')
+        import traceback
+        error_trace = traceback.format_exc()
+        print(f"[PROFILE PIC UPLOAD ERROR] {type(e).__name__}: {str(e)}")
+        print(error_trace)
+        flash(f'An error occurred while uploading your picture. Please try again.', 'error')
         return redirect(url_for('auth.profile'))
 
 

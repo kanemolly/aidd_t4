@@ -226,10 +226,14 @@
 <script>
 function approveBooking(bookingId) {
     if (confirm('Approve this booking?')) {
+        // Get CSRF token from meta tag
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+        
         fetch(`/bookings/${bookingId}/confirm`, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
             }
         })
         .then(response => response.json())
@@ -250,10 +254,14 @@ function approveBooking(bookingId) {
 
 function rejectBooking(bookingId) {
     if (confirm('Reject this booking?')) {
+        // Get CSRF token from meta tag
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+        
         fetch(`/bookings/${bookingId}`, {
             method: 'DELETE',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
             }
         })
         .then(response => response.json())

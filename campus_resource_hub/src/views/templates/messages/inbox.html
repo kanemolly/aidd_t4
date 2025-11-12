@@ -1,0 +1,752 @@
+{% extends "base.html" %}
+
+{% block title %}Messages - Campus Resource Hub{% endblock %}
+
+{% block content %}
+<div class="messages-inbox-container">
+    <!-- Header -->
+    <div class="inbox-header">
+        <div class="header-content">
+            <h1>Messages</h1>
+            <p class="header-subtitle">Your conversations with other users</p>
+        </div>
+        <div class="header-stats">
+            <div class="stat">
+                <span class="stat-number" id="unreadCount">0</span>
+                <span class="stat-label">Unread</span>
+            </div>
+            <div class="stat">
+                <span class="stat-number" id="conversationCount">0</span>
+                <span class="stat-label">Conversations</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters & Search -->
+    <div class="inbox-controls">
+        <div class="search-box">
+            <input 
+                type="text" 
+                id="conversationSearch" 
+                class="search-input" 
+                placeholder="Search conversations..."
+            >
+            <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"></circle>
+                <path d="m21 21-4.35-4.35"></path>
+            </svg>
+        </div>
+        <div class="filter-buttons">
+            <button class="filter-btn active" data-filter="all">All</button>
+            <button class="filter-btn" data-filter="unread">Unread Only</button>
+        </div>
+    </div>
+
+    <!-- Conversations List -->
+    <div class="conversations-wrapper">
+        <div class="conversations-list" id="conversationsList">
+            <!-- Conversations will be loaded here -->
+            <div class="loading-state">
+                <div class="spinner"></div>
+                <p>Loading conversations...</p>
+            </div>
+        </div>
+
+        <!-- Empty State -->
+        <div class="empty-state-container" id="emptyState" style="display: none;">
+            <div class="empty-state">
+                <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                </svg>
+                <h2>No conversations yet</h2>
+                <p>Start a conversation by messaging someone</p>
+                <a href="/resources" class="btn-primary">Browse Resources</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Conversation Item Template (for JavaScript) -->
+<template id="conversationItemTemplate">
+    <a class="conversation-item" href="THREAD_URL">
+        <div class="conversation-avatar">
+            <span class="avatar-letter">A</span>
+        </div>
+        <div class="conversation-content">
+            <div class="conversation-header">
+                <h3 class="conversation-name">User Name</h3>
+                <span class="conversation-time">Just now</span>
+            </div>
+            <p class="conversation-preview">Message preview...</p>
+            <div class="conversation-footer">
+                <span class="unread-badge" style="display: none;">3</span>
+            </div>
+        </div>
+    </a>
+</template>
+
+<style>
+    /* Container Layout */
+    .messages-inbox-container {
+        display: flex;
+        flex-direction: column;
+        min-height: calc(100vh - 80px);
+        background: linear-gradient(to bottom, #fafafa 0%, #f5f5f5 100%);
+    }
+
+    /* Header */
+    .inbox-header {
+        background: linear-gradient(135deg, #990000 0%, #cc0000 100%);
+        color: #EEEDEB;
+        padding: 32px 40px;
+        box-shadow: 0 2px 12px rgba(153, 0, 0, 0.12);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .inbox-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: radial-gradient(circle at top right, rgba(255, 255, 255, 0.1), transparent 50%);
+        pointer-events: none;
+    }
+
+    .header-content h1 {
+        margin: 0 0 8px 0;
+        font-size: 32px;
+        font-weight: 700;
+        color: #ffffff !important;
+    }
+
+    .header-subtitle {
+        margin: 0;
+        font-size: 16px;
+        opacity: 0.9;
+        color: #ffffff !important;
+    }
+
+    .header-stats {
+        display: flex;
+        gap: 32px;
+        position: relative;
+        z-index: 1;
+    }
+
+    .stat {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+        padding: 12px 20px;
+        background: rgba(255, 255, 255, 0.12);
+        border-radius: 12px;
+        backdrop-filter: blur(10px);
+        min-width: 90px;
+    }
+
+    .stat-number {
+        font-size: 32px;
+        font-weight: 800;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .stat-label {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        opacity: 0.9;
+        font-weight: 600;
+    }
+
+    /* Controls */
+    .inbox-controls {
+        background: #ffffff;
+        padding: 24px 32px;
+        border-bottom: 1px solid #e8e8e8;
+        display: flex;
+        gap: 20px;
+        align-items: center;
+        flex-wrap: wrap;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    }
+
+    .search-box {
+        flex: 1;
+        min-width: 200px;
+        position: relative;
+    }
+
+    .search-input {
+        width: 100%;
+        padding: 14px 16px 14px 44px;
+        border: 2px solid #e8e8e8;
+        border-radius: 12px;
+        font-size: 14px;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        background: #fafafa;
+    }
+
+    .search-input:focus {
+        outline: none;
+        border-color: #990000;
+        background: #ffffff;
+        box-shadow: 0 4px 12px rgba(153, 0, 0, 0.08);
+        transform: translateY(-1px);
+    }
+
+    .search-icon {
+        width: 18px;
+        height: 18px;
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #999;
+        pointer-events: none;
+    }
+
+    /* Filter Buttons */
+    .filter-buttons {
+        display: flex;
+        gap: 10px;
+    }
+
+    .filter-btn {
+        padding: 12px 20px;
+        border: 2px solid #e8e8e8;
+        background: #ffffff;
+        border-radius: 10px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        color: #666;
+    }
+
+    .filter-btn:hover {
+        border-color: #990000;
+        color: #990000;
+        background: #fff5f5;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(153, 0, 0, 0.08);
+    }
+
+    .filter-btn.active {
+        background: linear-gradient(135deg, #990000 0%, #cc0000 100%);
+        color: #ffffff;
+        border-color: #990000;
+        box-shadow: 0 4px 12px rgba(153, 0, 0, 0.15);
+    }
+
+    /* Conversations Wrapper */
+    .conversations-wrapper {
+        flex: 1;
+        overflow-y: auto;
+        position: relative;
+    }
+
+    /* Conversations List */
+    .conversations-list {
+        max-width: 900px;
+        margin: 0 auto;
+        width: 100%;
+        padding: 16px 0;
+    }
+
+    /* Conversation Item */
+    .conversation-item {
+        display: flex;
+        gap: 16px;
+        padding: 18px 24px;
+        margin: 8px 16px;
+        border-radius: 12px;
+        background: #ffffff;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+        text-decoration: none;
+        color: inherit;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        cursor: pointer;
+        border: 1px solid transparent;
+    }
+
+    .conversation-item:hover {
+        background-color: #fafafa;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        border-color: #990000;
+    }
+
+    .conversation-item.unread {
+        background: linear-gradient(to right, #fff8f0 0%, #ffffff 100%) !important;
+        border-left: 4px solid #990000 !important;
+        padding-left: 20px !important;
+        box-shadow: 0 2px 8px rgba(153, 0, 0, 0.08);
+    }
+
+    .conversation-item.unread:hover {
+        background: linear-gradient(to right, #fff4e6 0%, #fafafa 100%) !important;
+        box-shadow: 0 4px 16px rgba(153, 0, 0, 0.12);
+    }
+
+    .conversation-item.unread .conversation-name {
+        font-weight: 700 !important;
+        color: #990000;
+    }
+
+    .conversation-avatar {
+        width: 56px;
+        height: 56px;
+        min-width: 56px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #990000, #cc0000);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #ffffff;
+        font-weight: 700;
+        font-size: 20px;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .conversation-avatar .avatar-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        position: absolute;
+        top: 0;
+        left: 0;
+    }
+
+    /* Online indicator (optional) */
+    .conversation-avatar::after {
+        content: '';
+        position: absolute;
+        width: 12px;
+        height: 12px;
+        background-color: #4caf50;
+        border: 3px solid #ffffff;
+        border-radius: 50%;
+        bottom: 0;
+        right: 0;
+        display: none;
+        z-index: 1;
+    }
+
+    .conversation-avatar.online::after {
+        display: block;
+    }
+
+    .avatar-letter {
+        text-transform: uppercase;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        height: 100%;
+    }
+
+    /* Conversation Content */
+    .conversation-content {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    .conversation-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 12px;
+        margin-bottom: 6px;
+    }
+
+    .conversation-name {
+        margin: 0;
+        font-size: 16px;
+        font-weight: 600;
+        color: #333;
+    }
+
+    .conversation-time {
+        font-size: 13px;
+        color: #999;
+        white-space: nowrap;
+    }
+
+    .conversation-preview {
+        margin: 0;
+        font-size: 14px;
+        color: #777;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        line-height: 1.5;
+    }
+
+    .conversation-item.unread .conversation-preview {
+        color: #444;
+        font-weight: 600;
+    }
+
+    .conversation-footer {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 8px;
+    }
+
+    /* Unread Badge */
+    .unread-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 20px;
+        height: 20px;
+        padding: 0 6px;
+        background-color: #990000;
+        color: #ffffff;
+        border-radius: 10px;
+        font-size: 12px;
+        font-weight: 700;
+    }
+
+    /* Loading State */
+    .loading-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 200px;
+        color: #999;
+    }
+
+    .spinner {
+        width: 40px;
+        height: 40px;
+        border: 3px solid #f0f0f0;
+        border-top-color: #990000;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+        margin-bottom: 16px;
+    }
+
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+
+    .loading-state p {
+        font-size: 14px;
+        margin: 0;
+    }
+
+    /* Empty State */
+    .empty-state-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 400px;
+        padding: 40px 20px;
+    }
+
+    .empty-state {
+        text-align: center;
+    }
+
+    .empty-icon {
+        width: 80px;
+        height: 80px;
+        color: #ccc;
+        margin-bottom: 20px;
+        opacity: 0.5;
+    }
+
+    .empty-state h2 {
+        margin: 0 0 8px 0;
+        font-size: 20px;
+        color: #333;
+    }
+
+    .empty-state p {
+        margin: 0 0 24px 0;
+        color: #999;
+        font-size: 14px;
+    }
+
+    .empty-state .btn-primary {
+        padding: 14px 32px;
+        background: linear-gradient(135deg, #990000 0%, #cc0000 100%);
+        color: #ffffff;
+        text-decoration: none;
+        border-radius: 12px;
+        font-weight: 700;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        display: inline-block;
+        box-shadow: 0 4px 16px rgba(153, 0, 0, 0.2);
+        font-size: 15px;
+        letter-spacing: 0.3px;
+    }
+
+    .empty-state .btn-primary:hover {
+        background: linear-gradient(135deg, #cc0000 0%, #ff0000 100%);
+        transform: translateY(-3px);
+        box-shadow: 0 8px 24px rgba(153, 0, 0, 0.3);
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .inbox-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 20px;
+        }
+
+        .header-stats {
+            align-self: flex-start;
+        }
+
+        .inbox-controls {
+            flex-direction: column;
+        }
+
+        .search-box {
+            min-width: auto;
+        }
+
+        .filter-buttons {
+            width: 100%;
+        }
+
+        .conversation-item {
+            padding: 12px 16px;
+            gap: 12px;
+        }
+
+        .conversation-avatar {
+            width: 48px;
+            height: 48px;
+            min-width: 48px;
+            font-size: 18px;
+        }
+
+        .conversation-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .conversation-time {
+            order: -1;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .header-content h1 {
+            font-size: 24px;
+        }
+
+        .header-subtitle {
+            font-size: 14px;
+        }
+
+        .stat-number {
+            font-size: 22px;
+        }
+
+        .stat-label {
+            font-size: 11px;
+        }
+    }
+</style>
+
+<script>
+    let currentFilter = 'all';
+    let allConversations = [];
+
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        loadConversations();
+        setupEventListeners();
+    });
+
+    /**
+     * Load conversations from server
+     */
+    async function loadConversations() {
+        try {
+            const response = await fetch('/messages/?json=1', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to load conversations');
+            }
+
+            const data = await response.json();
+            allConversations = data.conversations || [];
+            
+            updateStats();
+            renderConversations();
+        } catch (error) {
+            console.error('Error loading conversations:', error);
+            showError('Failed to load conversations');
+        }
+    }
+
+    /**
+     * Update conversation statistics
+     */
+    function updateStats() {
+        const unreadCount = allConversations.filter(c => !c.is_read && !c.is_from_me).length;
+        document.getElementById('unreadCount').textContent = unreadCount;
+        document.getElementById('conversationCount').textContent = allConversations.length;
+    }
+
+    /**
+     * Render conversations list
+     */
+    function renderConversations() {
+        const list = document.getElementById('conversationsList');
+        const empty = document.getElementById('emptyState');
+
+        if (allConversations.length === 0) {
+            list.innerHTML = '';
+            empty.style.display = 'block';
+            return;
+        }
+
+        empty.style.display = 'none';
+
+        // Filter conversations
+        let filtered = allConversations;
+        if (currentFilter === 'unread') {
+            filtered = allConversations.filter(c => !c.is_read && !c.is_from_me);
+        }
+
+        // Apply search filter
+        const searchTerm = document.getElementById('conversationSearch').value.toLowerCase();
+        if (searchTerm) {
+            filtered = filtered.filter(c => 
+                c.other_user.name.toLowerCase().includes(searchTerm) ||
+                c.last_message.toLowerCase().includes(searchTerm)
+            );
+        }
+
+        // Render conversations
+        list.innerHTML = filtered.map(conversation => {
+            const unread = !conversation.is_read && !conversation.is_from_me;
+            const timeStr = formatTime(conversation.created_at);
+            const messagePreview = conversation.last_message.substring(0, 60) + 
+                (conversation.last_message.length > 60 ? '...' : '');
+            
+            // Get profile image URL or use static default
+            const otherUser = conversation.other_user;
+            const profileImageUrl = otherUser.profile_image 
+                ? `/static/${otherUser.profile_image}` 
+                : null;
+
+            return `
+                <a class="conversation-item ${unread ? 'unread' : ''}" href="/messages/thread/${conversation.thread_id}">
+                    <div class="conversation-avatar">
+                        ${profileImageUrl 
+                            ? `<img src="${profileImageUrl}" alt="${escapeHtml(otherUser.name)}" class="avatar-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                               <span class="avatar-letter" style="display:none;">${otherUser.name[0].toUpperCase()}</span>`
+                            : `<span class="avatar-letter">${otherUser.name[0].toUpperCase()}</span>`
+                        }
+                    </div>
+                    <div class="conversation-content">
+                        <div class="conversation-header">
+                            <h3 class="conversation-name">${escapeHtml(otherUser.name)}</h3>
+                            <span class="conversation-time">${timeStr}</span>
+                        </div>
+                        <p class="conversation-preview">${escapeHtml(messagePreview)}</p>
+                        <div class="conversation-footer">
+                            ${unread ? '<span class="unread-badge">1</span>' : ''}
+                        </div>
+                    </div>
+                </a>
+            `;
+        }).join('');
+    }
+
+    /**
+     * Setup event listeners
+     */
+    function setupEventListeners() {
+        // Search input
+        document.getElementById('conversationSearch').addEventListener('input', function() {
+            renderConversations();
+        });
+
+        // Filter buttons
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                currentFilter = this.getAttribute('data-filter');
+                renderConversations();
+            });
+        });
+    }
+
+    /**
+     * Format timestamp for display
+     */
+    function formatTime(dateString) {
+        const date = new Date(dateString);
+        const now = new Date();
+        const diffMs = now - date;
+        const diffMins = Math.floor(diffMs / 60000);
+        const diffHours = Math.floor(diffMs / 3600000);
+        const diffDays = Math.floor(diffMs / 86400000);
+
+        if (diffMins < 1) return 'Just now';
+        if (diffMins < 60) return `${diffMins}m ago`;
+        if (diffHours < 24) return `${diffHours}h ago`;
+        if (diffDays < 7) return `${diffDays}d ago`;
+        
+        // Format as short date
+        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    }
+
+    /**
+     * Escape HTML to prevent XSS
+     */
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    /**
+     * Show error message
+     */
+    function showError(message) {
+        const list = document.getElementById('conversationsList');
+        list.innerHTML = `
+            <div class="empty-state-container">
+                <div class="empty-state">
+                    <p style="color: #d32f2f; font-weight: 600;">${escapeHtml(message)}</p>
+                    <button onclick="location.reload()" class="btn-primary" style="margin-top: 16px;">Try Again</button>
+                </div>
+            </div>
+        `;
+    }
+
+    /**
+     * Refresh conversations periodically (polling)
+     */
+    setInterval(loadConversations, 10000); // Refresh every 10 seconds
+</script>
+{% endblock %}

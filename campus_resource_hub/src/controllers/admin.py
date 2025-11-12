@@ -17,11 +17,49 @@ bp = Blueprint('admin', __name__, url_prefix='/admin')
 @bp.route('/dashboard', methods=['GET'])
 @login_required
 def dashboard():
-    """Admin dashboard with comprehensive system statistics and analytics."""
+    """Unified admin dashboard with bookings, analytics, and moderation."""
     try:
         # Check admin permission
         if not current_user.is_admin():
             return jsonify({"error": "Unauthorized"}), 403
+        
+        from datetime import datetime, timedelta
+        from src.data_access.booking_dal import BookingDAL
+        
+        now = datetime.now()
+        thirty_days_ago = datetime.utcnow() - timedelta(days=30)
+        
+        # ============= ACTION ITEMS: PENDING BOOKINGS =============
+        # Get all pending bookings (needs attention first)
+        all_pending_bookings = db.session.query(Booking).filter(
+            Booking.status == 'pending'
+        ).order_by(Booking.created_at.asc()).all()
+        
+        # Pending bookings requiring approval (only those for resources with approval required)
+        pending_for_approval = db.session.query(Booking).join(
+            Resource, Booking.resource_id == Resource.id
+        ).filter(
+            and_(
+                Booking.status == 'pending',
+                Resource.requires_approval == True
+            )
+        ).count()
+        
+        # Currently active bookings
+        active_bookings = db.session.query(Booking).filter(
+            Booking.status == 'confirmed',
+            Booking.start_time <= now,
+            Booking.end_time >= now
+        ).order_by(Booking.start_time).all()
+        
+        # Upcoming today
+        today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+        today_end = today_start + timedelta(days=1)
+        upcoming_today = db.session.query(Booking).filter(
+            Booking.status == 'confirmed',
+            Booking.start_time > now,
+            Booking.start_time < today_end
+        ).order_by(Booking.start_time).limit(5).all()
         
         # ============= BASIC METRICS =============
         total_users = db.session.query(User).count()
@@ -31,8 +69,6 @@ def dashboard():
         
         # ============= ENGAGEMENT METRICS =============
         # Active users (users with bookings in last 30 days)
-        from datetime import datetime, timedelta
-        thirty_days_ago = datetime.utcnow() - timedelta(days=30)
         active_users = db.session.query(User).join(
             Booking, Booking.user_id == User.id
         ).filter(Booking.created_at >= thirty_days_ago).distinct().count()
@@ -112,16 +148,6 @@ def dashboard():
             for r in top_reviewed_resources
         ]
         
-        # ============= PENDING BOOKINGS FOR APPROVAL =============
-        pending_for_approval = db.session.query(Booking).join(
-            Resource, Booking.resource_id == Resource.id
-        ).filter(
-            and_(
-                Booking.status == 'pending',
-                Resource.requires_approval == True
-            )
-        ).count()
-        
         # ============= RECENT FLAGGED REVIEWS =============
         recent_flagged_reviews = db.session.query(Review).filter(
             Review.is_flagged == True
@@ -162,7 +188,7 @@ def dashboard():
         # Utilization rate (confirmed + completed vs pending + cancelled)
         confirmed_bookings = status_breakdown.get('confirmed', 0)
         completed_bookings = status_breakdown.get('completed', 0)
-        pending_bookings = status_breakdown.get('pending', 0)
+        pending_bookings_count = status_breakdown.get('pending', 0)
         cancelled_bookings = status_breakdown.get('cancelled', 0)
         
         total_confirmed_completed = confirmed_bookings + completed_bookings
@@ -170,6 +196,17 @@ def dashboard():
         
         return render_template(
             'admin/dashboard.html',
+            # Pending bookings (action items - shown first)
+            pending_bookings=all_pending_bookings[:15],  # Show top 15 oldest
+            active_bookings=active_bookings,
+            upcoming_today=upcoming_today,
+            action_counts={
+                'pending': len(all_pending_bookings),
+                'active_now': len(active_bookings),
+                'upcoming_today': len(upcoming_today),
+            },
+            now=now,
+            
             # Basic metrics
             total_users=total_users,
             total_resources=total_resources,
@@ -186,7 +223,7 @@ def dashboard():
             status_breakdown=status_breakdown,
             confirmed_bookings=confirmed_bookings,
             completed_bookings=completed_bookings,
-            pending_bookings=pending_bookings,
+            pending_bookings_count=pending_bookings_count,
             cancelled_bookings=cancelled_bookings,
             utilization_rate=round(utilization_rate, 1),
             
@@ -200,6 +237,7 @@ def dashboard():
             flagged_reviews_count=flagged_reviews_count,
             flagged_reviews_list=flagged_reviews_list,
             pending_for_approval=pending_for_approval,
+            recent_flagged_reviews=recent_flagged_reviews,
             
             # Template helpers
             enumerate=enumerate

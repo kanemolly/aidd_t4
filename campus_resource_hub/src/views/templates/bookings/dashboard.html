@@ -767,15 +767,21 @@
                             </td>
                             <td>
                                 <div class="btn-action-group justify-content-center">
+                                    <!-- DEBUG: booking object id is {{ booking.id }} -->
                                     <button type="button" 
                                             class="btn btn-sm btn-success text-white" 
-                                            onclick="confirmBooking({{ booking.id }})"
+                                            data-booking-id="{{ booking.id | int }}"
+                                            onclick="confirmBooking(this.getAttribute('data-booking-id'))"
                                             title="Approve">
                                         <i class="bi bi-check-lg"></i> Approve
                                     </button>
                                     <button type="button" 
                                             class="btn btn-sm btn-danger text-white" 
-                                            onclick="cancelBooking({{ booking.id }}, '{{ booking.user.full_name }}', '{{ booking.resource.name }}', '{{ booking.start_time.strftime('%b %d, %Y at %I:%M %p') }}')"
+                                            data-booking-id="{{ booking.id | int }}"
+                                            data-user-name="{{ booking.user.full_name }}"
+                                            data-resource-name="{{ booking.resource.name }}"
+                                            data-datetime="{{ booking.start_time.strftime('%b %d, %Y at %I:%M %p') }}"
+                                            onclick="cancelBooking(this.getAttribute('data-booking-id'), this.getAttribute('data-user-name'), this.getAttribute('data-resource-name'), this.getAttribute('data-datetime'))"
                                             title="Deny">
                                         <i class="bi bi-x-lg"></i> Deny
                                     </button>
@@ -1035,6 +1041,11 @@
 let pendingBookingId = null;
 
 function confirmBooking(bookingId) {
+    bookingId = parseInt(bookingId, 10);  // Ensure it's an integer
+    if (!bookingId || isNaN(bookingId)) {
+        console.error('Invalid booking ID:', bookingId);
+        return;
+    }
     pendingBookingId = bookingId;
     document.getElementById('confirmModal').classList.remove('hidden');
 }
@@ -1045,8 +1056,8 @@ function closeConfirmModal() {
 }
 
 function confirmAction() {
-    closeConfirmModal();
     const bookingId = pendingBookingId;
+    closeConfirmModal();
     
     // Show loading state
     const modal = document.getElementById('resultModal');
@@ -1055,10 +1066,14 @@ function confirmAction() {
     document.getElementById('resultTitle').textContent = 'Approving...';
     document.getElementById('resultMessage').textContent = 'Please wait...';
     
+    // Get CSRF token from meta tag
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+    
     fetch(`/bookings/${bookingId}/confirm`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken
         }
     })
     .then(response => {
@@ -1094,6 +1109,7 @@ function confirmAction() {
 }
 
 function cancelBooking(bookingId, userName, resourceName, dateTime) {
+    bookingId = parseInt(bookingId, 10);  // Ensure it's an integer
     pendingBookingId = bookingId;
     
     // Populate modal with booking details
@@ -1118,8 +1134,8 @@ function denyAction() {
         return;
     }
     
-    closeDenyModal();
     const bookingId = pendingBookingId;
+    closeDenyModal();
     
     // Show loading state
     const modal = document.getElementById('resultModal');
@@ -1132,6 +1148,7 @@ function denyAction() {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token() }}'
         },
         body: JSON.stringify({ reason: reason })
     })

@@ -37,6 +37,21 @@ class MessageDAL:
             if sender_id == recipient_id:
                 raise ValueError("Sender and recipient cannot be the same user")
 
+            # If no thread_id provided, try to find an existing conversation
+            if not thread_id:
+                # Look for any message in an existing conversation between these users
+                existing_message = Message.query.filter(
+                    ((Message.sender_id == sender_id) & (Message.recipient_id == recipient_id)) |
+                    ((Message.sender_id == recipient_id) & (Message.recipient_id == sender_id))
+                ).first()
+                
+                # Use existing thread_id if found, otherwise use first message's ID as thread
+                if existing_message and existing_message.thread_id:
+                    thread_id = existing_message.thread_id
+                elif existing_message:
+                    # Use the first message's ID as the thread_id for all messages in this conversation
+                    thread_id = existing_message.id
+
             message = Message(
                 sender_id=sender_id,
                 recipient_id=recipient_id,

@@ -519,6 +519,47 @@
         text-decoration: underline;
     }
 
+    /* Toast Notifications */
+    .toast-notification {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 14px 20px;
+        border-radius: 8px;
+        color: white;
+        font-weight: 500;
+        font-size: 14px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        opacity: 0;
+        transform: translateX(400px);
+        transition: all 0.3s ease;
+        z-index: 10000;
+        max-width: 400px;
+        word-wrap: break-word;
+    }
+
+    .toast-notification.show {
+        opacity: 1;
+        transform: translateX(0);
+    }
+
+    .toast-notification.success {
+        background: linear-gradient(135deg, #4caf50 0%, #388e3c 100%);
+    }
+
+    .toast-notification.error {
+        background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
+    }
+
+    @media (max-width: 768px) {
+        .toast-notification {
+            top: 15px;
+            right: 15px;
+            left: 15px;
+            max-width: none;
+        }
+    }
+
     .empty-state {
         text-align: center;
         padding: 40px 20px;
@@ -674,10 +715,10 @@
             // Build action buttons HTML
             let actionsHTML = '';
             if (canDelete) {
-                actionsHTML += `<button class="btn-delete-review" onclick="deleteReview(${review.id})" title="Delete review">🗑️ Delete</button>`;
+                actionsHTML += `<button type="button" class="btn-delete-review" onclick="deleteReview(${review.id}); return false;" title="Delete review">🗑️ Delete</button>`;
             }
             if (canReport) {
-                actionsHTML += `<button class="btn-report-review" onclick="reportReview(${review.id})" title="Report inappropriate content">🚩 Report</button>`;
+                actionsHTML += `<button type="button" class="btn-report-review" onclick="reportReview(${review.id}); return false;" title="Report inappropriate content">🚩 Report</button>`;
             }
             
             return `
@@ -754,7 +795,7 @@
             e.preventDefault();
 
             if (!selectedRating) {
-                showError('Please select a rating');
+                showErrorToast('Please select a rating');
                 return;
             }
 
@@ -765,8 +806,6 @@
             };
 
             submitBtn.disabled = true;
-            statusMessage.textContent = 'Posting review...';
-            statusMessage.classList.remove('error');
 
             fetch('/reviews', {
                 method: 'POST',
@@ -778,8 +817,7 @@
             .then(response => response.json())
             .then(data => {
                 if (data.status === 'success') {
-                    statusMessage.textContent = 'Review posted successfully!';
-                    statusMessage.classList.remove('error');
+                    showSuccessToast('✨ Review posted successfully!');
                     form.reset();
                     selectedRating = 0;
                     updateStarDisplay(0);
@@ -791,22 +829,49 @@
                         document.getElementById('reviewFormContainer').style.display = 'none';
                     }, 1500);
                 } else {
-                    showError(data.message);
+                    showErrorToast(data.message || 'Failed to post review');
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                showError('Failed to post review');
+                showErrorToast('Failed to post review');
             })
             .finally(() => {
                 submitBtn.disabled = false;
             });
-
-            function showError(msg) {
-                statusMessage.textContent = msg;
-                statusMessage.classList.add('error');
-            }
         });
+    }
+
+    function showSuccessToast(message) {
+        const toast = document.createElement('div');
+        toast.className = 'toast-notification success';
+        toast.textContent = message;
+        document.body.appendChild(toast);
+
+        setTimeout(() => {
+            toast.classList.add('show');
+        }, 10);
+
+        setTimeout(() => {
+            toast.classList.remove('show');
+            setTimeout(() => toast.remove(), 300);
+        }, 4000);
+    }
+
+    function showErrorToast(message) {
+        const toast = document.createElement('div');
+        toast.className = 'toast-notification error';
+        toast.textContent = message;
+        document.body.appendChild(toast);
+
+        setTimeout(() => {
+            toast.classList.add('show');
+        }, 10);
+
+        setTimeout(() => {
+            toast.classList.remove('show');
+            setTimeout(() => toast.remove(), 300);
+        }, 4000);
     }
 
     function updateStarDisplay(rating) {
@@ -874,15 +939,18 @@
                     reviewElement.remove();
                 }
                 
+                showSuccessToast('✨ Review deleted successfully');
+                
                 // Refresh the reviews list
-                await loadReviews();
+                const resourceId = getResourceId();
+                await loadReviews(resourceId);
             } else {
                 const data = await response.json();
-                alert(data.message || 'Failed to delete review');
+                showErrorToast(data.message || 'Failed to delete review');
             }
         } catch (error) {
             console.error('Error deleting review:', error);
-            alert('An error occurred while deleting the review');
+            showErrorToast('An error occurred while deleting the review');
         }
     }
 
@@ -906,7 +974,7 @@
             const data = await response.json();
 
             if (response.ok) {
-                alert('Thank you for reporting. Staff will review this comment.');
+                showSuccessToast('👍 Thanks for letting us know! This comment has been sent to an administrator for review.');
                 
                 // Optionally hide the report button for this review
                 const reviewElement = document.querySelector(`[data-review-id="${reviewId}"]`);
@@ -919,11 +987,11 @@
                     }
                 }
             } else {
-                alert(data.message || 'Failed to report review');
+                showErrorToast(data.message || 'Failed to report review');
             }
         } catch (error) {
             console.error('Error reporting review:', error);
-            alert('An error occurred while reporting the review');
+            showErrorToast('An error occurred while reporting the review');
         }
     }
 </script>

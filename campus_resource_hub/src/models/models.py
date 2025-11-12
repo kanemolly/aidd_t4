@@ -52,8 +52,10 @@ class User(UserMixin, db.Model):
     # Relationships
     resources = db.relationship('Resource', backref='creator', lazy='dynamic', foreign_keys='Resource.creator_id')
     bookings = db.relationship('Booking', backref='user', lazy='dynamic', foreign_keys='Booking.user_id')
-    messages_sent = db.relationship('Message', backref='sender', lazy='dynamic', foreign_keys='Message.sender_id')
-    messages_received = db.relationship('Message', backref='recipient', lazy='dynamic', foreign_keys='Message.recipient_id')
+    messages_sent = db.relationship('Message', lazy='dynamic', foreign_keys='Message.sender_id')
+    messages_received = db.relationship('Message', lazy='dynamic', foreign_keys='Message.recipient_id')
+    notifications = db.relationship('Notification', backref='recipient', lazy='dynamic', foreign_keys='Notification.user_id')
+    notifications_sent = db.relationship('Notification', backref='sender_user', lazy='dynamic', foreign_keys='Notification.sender_id')
     reviews = db.relationship('Review', backref='reviewer', lazy='dynamic', foreign_keys='Review.reviewer_id')
     
     def set_password(self, password):
@@ -213,6 +215,7 @@ class Booking(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
     
     # Relationships
+    approved_by = db.relationship('User', foreign_keys=[approved_by_id], lazy='joined')
     recurring_instances = db.relationship('Booking', backref=db.backref('parent_booking', remote_side=[id]), lazy='dynamic')
     
     def to_dict(self):
@@ -247,6 +250,12 @@ class Message(db.Model):
     # Foreign Keys
     sender_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     recipient_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    booking_id = db.Column(db.Integer, db.ForeignKey('bookings.id'), nullable=True, index=True)  # Link to booking if relevant
+    
+    # Relationships
+    sender = db.relationship('User', foreign_keys=[sender_id], lazy='joined', viewonly=True)
+    recipient = db.relationship('User', foreign_keys=[recipient_id], lazy='joined', viewonly=True)
+    booking = db.relationship('Booking', backref='messages')
     
     # Message Content
     subject = db.Column(db.String(255), nullable=True)
@@ -278,6 +287,78 @@ class Message(db.Model):
     
     def __repr__(self):
         return f'<Message {self.id}>'
+
+
+class Notification(db.Model):
+    """User notification model for system events."""
+    
+    __tablename__ = 'notifications'
+    
+    # Notification type constants
+    TYPE_NEW_MESSAGE = 'new_message'
+    TYPE_BOOKING_REQUEST = 'booking_request'
+    TYPE_BOOKING_CONFIRMED = 'booking_confirmed'
+    TYPE_BOOKING_DENIED = 'booking_denied'
+    TYPE_BOOKING_CANCELLED = 'booking_cancelled'
+    TYPE_BOOKING_REMINDER = 'booking_reminder'
+    TYPE_REVIEW_FLAGGED = 'review_flagged'
+    TYPE_REVIEW_DISMISSED = 'review_dismissed'
+    
+    VALID_TYPES = [
+        TYPE_NEW_MESSAGE,
+        TYPE_BOOKING_REQUEST,
+        TYPE_BOOKING_CONFIRMED,
+        TYPE_BOOKING_DENIED,
+        TYPE_BOOKING_CANCELLED,
+        TYPE_BOOKING_REMINDER,
+        TYPE_REVIEW_FLAGGED,
+        TYPE_REVIEW_DISMISSED
+    ]
+    
+    # Primary Key
+    id = db.Column(db.Integer, primary_key=True)
+    
+    # Foreign Keys
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
+    message_id = db.Column(db.Integer, db.ForeignKey('messages.id'), nullable=True)  # Optional: link to message
+    booking_id = db.Column(db.Integer, db.ForeignKey('bookings.id'), nullable=True)  # Optional: link to booking
+    
+    # Notification Details
+    notification_type = db.Column(db.String(50), nullable=False)  # Type of notification
+    title = db.Column(db.String(255), nullable=False)  # Notification title
+    description = db.Column(db.Text, nullable=False)  # Notification description
+    is_read = db.Column(db.Boolean, default=False, nullable=False, index=True)
+    
+    # Navigation/Action Context
+    action_url = db.Column(db.String(255), nullable=True)  # URL to navigate to when clicked
+    sender_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)  # User who triggered the notification
+    
+    # Timestamps
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False, index=True)
+    read_at = db.Column(db.DateTime, nullable=True)
+    
+    def mark_as_read(self):
+        """Mark notification as read."""
+        self.is_read = True
+        self.read_at = datetime.utcnow()
+    
+    def to_dict(self):
+        """Convert notification to dictionary."""
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'notification_type': self.notification_type,
+            'title': self.title,
+            'description': self.description,
+            'is_read': self.is_read,
+            'action_url': self.action_url,
+            'sender_id': self.sender_id,
+            'created_at': self.created_at.isoformat(),
+            'read_at': self.read_at.isoformat() if self.read_at else None
+        }
+    
+    def __repr__(self):
+        return f'<Notification {self.id} - {self.notification_type}>'
 
 
 class Review(db.Model):

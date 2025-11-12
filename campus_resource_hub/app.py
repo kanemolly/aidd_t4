@@ -34,8 +34,12 @@ def create_app(config_name=None):
     if config_name is None:
         config_name = os.environ.get('FLASK_ENV', 'development')
     
-    # Create Flask app
-    app = Flask(__name__)
+    # Create Flask app with explicit static folder path
+    # Get the directory where app.py is located
+    basedir = os.path.abspath(os.path.dirname(__file__))
+    static_dir = os.path.join(basedir, 'static')
+    
+    app = Flask(__name__, static_folder=static_dir, static_url_path='/static')
     
     # Load configuration
     app.config.from_object(config.get(config_name, config['default']))
@@ -82,6 +86,7 @@ def _register_blueprints(app):
     app.register_blueprint(resources.bp)
     app.register_blueprint(bookings.bp)
     app.register_blueprint(messages.bp)
+    app.register_blueprint(messages.api_bp)  # API endpoints
     app.register_blueprint(reviews.bp)
     app.register_blueprint(admin.bp)
     if concierge:

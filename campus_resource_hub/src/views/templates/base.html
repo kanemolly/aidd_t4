@@ -6,10 +6,14 @@
     <meta name="description" content="Campus Resource Hub - Manage resources, bookings, and more at Indiana University">
     <meta name="author" content="Campus Resource Hub">
     <meta name="theme-color" content="#990000">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>{% block title %}Campus Resource Hub{% endblock %}</title>
     
     <!-- Global Theme Stylesheet -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}?v={{ range(1, 9999) | random }}">
     
     <!-- Performance & UI Enhancements -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/performance.css') }}">
@@ -20,6 +24,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     
     <style>
+        /* NOTIFICATION SYSTEM v2.0 - UPDATED 2025-11-11 18:20 */
         /* Navbar Customization */
         nav {
             background-color: var(--iu-crimson);
@@ -205,6 +210,231 @@
             color: var(--neutral-white);
         }
 
+        /* Notification Bell and Dropdown */
+        .notification-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .notification-bell {
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            color: #FFFFFF;
+            padding: 8px;
+            border-radius: 6px;
+            position: relative;
+            transition: all var(--transition-fast);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+        }
+
+        .notification-bell:hover {
+            background-color: rgba(255, 255, 255, 0.15);
+            transform: scale(1.1);
+        }
+
+        .notification-bell:active {
+            transform: scale(0.95);
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            background-color: #ff6b6b;
+            color: #ffffff;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 700;
+            border: 2px solid var(--iu-crimson);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        /* Notification Dropdown */
+        .notification-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+            width: 360px;
+            max-width: calc(100vw - 20px);
+            margin-top: 8px;
+            z-index: 1000;
+            display: none;
+            flex-direction: column;
+            max-height: 600px;
+            animation: slideDown 0.3s ease;
+        }
+
+        .notification-dropdown.active {
+            display: flex;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .notification-header {
+            padding: 16px !important;
+            border-bottom: 1px solid #e0e0e0 !important;
+            display: flex !important;
+            justify-content: space-between !important;
+            align-items: center !important;
+            background-color: #ffffff !important;
+        }
+
+        .notification-header h3 {
+            margin: 0 !important;
+            font-size: 16px !important;
+            color: #111 !important;
+            font-weight: 700 !important;
+        }
+
+        .clear-btn {
+            background: none !important;
+            border: none !important;
+            color: #333 !important;
+            cursor: pointer !important;
+            font-size: 18px !important;
+            padding: 4px 8px !important;
+            border-radius: 4px !important;
+            transition: all var(--transition-fast) !important;
+        }
+
+        .clear-btn:hover {
+            color: #111 !important;
+            background-color: #f0f0f0 !important;
+        }
+
+        /* Notification List */
+        .notification-list {
+            flex: 1 1 auto;
+            overflow-y: auto;
+            max-height: 450px;
+            min-height: 50px;
+        }
+
+        .notification-list::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .notification-list::-webkit-scrollbar-track {
+            background: #f0f0f0;
+        }
+
+        .notification-list::-webkit-scrollbar-thumb {
+            background: #ddd;
+            border-radius: 3px;
+        }
+
+        .notification-list::-webkit-scrollbar-thumb:hover {
+            background: #999;
+        }
+
+        .notification-empty {
+            padding: 32px 16px !important;
+            text-align: center !important;
+            color: #555 !important;
+            font-size: 14px !important;
+            margin: 0 !important;
+        }
+
+        /* Notification Item */
+        .notification-item {
+            padding: 14px 16px !important;
+            border-bottom: 1px solid #e0e0e0 !important;
+            cursor: pointer !important;
+            transition: all 0.3s ease !important;
+            text-decoration: none !important;
+            display: block !important;
+            color: #1a1a1a !important;
+            background-color: #ffffff !important;
+            border-left: 4px solid transparent !important;
+            padding-left: 12px !important;
+        }
+
+        .notification-item:hover {
+            background-color: #f8f8f8 !important;
+        }
+
+        .notification-item.unread {
+            background-color: #fff4e6 !important;
+            border-left: 4px solid #990000 !important;
+        }
+
+        .notification-item.unread:hover {
+            background-color: #ffeac2 !important;
+        }
+
+        .notification-item-title {
+            font-weight: 700 !important;
+            color: #111 !important;
+            margin-bottom: 4px !important;
+            font-size: 14px !important;
+            letter-spacing: -0.3px !important;
+        }
+
+        .notification-item-text {
+            color: #444 !important;
+            font-size: 13px !important;
+            margin-bottom: 6px !important;
+            line-height: 1.5 !important;
+            font-weight: 400 !important;
+        }
+
+        .notification-item-time {
+            color: #666 !important;
+            font-size: 12px !important;
+            font-weight: 500 !important;
+        }
+
+        /* Notification Footer */
+        .notification-footer {
+            padding: 12px 16px !important;
+            border-top: 1px solid #e0e0e0 !important;
+            text-align: center !important;
+            color: var(--iu-crimson) !important;
+            font-weight: 600 !important;
+            font-size: 13px !important;
+            text-decoration: none !important;
+            transition: background-color var(--transition-fast) !important;
+            display: block !important;
+            cursor: pointer !important;
+            background-color: #ffffff !important;
+            flex-shrink: 0 !important;
+            border-bottom-left-radius: 12px !important;
+            border-bottom-right-radius: 12px !important;
+        }
+
+        .notification-footer:hover {
+            background-color: #fafafa !important;
+            text-decoration: underline !important;
+        }
+
         /* Responsive */
         @media (max-width: 768px) {
             .navbar-container {
@@ -237,6 +467,22 @@
             .navbar-brand {
                 font-size: var(--font-size-base);
             }
+
+            .notification-dropdown {
+                width: 320px;
+                right: -100px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .notification-dropdown {
+                width: 280px;
+                right: -80px;
+            }
+
+            .notification-item {
+                padding: 10px 12px;
+            }
         }
 
         {% block extra_css %}{% endblock %}
@@ -253,21 +499,55 @@
                 {% if current_user.is_authenticated %}
                     <!-- Admin Navigation -->
                     {% if current_user.is_admin() %}
-                        <li><a href="{{ url_for('bookings.dashboard') }}">🏠 Dashboard</a></li>
-                        <li><a href="{{ url_for('resources.list_resources') }}">� All Resources</a></li>
-                        <li><a href="{{ url_for('bookings.list_bookings') }}">� All Bookings</a></li>
+                        <li><a href="{{ url_for('admin.dashboard') }}">🏠 Dashboard</a></li>
+                        <li><a href="{{ url_for('resources.list_resources') }}">📚 All Resources</a></li>
+                        <li><a href="{{ url_for('bookings.list_bookings') }}">📅 All Bookings</a></li>
                         <li><a href="{{ url_for('bookings.analytics') }}">📊 Analytics</a></li>
                         <li><a href="{{ url_for('concierge.index') }}">🧠 Concierge</a></li>
+                        <li><a href="{{ url_for('messages.list_messages') }}">💬 Messages</a></li>
+                        <li class="notification-container">
+                            <button class="notification-bell" id="notificationBell" title="Notifications">
+                                🔔
+                                <span class="notification-badge" id="notificationBadge" style="display: none;">0</span>
+                            </button>
+                            <div class="notification-dropdown" id="notificationDropdown">
+                                <div class="notification-header">
+                                    <h3>Notifications</h3>
+                                    <button class="clear-btn" id="clearAllBtn" title="Mark all as read">✓</button>
+                                </div>
+                                <div class="notification-list" id="notificationList">
+                                    <p class="notification-empty">No notifications</p>
+                                </div>
+                                <a href="{{ url_for('messages.list_messages') }}" class="notification-footer">View all messages →</a>
+                            </div>
+                        </li>
                         <li><a href="{{ url_for('auth.profile') }}" style="color: var(--iu-crimson); font-weight: 600;">👤 {{ current_user.full_name }}</a></li>
                         <li><a href="{{ url_for('auth.logout') }}">Logout</a></li>
                     
                     <!-- Staff Navigation -->
                     {% elif current_user.is_staff() %}
-                        <li><a href="{{ url_for('bookings.dashboard') }}">🏠 Dashboard</a></li>
+                        <li><a href="{{ url_for('admin.dashboard') }}">🏠 Dashboard</a></li>
                         <li><a href="{{ url_for('resources.list_resources') }}">📚 Resources</a></li>
                         <li><a href="{{ url_for('resources.create_resource') }}">➕ Add Resource</a></li>
-                        <li><a href="{{ url_for('bookings.list_bookings') }}">� All Bookings</a></li>
+                        <li><a href="{{ url_for('bookings.list_bookings') }}">📅 All Bookings</a></li>
                         <li><a href="{{ url_for('concierge.index') }}">🧠 Concierge</a></li>
+                        <li><a href="{{ url_for('messages.list_messages') }}">💬 Messages</a></li>
+                        <li class="notification-container">
+                            <button class="notification-bell" id="notificationBell" title="Notifications">
+                                🔔
+                                <span class="notification-badge" id="notificationBadge" style="display: none;">0</span>
+                            </button>
+                            <div class="notification-dropdown" id="notificationDropdown">
+                                <div class="notification-header">
+                                    <h3>Notifications</h3>
+                                    <button class="clear-btn" id="clearAllBtn" title="Mark all as read">✓</button>
+                                </div>
+                                <div class="notification-list" id="notificationList">
+                                    <p class="notification-empty">No notifications</p>
+                                </div>
+                                <a href="{{ url_for('messages.list_messages') }}" class="notification-footer">View all messages →</a>
+                            </div>
+                        </li>
                         <li><a href="{{ url_for('auth.profile') }}">{{ current_user.full_name }}</a></li>
                         <li><a href="{{ url_for('auth.logout') }}">Logout</a></li>
                     
@@ -276,6 +556,23 @@
                         <li><a href="{{ url_for('resources.list_resources') }}">📚 Browse Resources</a></li>
                         <li><a href="{{ url_for('bookings.list_bookings') }}">📅 My Bookings</a></li>
                         <li><a href="{{ url_for('concierge.index') }}">🧠 Concierge</a></li>
+                        <li><a href="{{ url_for('messages.list_messages') }}">💬 Messages</a></li>
+                        <li class="notification-container">
+                            <button class="notification-bell" id="notificationBell" title="Notifications">
+                                🔔
+                                <span class="notification-badge" id="notificationBadge" style="display: none;">0</span>
+                            </button>
+                            <div class="notification-dropdown" id="notificationDropdown">
+                                <div class="notification-header">
+                                    <h3>Notifications</h3>
+                                    <button class="clear-btn" id="clearAllBtn" title="Mark all as read">✓</button>
+                                </div>
+                                <div class="notification-list" id="notificationList">
+                                    <p class="notification-empty">No notifications</p>
+                                </div>
+                                <a href="{{ url_for('messages.list_messages') }}" class="notification-footer">View all messages →</a>
+                            </div>
+                        </li>
                         <li><a href="{{ url_for('auth.profile') }}">{{ current_user.full_name }}</a></li>
                         <li><a href="{{ url_for('auth.logout') }}">Logout</a></li>
                     {% endif %}
@@ -299,9 +596,9 @@
             {% if current_user.is_authenticated %}
                 <!-- Admin Mobile Menu -->
                 {% if current_user.is_admin() %}
-                    <a href="{{ url_for('bookings.dashboard') }}">🏠 Dashboard</a>
-                    <a href="{{ url_for('resources.list_resources') }}">� All Resources</a>
-                    <a href="{{ url_for('bookings.list_bookings') }}">� All Bookings</a>
+                    <a href="{{ url_for('admin.dashboard') }}">🏠 Dashboard</a>
+                    <a href="{{ url_for('resources.list_resources') }}">📚 All Resources</a>
+                    <a href="{{ url_for('bookings.list_bookings') }}">📅 All Bookings</a>
                     <a href="{{ url_for('bookings.analytics') }}">📊 Analytics</a>
                     <a href="{{ url_for('concierge.index') }}">🧠 Concierge</a>
                     <a href="{{ url_for('auth.profile') }}">👤 Profile (Admin)</a>
@@ -309,10 +606,10 @@
                 
                 <!-- Staff Mobile Menu -->
                 {% elif current_user.is_staff() %}
-                    <a href="{{ url_for('bookings.dashboard') }}">🏠 Dashboard</a>
+                    <a href="{{ url_for('admin.dashboard') }}">🏠 Dashboard</a>
                     <a href="{{ url_for('resources.list_resources') }}">📚 Resources</a>
                     <a href="{{ url_for('resources.create_resource') }}">➕ Add Resource</a>
-                    <a href="{{ url_for('bookings.list_bookings') }}">� All Bookings</a>
+                    <a href="{{ url_for('bookings.list_bookings') }}">📅 All Bookings</a>
                     <a href="{{ url_for('concierge.index') }}">🧠 Concierge</a>
                     <a href="{{ url_for('auth.profile') }}">Profile (Staff)</a>
                     <a href="{{ url_for('auth.logout') }}">Logout</a>
@@ -1182,6 +1479,310 @@
     
     <!-- Resource Image Management -->
     <script src="{{ url_for('static', filename='js/resource-images.js') }}"></script>
+
+    <!-- Notification System -->
+    <script>
+        // Initialize notification system for authenticated users
+        {% if current_user.is_authenticated %}
+        (function() {
+            const notificationBell = document.getElementById('notificationBell');
+            const notificationDropdown = document.getElementById('notificationDropdown');
+            const notificationBadge = document.getElementById('notificationBadge');
+            const notificationList = document.getElementById('notificationList');
+            const clearAllBtn = document.getElementById('clearAllBtn');
+
+            if (!notificationBell) return; // Not on authenticated page
+
+            // Toggle dropdown visibility
+            notificationBell.addEventListener('click', function(e) {
+                e.stopPropagation();
+                notificationDropdown.classList.toggle('active');
+                if (notificationDropdown.classList.contains('active')) {
+                    loadNotifications();
+                }
+            });
+
+            // Close dropdown when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('.notification-container')) {
+                    notificationDropdown.classList.remove('active');
+                }
+            });
+
+            // Clear all notifications
+            if (clearAllBtn) {
+                clearAllBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    markAllAsRead();
+                });
+            }
+
+            /**
+             * Load notifications from server
+             */
+            async function loadNotifications() {
+                try {
+                    console.log('🔔 Loading notifications...');
+                    const response = await fetch('/api/notifications', {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Failed to load notifications');
+                    }
+
+                    const data = await response.json();
+                    const notifications = data.notifications || [];
+                    console.log('📬 Loaded', notifications.length, 'notifications');
+
+                    // Update badge
+                    updateBadge(notifications);
+
+                    // Render notifications
+                    renderNotifications(notifications);
+                } catch (error) {
+                    console.error('Error loading notifications:', error);
+                    notificationList.innerHTML = '<p class="notification-empty">Failed to load notifications</p>';
+                }
+            }
+
+            /**
+             * Update notification badge
+             */
+            function updateBadge(notifications) {
+                const unreadCount = notifications.filter(n => !n.is_read).length;
+
+                if (unreadCount > 0) {
+                    notificationBadge.textContent = unreadCount > 9 ? '9+' : unreadCount;
+                    notificationBadge.style.display = 'flex';
+                } else {
+                    notificationBadge.style.display = 'none';
+                }
+            }
+
+            /**
+             * Render notifications list
+             */
+            function renderNotifications(notifications) {
+                if (notifications.length === 0) {
+                    notificationList.innerHTML = '<p class="notification-empty">No notifications</p>';
+                    return;
+                }
+
+                // Sort by creation date (newest first)
+                notifications.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+                // Show latest 10 notifications
+                const recentNotifications = notifications.slice(0, 10);
+
+                notificationList.innerHTML = recentNotifications.map(notification => {
+                    const timeStr = formatNotificationTime(notification.created_at);
+                    const unreadClass = !notification.is_read ? 'unread' : '';
+                    const actionUrl = notification.action_url || '#';
+
+                    return `
+                        <a href="${actionUrl}" class="notification-item ${unreadClass}" data-id="${notification.id}">
+                            <div class="notification-item-title">${escapeHtml(notification.title)}</div>
+                            <div class="notification-item-text">${escapeHtml(notification.description)}</div>
+                            <div class="notification-item-time">${timeStr}</div>
+                        </a>
+                    `;
+                }).join('');
+
+                // Add click handlers to mark as read
+                document.querySelectorAll('.notification-item').forEach(item => {
+                    item.addEventListener('click', async function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        
+                        const originalId = this.getAttribute('data-id');
+                        let notificationId = originalId;
+                        const actionUrl = this.getAttribute('href');
+                        const isUnread = this.classList.contains('unread');
+
+                        // If this is a virtual booking alert (id like "booking_2"), don't call the notifications API
+                        const isVirtualBooking = typeof originalId === 'string' && originalId.startsWith('booking_');
+
+                        // For normal IDs that may contain non-numeric characters, extract the numeric part
+                        if (!isVirtualBooking) {
+                            const numericMatch = String(notificationId).match(/\d+/);
+                            if (numericMatch) {
+                                notificationId = numericMatch[0];
+                            }
+                        }
+
+                        console.log('🔔 Notification clicked:', originalId, 'parsed id:', notificationId, 'Unread:', isUnread, 'virtualBooking:', isVirtualBooking);
+
+                        // If unread, provide immediate visual feedback and attempt to mark as read when appropriate
+                        if (isUnread) {
+                            console.log('✅ Marking as read (client-side UI update)...');
+
+                            // Provide immediate visual feedback
+                            this.classList.remove('unread');
+                            this.style.backgroundColor = '#ffffff';
+                            this.style.borderLeft = '4px solid transparent';
+
+                            // Update badge immediately
+                            const currentBadge = parseInt(notificationBadge.textContent) || 0;
+                            const newCount = currentBadge - 1;
+                            console.log('📉 Badge: ', currentBadge, '→', newCount);
+                            if (newCount > 0) {
+                                notificationBadge.textContent = newCount > 9 ? '9+' : newCount;
+                            } else {
+                                notificationBadge.style.display = 'none';
+                            }
+
+                            // If this is a virtual booking (not stored in DB), we cannot mark it server-side — just navigate
+                            if (isVirtualBooking) {
+                                console.log('ℹ️ Virtual booking alert — skipping server mark-as-read');
+                            } else {
+                                // Try to mark as read on server, but never block navigation on 403 or other errors
+                                try {
+                                    const success = await markNotificationAsReadAndWait(notificationId);
+                                    if (success) {
+                                        console.log('⏳ Waiting 200ms for database commit...');
+                                        // Small delay to ensure database transaction completes
+                                        await new Promise(resolve => setTimeout(resolve, 200));
+                                    } else {
+                                        console.warn('⚠️ Server did not confirm mark-as-read (may be unauthorized). Proceeding to navigation to avoid blocking the user.');
+                                    }
+                                } catch (error) {
+                                    console.error('❌ Error during mark as read:', error);
+                                    console.warn('⚠️ Allowing navigation despite error');
+                                }
+                            }
+                        }
+                        
+                        // Navigate to the action URL after server confirms
+                        if (actionUrl && actionUrl !== '#') {
+                            console.log('🚀 Navigating to:', actionUrl);
+                            window.location.href = actionUrl;
+                        }
+                    });
+                });
+            }
+
+            /**
+             * Mark single notification as read (fire and forget)
+             */
+            function markNotificationAsRead(notificationId) {
+                const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+                fetch(`/api/notifications/${notificationId}/read`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken
+                    }
+                }).then(response => {
+                    if (response.ok) {
+                        console.log('✅ Notification marked as read on server');
+                    } else {
+                        console.error('❌ Failed to mark notification as read:', response.status);
+                    }
+                }).catch(error => {
+                    console.error('❌ Error marking notification as read:', error);
+                });
+            }
+
+            /**
+             * Mark single notification as read and wait for response
+             */
+            async function markNotificationAsReadAndWait(notificationId) {
+                try {
+                    console.log('🔄 Sending POST request to mark notification', notificationId, 'as read...');
+                    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+                    console.log('🔑 CSRF Token:', csrfToken ? 'Found' : 'MISSING!');
+                    
+                    const response = await fetch(`/api/notifications/${notificationId}/read`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': csrfToken
+                        }
+                    });
+
+                    console.log('📡 Server response status:', response.status, response.statusText);
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        console.log('✅ Server confirmed notification marked as read. Response:', data);
+                        return true;
+                    } else {
+                        const errorText = await response.text();
+                        console.error('❌ Server failed to mark notification as read. Status:', response.status, 'Error:', errorText);
+                        return false;
+                    }
+                } catch (error) {
+                    console.error('❌ Network error marking notification as read:', error);
+                    return false;
+                }
+            }
+
+            /**
+             * Mark all notifications as read
+             */
+            async function markAllAsRead() {
+                try {
+                    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+                    const response = await fetch('/api/notifications/read-all', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': csrfToken
+                        }
+                    });
+
+                    if (response.ok) {
+                        console.log('✅ All notifications marked as read');
+                        await loadNotifications(); // Refresh to update badge and styling
+                    } else {
+                        console.error('❌ Failed to mark all as read:', response.status);
+                    }
+                } catch (error) {
+                    console.error('Error marking all as read:', error);
+                }
+            }
+
+            /**
+             * Format notification timestamp
+             */
+            function formatNotificationTime(dateString) {
+                const date = new Date(dateString);
+                const now = new Date();
+                const diffMs = now - date;
+                const diffMins = Math.floor(diffMs / 60000);
+                const diffHours = Math.floor(diffMs / 3600000);
+                const diffDays = Math.floor(diffMs / 86400000);
+
+                if (diffMins < 1) return 'Just now';
+                if (diffMins < 60) return `${diffMins}m ago`;
+                if (diffHours < 24) return `${diffHours}h ago`;
+                if (diffDays < 7) return `${diffDays}d ago`;
+                
+                return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            }
+
+            /**
+             * Escape HTML to prevent XSS
+             */
+            function escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+
+            // Load notifications on page load
+            loadNotifications();
+
+            // Refresh notifications every 10 seconds
+            setInterval(loadNotifications, 10000);
+        })();
+        {% endif %}
+    </script>
 
     {% block extra_js %}{% endblock %}
 </body>

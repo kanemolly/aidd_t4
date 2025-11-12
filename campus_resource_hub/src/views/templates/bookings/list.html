@@ -734,11 +734,14 @@ function closeApproveModal() {
 function confirmApproveBooking() {
     if (!currentBookingId) return;
 
+    // Get CSRF token from meta tag
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+
     fetch(`/bookings/${currentBookingId}/confirm`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'X-CSRFToken': '{{ csrf_token() }}'
+            'X-CSRFToken': csrfToken
         }
     })
     .then(response => response.json())
@@ -791,11 +794,14 @@ function closeCancelModal() {
 function confirmCancelBooking() {
     if (!currentBookingId) return;
 
+    // Get CSRF token from meta tag
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+
     fetch(`/bookings/${currentBookingId}/cancel`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'X-CSRFToken': '{{ csrf_token() }}'
+            'X-CSRFToken': csrfToken
         }
     })
     .then(response => response.json())
@@ -805,6 +811,18 @@ function confirmCancelBooking() {
             // Show success message
             const successMsg = document.createElement('div');
             successMsg.className = 'alert-success';
+            successMsg.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: #10B981;
+                color: white;
+                padding: 16px 24px;
+                border-radius: 8px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                z-index: 2000;
+                font-weight: 600;
+            `;
             successMsg.textContent = 'Booking cancelled successfully!';
             document.body.appendChild(successMsg);
             
@@ -813,13 +831,37 @@ function confirmCancelBooking() {
                 window.location.reload();
             }, 2000);
         } else {
-            alert('Error cancelling booking: ' + data.error);
+            // Show error in a nice toast instead of alert
+            showErrorToast('Error cancelling booking: ' + data.error);
         }
     })
     .catch(error => {
-        alert('Error cancelling booking. Please try again.');
+        showErrorToast('Error cancelling booking. Please try again.');
         console.error('Error:', error);
     });
+}
+
+function showErrorToast(message) {
+    const errorMsg = document.createElement('div');
+    errorMsg.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #EF4444;
+        color: white;
+        padding: 16px 24px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        z-index: 2000;
+        font-weight: 600;
+        max-width: 400px;
+    `;
+    errorMsg.textContent = message;
+    document.body.appendChild(errorMsg);
+    
+    setTimeout(() => {
+        errorMsg.remove();
+    }, 4000);
 }
 
 function denyBooking(bookingId, userName, resourceName, dateTime) {
@@ -848,11 +890,14 @@ function confirmDenyBooking() {
         return;
     }
 
+    // Get CSRF token from meta tag
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+
     fetch(`/bookings/${currentBookingId}/cancel`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'X-CSRFToken': '{{ csrf_token() }}'
+            'X-CSRFToken': csrfToken
         },
         body: JSON.stringify({ reason: reason })
     })
