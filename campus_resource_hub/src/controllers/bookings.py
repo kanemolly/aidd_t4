@@ -11,6 +11,7 @@ from src.models import Booking
 from src.extensions import csrf_protect
 from src.services.email_service import email_service
 from src.services.calendar_service import calendar_service
+from src.services.notification_service import NotificationService
 
 bp = Blueprint('bookings', __name__, url_prefix='/bookings')
 
@@ -106,11 +107,13 @@ def list_bookings():
             }), 200
         
         # Return HTML template for web view
+        from datetime import datetime
         return render_template(
             'bookings/list.html',
             bookings=bookings,
             is_admin_view=is_admin_view,
-            current_status=status
+            current_status=status,
+            now=datetime.now
         )
         
     except Exception as e:
@@ -287,7 +290,11 @@ def create_booking():
             }), 409
         
         # Auto-approve if resource doesn't require approval
-        booking_status = Booking.STATUS_PENDING if resource.requires_approval else Booking.STATUS_CONFIRMED
+        # BUT: Recurring bookings ALWAYS require admin approval
+        if is_recurring:
+            booking_status = Booking.STATUS_PENDING  # Always pending for recurring
+        else:
+            booking_status = Booking.STATUS_PENDING if resource.requires_approval else Booking.STATUS_CONFIRMED
         
         # Handle recurring bookings
         if is_recurring and recurrence_end_str:
@@ -361,11 +368,18 @@ def create_booking():
                 
                 created_bookings.append(instance)
             
+            message = f'Created {len(created_bookings)} recurring booking(s). '
+            if conflicts:
+                message += f'{len(conflicts)} dates were skipped due to conflicts. '
+            message += 'All recurring bookings require admin approval.'
+            
             return jsonify({
                 'success': True,
-                'message': f'Created {len(created_bookings)} recurring booking(s)',
+                'message': message,
                 'booking_id': parent_booking.id,
-                'auto_approved': not resource.requires_approval,
+                'auto_approved': False,  # Always false for recurring
+                'requires_approval': True,
+                'is_recurring': True,
                 'total_created': len(created_bookings),
                 'conflicts_skipped': len(conflicts),
                 'conflicted_dates': conflicts,
@@ -597,6 +611,13 @@ def confirm_booking(booking_id):
         from src.extensions import db
         db.session.commit()
         
+        # Create notification record
+        try:
+            notification_service = NotificationService()
+            notification_service.notify_booking_confirmed(confirmed_booking)
+        except Exception as e:
+            print(f"Error creating notification record: {str(e)}")
+        
         # Send in-app notification to student
         try:
             from src.data_access.message_dal import MessageDAL
@@ -748,6 +769,156 @@ The resource is now available for other students to book.
         
     except Exception as e:
         import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': f'Server error: {str(e)}'}), 500
+
+
+@bp.route('/<int:booking_id>/edit', methods=['POST'])
+@csrf_protect.exempt
+@login_required
+def edit_booking(booking_id):
+    """
+    Edit a booking (admin/staff only).
+    Allows modification of start_time, end_time, and notes.
+    Notifies the user of changes.
+    
+    Request body (JSON):
+        - start_time (str): ISO format datetime
+        - end_time (str): ISO format datetime
+        - notes (str, optional): Booking notes
+    
+    Returns:
+        200: Updated booking with change summary
+        400: Validation error (conflict, invalid times)
+        403: Unauthorized
+        404: Booking not found
+        500: Server error
+    """
+    try:
+        booking = BookingDAL.get_booking_by_id(booking_id)
+        if not booking:
+            return jsonify({'success': False, 'error': 'Booking not found'}), 404
+        
+        # Only admin and staff can edit
+        if not (current_user.is_admin() or current_user.is_staff()):
+            return jsonify({'success': False, 'error': 'Only admins and staff can edit bookings'}), 403
+        
+        # Parse request data
+        data = request.get_json()
+        if not data:
+            return jsonify({'success': False, 'error': 'Request body is required'}), 400
+        
+        # Extract and validate new times
+        new_start_str = data.get('start_time')
+        new_end_str = data.get('end_time')
+        new_notes = data.get('notes', '').strip()
+        
+        if not new_start_str or not new_end_str:
+            return jsonify({'success': False, 'error': 'start_time and end_time are required'}), 400
+        
+        try:
+            # Parse datetime strings (assume ISO format from frontend)
+            from dateutil import parser
+            new_start_time = parser.isoparse(new_start_str)
+            new_end_time = parser.isoparse(new_end_str)
+        except (ValueError, TypeError) as e:
+            return jsonify({'success': False, 'error': f'Invalid datetime format: {str(e)}'}), 400
+        
+        # Validate time range
+        if new_start_time >= new_end_time:
+            return jsonify({'success': False, 'error': 'Start time must be before end time'}), 400
+        
+        # Check for booking conflicts (excluding current booking)
+        if booking.status in [Booking.STATUS_CONFIRMED, Booking.STATUS_PENDING]:
+            confirmed_bookings = BookingDAL.get_confirmed_bookings_for_resource(
+                booking.resource_id,
+                start_time=new_start_time,
+                end_time=new_end_time
+            )
+            # Filter out current booking
+            conflicting = [b for b in confirmed_bookings if b.id != booking_id]
+            if conflicting:
+                conflict_list = ', '.join([f"#{b.id} ({b.start_time} - {b.end_time})" for b in conflicting])
+                return jsonify({
+                    'success': False,
+                    'error': f'Time slot conflicts with existing bookings: {conflict_list}'
+                }), 400
+        
+        # Track changes
+        changes = []
+        if booking.start_time != new_start_time:
+            changes.append(f"Start time: {booking.start_time.isoformat()} → {new_start_time.isoformat()}")
+            booking.start_time = new_start_time
+        
+        if booking.end_time != new_end_time:
+            changes.append(f"End time: {booking.end_time.isoformat()} → {new_end_time.isoformat()}")
+            booking.end_time = new_end_time
+        
+        if booking.notes != new_notes:
+            old_notes = booking.notes or "(empty)"
+            changes.append(f"Notes: {old_notes} → {new_notes if new_notes else '(empty)'}")
+            booking.notes = new_notes if new_notes else None
+        
+        if not changes:
+            return jsonify({'success': False, 'error': 'No changes provided'}), 400
+        
+        # Update modification tracking
+        booking.modified_by_id = current_user.id
+        booking.modified_at = datetime.utcnow()
+        booking.change_summary = '\n'.join(changes)
+        
+        # Commit changes
+        from src.extensions import db
+        db.session.commit()
+        
+        # Send in-app notification to student
+        try:
+            from src.data_access.message_dal import MessageDAL
+            notification_subject = f"Booking Modified: {booking.resource.name}"
+            notification_body = f"""
+Your booking for {booking.resource.name} has been modified by an administrator.
+
+Modified Booking Details:
+- Resource: {booking.resource.name}
+- Start: {booking.start_time.strftime('%B %d, %Y at %I:%M %p')}
+- End: {booking.end_time.strftime('%B %d, %Y at %I:%M %p')}
+- Location: {booking.resource.location if booking.resource.location else 'Not specified'}
+
+Changes Made:
+{booking.change_summary}
+
+Modified By: {current_user.full_name}
+
+Please review your booking details and contact us if you have any questions.
+            """.strip()
+            
+            MessageDAL.create_message(
+                sender_id=current_user.id,
+                recipient_id=booking.user_id,
+                subject=notification_subject,
+                body=notification_body
+            )
+        except Exception as e:
+            # Log error but don't fail the edit
+            print(f"Error sending in-app notification: {str(e)}")
+        
+        # Send email notification
+        if current_app.config.get('EMAIL_NOTIFICATIONS_ENABLED', True):
+            try:
+                email_service.send_booking_modified(booking, booking.user, current_user, changes)
+            except Exception as e:
+                print(f"Error sending modification email: {str(e)}")
+        
+        return jsonify({
+            'success': True,
+            'message': 'Booking modified successfully',
+            'booking': booking.to_dict(),
+            'changes': changes
+        }), 200
+        
+    except Exception as e:
+        import traceback
+        print(f"Error in edit_booking: {str(e)}")
         traceback.print_exc()
         return jsonify({'success': False, 'error': f'Server error: {str(e)}'}), 500
 

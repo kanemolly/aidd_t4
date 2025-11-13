@@ -214,6 +214,11 @@ class Booking(db.Model):
     cancellation_reason = db.Column(db.Text, nullable=True)  # Reason for cancellation/denial
     cancelled_by_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)  # Who cancelled/denied
     
+    # Modification tracking
+    modified_by_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)  # Admin who modified
+    modified_at = db.Column(db.DateTime, nullable=True)  # When modified by admin
+    change_summary = db.Column(db.Text, nullable=True)  # Summary of what changed (JSON or text)
+    
     # Timestamps
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
@@ -221,6 +226,7 @@ class Booking(db.Model):
     # Relationships
     approved_by = db.relationship('User', foreign_keys=[approved_by_id], lazy='joined')
     cancelled_by = db.relationship('User', foreign_keys=[cancelled_by_id], lazy='joined')
+    modified_by = db.relationship('User', foreign_keys=[modified_by_id], lazy='joined')
     recurring_instances = db.relationship('Booking', backref=db.backref('parent_booking', remote_side=[id]), lazy='dynamic')
     
     def to_dict(self):

@@ -255,6 +255,49 @@ Campus Resource Hub Team
         
         return self.send_email(user.email, subject, body, user.full_name)
     
+    def send_booking_modified(self, booking, user, modified_by, changes: list) -> bool:
+        """Send email notification when booking is modified by admin."""
+        subject = f"Booking Modified: {booking.resource.name}"
+        
+        # Format changes list
+        changes_text = "\n".join([f"  • {change}" for change in changes])
+        
+        body = f"""
+Hi {user.full_name},
+
+Your booking has been modified by an administrator.
+
+Modified Booking Details:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Resource: {booking.resource.name}
+Type: {booking.resource.resource_type.title()}
+Location: {booking.resource.location or 'Not specified'}
+
+Date: {booking.start_time.strftime('%A, %B %d, %Y')}
+Start Time: {booking.start_time.strftime('%I:%M %p')}
+End Time: {booking.end_time.strftime('%I:%M %p')}
+
+Booking ID: {booking.id}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Changes Made:
+{changes_text}
+
+Modified By: {modified_by.full_name}
+
+{self._get_booking_notes(booking)}
+
+Please review your booking details. If you have questions about these changes, 
+please contact the resource administrator.
+
+View your booking: http://localhost:5000/bookings/{booking.id}/view
+
+Best regards,
+Campus Resource Hub Team
+        """.strip()
+        
+        return self.send_email(user.email, subject, body, user.full_name)
+    
     def _format_duration(self, start_time, end_time) -> str:
         """Format duration between two times."""
         duration = end_time - start_time

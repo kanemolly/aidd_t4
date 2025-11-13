@@ -74,7 +74,7 @@ class BookingDAL:
     @staticmethod
     def get_bookings_by_user(user_id: int, limit: int = None, offset: int = 0) -> list:
         """
-        Get bookings by user ID.
+        Get bookings by user ID, ordered by start time (upcoming first).
 
         Args:
             user_id (int): ID of user making bookings
@@ -82,13 +82,13 @@ class BookingDAL:
             offset (int): Number of bookings to skip. Default: 0
 
         Returns:
-            list: List of Booking objects
+            list: List of Booking objects ordered by start_time ascending
 
         Raises:
             SQLAlchemyError: For database errors
         """
         try:
-            query = Booking.query.filter_by(user_id=user_id).order_by(Booking.start_time.desc()).offset(offset)
+            query = Booking.query.filter_by(user_id=user_id).order_by(Booking.start_time.asc()).offset(offset)
             if limit:
                 query = query.limit(limit)
             return query.all()
@@ -98,7 +98,7 @@ class BookingDAL:
     @staticmethod
     def get_user_bookings_by_status(user_id: int, status: str, limit: int = None, offset: int = 0) -> list:
         """
-        Get bookings for a user filtered by status.
+        Get bookings for a user filtered by status, ordered by start time (upcoming first).
 
         Args:
             user_id (int): ID of user making bookings
@@ -107,13 +107,13 @@ class BookingDAL:
             offset (int): Number of bookings to skip. Default: 0
 
         Returns:
-            list: List of Booking objects
+            list: List of Booking objects ordered by start_time ascending
 
         Raises:
             SQLAlchemyError: For database errors
         """
         try:
-            query = Booking.query.filter_by(user_id=user_id, status=status).order_by(Booking.start_time.desc()).offset(offset)
+            query = Booking.query.filter_by(user_id=user_id, status=status).order_by(Booking.start_time.asc()).offset(offset)
             if limit:
                 query = query.limit(limit)
             return query.all()
@@ -147,7 +147,7 @@ class BookingDAL:
     @staticmethod
     def get_bookings_by_status(status: str, limit: int = None, offset: int = 0) -> list:
         """
-        Get bookings by status.
+        Get bookings by status, ordered by start time (upcoming first).
 
         Args:
             status (str): Status to filter by - 'pending', 'confirmed', 'cancelled', 'completed'
@@ -155,13 +155,13 @@ class BookingDAL:
             offset (int): Number of bookings to skip. Default: 0
 
         Returns:
-            list: List of Booking objects
+            list: List of Booking objects ordered by start_time ascending
 
         Raises:
             SQLAlchemyError: For database errors
         """
         try:
-            query = Booking.query.filter_by(status=status).order_by(Booking.created_at.desc()).offset(offset)
+            query = Booking.query.filter_by(status=status).order_by(Booking.start_time.asc()).offset(offset)
             if limit:
                 query = query.limit(limit)
             return query.all()
@@ -207,20 +207,20 @@ class BookingDAL:
     @staticmethod
     def get_all_bookings(limit: int = None, offset: int = 0) -> list:
         """
-        Get all bookings with optional pagination.
+        Get all bookings with optional pagination, ordered by start time (upcoming first).
 
         Args:
             limit (int): Maximum number of bookings to return. Optional.
             offset (int): Number of bookings to skip. Default: 0
 
         Returns:
-            list: List of Booking objects
+            list: List of Booking objects ordered by start_time ascending
 
         Raises:
             SQLAlchemyError: For database errors
         """
         try:
-            query = Booking.query.order_by(Booking.created_at.desc()).offset(offset)
+            query = Booking.query.order_by(Booking.start_time.asc()).offset(offset)
             if limit:
                 query = query.limit(limit)
             return query.all()

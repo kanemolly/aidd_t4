@@ -1,3 +1,4 @@
+<!-- Bulk Actions Enabled - v2.0 - Last Updated: 2025-11-13 -->
 {% extends "base.html" %}
 
 {% block title %}Pending Bookings - Admin - Campus Resource Hub{% endblock %}
@@ -134,6 +135,148 @@
         font-size: var(--font-size-md);
     }
 
+    /* Bulk Actions */
+    .bulk-actions-bar {
+        background: var(--neutral-white);
+        border-radius: var(--radius-lg);
+        padding: var(--space-lg);
+        margin-bottom: var(--space-lg);
+        box-shadow: var(--shadow-md);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--space-md);
+    }
+
+    .bulk-selection-info {
+        display: flex;
+        align-items: center;
+        gap: var(--space-md);
+        color: var(--neutral-gray-700);
+        font-size: var(--font-size-md);
+    }
+
+    .selected-count {
+        background: var(--iu-crimson);
+        color: white;
+        padding: var(--space-xs) var(--space-md);
+        border-radius: var(--radius-full);
+        font-weight: 700;
+        font-size: var(--font-size-sm);
+    }
+
+    .bulk-action-buttons {
+        display: flex;
+        gap: var(--space-md);
+    }
+
+    .btn-bulk-approve {
+        background: #10B981;
+        color: white;
+        padding: var(--space-md) var(--space-xl);
+        border: none;
+        border-radius: var(--radius-lg);
+        cursor: pointer;
+        font-weight: 600;
+        font-size: var(--font-size-md);
+        transition: all var(--transition-fast);
+        display: flex;
+        align-items: center;
+        gap: var(--space-sm);
+    }
+
+    .btn-bulk-approve:hover:not(:disabled) {
+        background: #059669;
+        box-shadow: var(--shadow-lg);
+        transform: translateY(-2px);
+    }
+
+    .btn-bulk-approve:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .btn-bulk-reject {
+        background: #EF4444;
+        color: white;
+        padding: var(--space-md) var(--space-xl);
+        border: none;
+        border-radius: var(--radius-lg);
+        cursor: pointer;
+        font-weight: 600;
+        font-size: var(--font-size-md);
+        transition: all var(--transition-fast);
+        display: flex;
+        align-items: center;
+        gap: var(--space-sm);
+    }
+
+    .btn-bulk-reject:hover:not(:disabled) {
+        background: #DC2626;
+        box-shadow: var(--shadow-lg);
+        transform: translateY(-2px);
+    }
+
+    .btn-bulk-reject:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .btn-clear-selection {
+        background: transparent;
+        color: var(--neutral-gray-600);
+        padding: var(--space-md) var(--space-lg);
+        border: 1px solid var(--neutral-gray-300);
+        border-radius: var(--radius-lg);
+        cursor: pointer;
+        font-weight: 600;
+        font-size: var(--font-size-sm);
+        transition: all var(--transition-fast);
+    }
+
+    .btn-clear-selection:hover {
+        border-color: var(--neutral-gray-400);
+        background: var(--neutral-gray-50);
+    }
+
+    /* Checkbox styling */
+    .booking-checkbox {
+        width: 20px;
+        height: 20px;
+        cursor: pointer;
+        accent-color: var(--iu-crimson);
+    }
+
+    .select-all-checkbox {
+        width: 20px;
+        height: 20px;
+        cursor: pointer;
+        accent-color: var(--iu-crimson);
+    }
+
+    /* Row selection highlight */
+    .bookings-table tbody tr.selected {
+        background: #FEF2F2 !important;
+        border-left: 4px solid var(--iu-crimson);
+    }
+
+    .btn-view-details {
+        background: var(--iu-crimson);
+        color: white;
+        padding: var(--space-xs) var(--space-md);
+        border: none;
+        border-radius: var(--radius-lg);
+        cursor: pointer;
+        font-weight: 600;
+        font-size: var(--font-size-sm);
+        transition: all var(--transition-fast);
+    }
+
+    .btn-view-details:hover {
+        background: var(--iu-dark);
+        box-shadow: var(--shadow-lg);
+    }
+
     @media (max-width: 768px) {
         .admin-container {
             padding: var(--space-lg) var(--space-md);
@@ -156,6 +299,21 @@
         .btn-reject {
             width: 100%;
         }
+
+        .bulk-actions-bar {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .bulk-action-buttons {
+            flex-direction: column;
+        }
+
+        .btn-bulk-approve,
+        .btn-bulk-reject {
+            width: 100%;
+            justify-content: center;
+        }
     }
 </style>
 {% endblock %}
@@ -169,9 +327,31 @@
     </div>
 
     {% if bookings %}
+        <!-- Bulk Actions Bar -->
+        <div class="bulk-actions-bar" id="bulkActionsBar">
+            <div class="bulk-selection-info">
+                <span class="selected-count" id="selectedCount">0</span>
+                <span>booking(s) selected</span>
+            </div>
+            <div class="bulk-action-buttons">
+                <button class="btn-bulk-approve" id="btnBulkApprove" onclick="bulkApproveBookings()" disabled>
+                    ✓ Approve Selected
+                </button>
+                <button class="btn-bulk-reject" id="btnBulkReject" onclick="bulkRejectBookings()" disabled>
+                    ✕ Reject Selected
+                </button>
+                <button class="btn-clear-selection" onclick="clearSelection()">
+                    Clear Selection
+                </button>
+            </div>
+        </div>
+
         <table class="bookings-table">
             <thead>
                 <tr>
+                    <th style="width: 40px;">
+                        <input type="checkbox" class="select-all-checkbox" id="selectAll" onchange="toggleSelectAll(this)">
+                    </th>
                     <th>Resource</th>
                     <th>User</th>
                     <th>Start Time</th>
@@ -182,7 +362,10 @@
             </thead>
             <tbody>
                 {% for booking in bookings %}
-                <tr>
+                <tr id="booking-row-{{ booking.id }}" data-booking-id="{{ booking.id }}">
+                    <td>
+                        <input type="checkbox" class="booking-checkbox" data-booking-id="{{ booking.id }}" onchange="updateSelection()">
+                    </td>
                     <td>
                         <div class="booking-resource">{{ booking.resource.name }}</div>
                         <div class="booking-time">{{ booking.resource.resource_type }}</div>
@@ -202,6 +385,9 @@
                     </td>
                     <td>
                         <div class="action-buttons">
+                            <button class="btn-view-details" onclick="window.location.href='/bookings/{{ booking.id }}'">
+                                👁️ Details
+                            </button>
                             <button class="btn-approve" onclick="approveBooking({{ booking.id }})">
                                 ✓ Approve
                             </button>
@@ -228,6 +414,52 @@
 const CSRF_TOKEN = '{{ csrf_token() }}';
 console.log('[GLOBAL] CSRF Token loaded on admin/pending_bookings:', CSRF_TOKEN ? `✅ Present (${CSRF_TOKEN.length} chars)` : '❌ Missing');
 
+// Track selected bookings
+let selectedBookings = new Set();
+
+function updateSelection() {
+    const checkboxes = document.querySelectorAll('.booking-checkbox');
+    selectedBookings.clear();
+    
+    checkboxes.forEach(cb => {
+        const row = document.getElementById(`booking-row-${cb.dataset.bookingId}`);
+        if (cb.checked) {
+            selectedBookings.add(parseInt(cb.dataset.bookingId));
+            row.classList.add('selected');
+        } else {
+            row.classList.remove('selected');
+        }
+    });
+    
+    // Update UI
+    const count = selectedBookings.size;
+    document.getElementById('selectedCount').textContent = count;
+    document.getElementById('btnBulkApprove').disabled = count === 0;
+    document.getElementById('btnBulkReject').disabled = count === 0;
+    
+    // Update select all checkbox
+    const selectAllCb = document.getElementById('selectAll');
+    selectAllCb.checked = count > 0 && count === checkboxes.length;
+    selectAllCb.indeterminate = count > 0 && count < checkboxes.length;
+}
+
+function toggleSelectAll(checkbox) {
+    const checkboxes = document.querySelectorAll('.booking-checkbox');
+    checkboxes.forEach(cb => {
+        cb.checked = checkbox.checked;
+    });
+    updateSelection();
+}
+
+function clearSelection() {
+    const checkboxes = document.querySelectorAll('.booking-checkbox');
+    checkboxes.forEach(cb => {
+        cb.checked = false;
+    });
+    document.getElementById('selectAll').checked = false;
+    updateSelection();
+}
+
 function approveBooking(bookingId) {
     if (confirm('Approve this booking?')) {
         fetch(`/bookings/${bookingId}/confirm`, {
@@ -241,7 +473,6 @@ function approveBooking(bookingId) {
             })
         })
         .then(response => {
-            // Check if response is OK first
             if (!response.ok) {
                 return response.text().then(text => {
                     throw new Error(`HTTP ${response.status}: ${text}`);
@@ -251,8 +482,17 @@ function approveBooking(bookingId) {
         })
         .then(data => {
             if (data.success) {
-                alert('Booking approved!');
-                location.reload();
+                // Remove row with animation
+                const row = document.getElementById(`booking-row-${bookingId}`);
+                row.style.opacity = '0';
+                row.style.transition = 'opacity 0.3s ease';
+                setTimeout(() => {
+                    row.remove();
+                    updateSelection();
+                    if (document.querySelectorAll('.booking-checkbox').length === 0) {
+                        location.reload();
+                    }
+                }, 300);
             } else {
                 alert('Error: ' + (data.error || data.message));
             }
@@ -274,7 +514,6 @@ function rejectBooking(bookingId) {
             }
         })
         .then(response => {
-            // Check if response is OK first
             if (!response.ok) {
                 return response.text().then(text => {
                     throw new Error(`HTTP ${response.status}: ${text}`);
@@ -284,8 +523,17 @@ function rejectBooking(bookingId) {
         })
         .then(data => {
             if (data.success) {
-                alert('Booking rejected and deleted!');
-                location.reload();
+                // Remove row with animation
+                const row = document.getElementById(`booking-row-${bookingId}`);
+                row.style.opacity = '0';
+                row.style.transition = 'opacity 0.3s ease';
+                setTimeout(() => {
+                    row.remove();
+                    updateSelection();
+                    if (document.querySelectorAll('.booking-checkbox').length === 0) {
+                        location.reload();
+                    }
+                }, 300);
             } else {
                 alert('Error: ' + (data.error || data.message));
             }
@@ -296,5 +544,121 @@ function rejectBooking(bookingId) {
         });
     }
 }
+
+async function bulkApproveBookings() {
+    const count = selectedBookings.size;
+    if (count === 0) return;
+    
+    if (!confirm(`Approve ${count} selected booking(s)?`)) return;
+    
+    const bookingIds = Array.from(selectedBookings);
+    let successful = 0;
+    let failed = 0;
+    
+    // Show progress
+    const btnApprove = document.getElementById('btnBulkApprove');
+    const originalText = btnApprove.innerHTML;
+    btnApprove.disabled = true;
+    btnApprove.innerHTML = '⏳ Processing...';
+    
+    for (const bookingId of bookingIds) {
+        try {
+            const response = await fetch(`/bookings/${bookingId}/confirm`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': CSRF_TOKEN
+                },
+                body: JSON.stringify({
+                    csrf_token: CSRF_TOKEN
+                })
+            });
+            
+            const data = await response.json();
+            if (data.success) {
+                successful++;
+                const row = document.getElementById(`booking-row-${bookingId}`);
+                row.style.opacity = '0';
+                row.style.transition = 'opacity 0.3s ease';
+                setTimeout(() => row.remove(), 300);
+            } else {
+                failed++;
+            }
+        } catch (error) {
+            console.error(`Error approving booking ${bookingId}:`, error);
+            failed++;
+        }
+    }
+    
+    // Show results
+    clearSelection();
+    btnApprove.innerHTML = originalText;
+    
+    const message = `✅ Approved: ${successful}` + (failed > 0 ? `\n❌ Failed: ${failed}` : '');
+    alert(message);
+    
+    if (document.querySelectorAll('.booking-checkbox').length === 0) {
+        location.reload();
+    }
+}
+
+async function bulkRejectBookings() {
+    const count = selectedBookings.size;
+    if (count === 0) return;
+    
+    if (!confirm(`Reject ${count} selected booking(s)? This action cannot be undone.`)) return;
+    
+    const bookingIds = Array.from(selectedBookings);
+    let successful = 0;
+    let failed = 0;
+    
+    // Show progress
+    const btnReject = document.getElementById('btnBulkReject');
+    const originalText = btnReject.innerHTML;
+    btnReject.disabled = true;
+    btnReject.innerHTML = '⏳ Processing...';
+    
+    for (const bookingId of bookingIds) {
+        try {
+            const response = await fetch(`/bookings/${bookingId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': CSRF_TOKEN
+                }
+            });
+            
+            const data = await response.json();
+            if (data.success) {
+                successful++;
+                const row = document.getElementById(`booking-row-${bookingId}`);
+                row.style.opacity = '0';
+                row.style.transition = 'opacity 0.3s ease';
+                setTimeout(() => row.remove(), 300);
+            } else {
+                failed++;
+            }
+        } catch (error) {
+            console.error(`Error rejecting booking ${bookingId}:`, error);
+            failed++;
+        }
+    }
+    
+    // Show results
+    clearSelection();
+    btnReject.innerHTML = originalText;
+    
+    const message = `✅ Rejected: ${successful}` + (failed > 0 ? `\n❌ Failed: ${failed}` : '');
+    alert(message);
+    
+    if (document.querySelectorAll('.booking-checkbox').length === 0) {
+        location.reload();
+    }
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    updateSelection();
+});
 </script>
 {% endblock %}
