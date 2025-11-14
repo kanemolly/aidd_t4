@@ -386,3 +386,102 @@ class BookingDAL:
             return Booking.query.count()
         except SQLAlchemyError as e:
             raise SQLAlchemyError(f"Error counting bookings: {str(e)}")
+
+    @staticmethod
+    def update_booking_status(booking_id: int, status: str) -> Booking:
+        """
+        Update booking status by ID.
+
+        Args:
+            booking_id (int): Booking's primary key
+            status (str): New status value
+
+        Returns:
+            Booking: Updated booking object
+
+        Raises:
+            ValueError: If booking not found
+            SQLAlchemyError: For database errors
+        """
+        return BookingDAL.update_booking(booking_id, status=status)
+
+    @staticmethod
+    def check_booking_conflicts(resource_id: int, start_time: datetime, 
+                               end_time: datetime, exclude_booking_id: int = None) -> list:
+        """
+        Check for booking conflicts for a resource in a given time range.
+
+        Args:
+            resource_id (int): Resource ID to check
+            start_time (datetime): Start time of proposed booking
+            end_time (datetime): End time of proposed booking
+            exclude_booking_id (int): Optional booking ID to exclude from check
+
+        Returns:
+            list: List of conflicting Booking objects
+
+        Raises:
+            SQLAlchemyError: For database errors
+        """
+        try:
+            query = Booking.query.filter(
+                Booking.resource_id == resource_id,
+                Booking.status.in_(['pending', 'confirmed']),  # Only active bookings
+                Booking.start_time < end_time,  # Starts before proposed end
+                Booking.end_time > start_time   # Ends after proposed start
+            )
+            
+            if exclude_booking_id:
+                query = query.filter(Booking.id != exclude_booking_id)
+            
+            return query.all()
+        except SQLAlchemyError as e:
+            raise SQLAlchemyError(f"Error checking booking conflicts: {str(e)}")
+
+    @staticmethod
+    def get_pending_bookings(limit: int = None, offset: int = 0) -> list:
+        """
+        Get all pending bookings.
+
+        Args:
+            limit (int): Maximum number of bookings to return. Optional.
+            offset (int): Number of bookings to skip. Default: 0
+
+        Returns:
+            list: List of Booking objects with 'pending' status
+
+        Raises:
+            SQLAlchemyError: For database errors
+        """
+        return BookingDAL.get_bookings_by_status('pending', limit=limit, offset=offset)
+
+    @staticmethod
+    def get_bookings_by_date_range(start_date: datetime, end_date: datetime, 
+                                   limit: int = None, offset: int = 0) -> list:
+        """
+        Get bookings within a date range.
+
+        Args:
+            start_date (datetime): Start of date range
+            end_date (datetime): End of date range
+            limit (int): Maximum number of bookings to return. Optional.
+            offset (int): Number of bookings to skip. Default: 0
+
+        Returns:
+            list: List of Booking objects within date range
+
+        Raises:
+            SQLAlchemyError: For database errors
+        """
+        try:
+            query = Booking.query.filter(
+                Booking.start_time >= start_date,
+                Booking.start_time <= end_date
+            ).order_by(Booking.start_time.asc()).offset(offset)
+            
+            if limit:
+                query = query.limit(limit)
+            
+            return query.all()
+        except SQLAlchemyError as e:
+            raise SQLAlchemyError(f"Error fetching bookings by date range: {str(e)}")

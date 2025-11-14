@@ -23,6 +23,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     
+    {% block head %}{% endblock %}
+    
     <style>
         /* NOTIFICATION SYSTEM v2.0 - UPDATED 2025-11-11 18:20 */
         /* Navbar Customization */
@@ -526,12 +528,12 @@
                     
                     <!-- Staff Navigation -->
                     {% elif current_user.is_staff() %}
-                        <li><a href="{{ url_for('admin.dashboard') }}">🏠 Dashboard</a></li>
-                        <li><a href="{{ url_for('resources.list_resources') }}">📚 Resources</a></li>
+                        <li><a href="{{ url_for('staff.dashboard') }}">🏠 Dashboard</a></li>
+                        <li><a href="{{ url_for('staff.my_resources') }}">📦 My Resources</a></li>
                         <li><a href="{{ url_for('resources.create_resource') }}">➕ Add Resource</a></li>
-                        <li><a href="{{ url_for('bookings.list_bookings') }}">📅 All Bookings</a></li>
+                        <li><a href="{{ url_for('staff.my_bookings') }}">📅 Bookings</a></li>
                         <li><a href="{{ url_for('concierge.index') }}">🧠 Concierge</a></li>
-                        <li><a href="{{ url_for('messages.list_messages') }}">💬 Messages</a></li>
+                        <li><a href="{{ url_for('staff.my_messages') }}">💬 Messages</a></li>
                         <li class="notification-container">
                             <button class="notification-bell" id="notificationBell" title="Notifications">
                                 🔔
@@ -606,10 +608,11 @@
                 
                 <!-- Staff Mobile Menu -->
                 {% elif current_user.is_staff() %}
-                    <a href="{{ url_for('admin.dashboard') }}">🏠 Dashboard</a>
-                    <a href="{{ url_for('resources.list_resources') }}">📚 Resources</a>
+                    <a href="{{ url_for('staff.dashboard') }}">🏠 Dashboard</a>
+                    <a href="{{ url_for('staff.my_resources') }}">📦 My Resources</a>
                     <a href="{{ url_for('resources.create_resource') }}">➕ Add Resource</a>
-                    <a href="{{ url_for('bookings.list_bookings') }}">📅 All Bookings</a>
+                    <a href="{{ url_for('staff.my_bookings') }}">📅 Bookings</a>
+                    <a href="{{ url_for('staff.my_messages') }}">💬 Messages</a>
                     <a href="{{ url_for('concierge.index') }}">🧠 Concierge</a>
                     <a href="{{ url_for('auth.profile') }}">Profile (Staff)</a>
                     <a href="{{ url_for('auth.logout') }}">Logout</a>

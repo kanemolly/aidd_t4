@@ -44,6 +44,9 @@ def create_app(config_name=None):
     # Load configuration
     app.config.from_object(config.get(config_name, config['default']))
     
+    # Enable template auto-reload for development
+    app.config['TEMPLATES_AUTO_RELOAD'] = True
+    
     # Initialize Flask extensions
     db.init_app(app)
     login_manager.init_app(app)
@@ -89,7 +92,7 @@ def create_app(config_name=None):
 
 def _register_blueprints(app):
     """Register all Flask blueprints."""
-    from src.controllers import auth, resources, bookings, messages, reviews, admin
+    from src.controllers import auth, resources, bookings, messages, reviews, admin, staff
     try:
         from src.controllers import concierge
     except ImportError:
@@ -103,6 +106,7 @@ def _register_blueprints(app):
     app.register_blueprint(messages.api_bp)  # API endpoints
     app.register_blueprint(reviews.bp)
     app.register_blueprint(admin.bp)
+    app.register_blueprint(staff.bp)
     if concierge:
         app.register_blueprint(concierge.bp)
 
@@ -139,8 +143,10 @@ def _register_main_routes(app):
         from flask_login import current_user
         # Redirect based on user role
         if current_user.is_authenticated:
-            if current_user.is_admin() or current_user.is_staff():
-                return redirect(url_for('bookings.dashboard'))
+            if current_user.is_admin():
+                return redirect(url_for('admin.dashboard'))
+            elif current_user.is_staff():
+                return redirect(url_for('staff.dashboard'))
             return redirect(url_for('resources.list_resources'))
         # Not logged in - show resources (login required will catch them)
         return redirect(url_for('resources.list_resources'))

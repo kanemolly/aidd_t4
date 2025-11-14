@@ -1,0 +1,494 @@
+{% extends "base.html" %}
+
+{% block title %}Create User Account - Admin{% endblock %}
+
+{% block head %}
+<style>
+    /* Root Variables */
+    :root {
+        --color-crimson: #990000;
+        --color-crimson-dark: #7d0000;
+        --color-crimson-light: #cc0000;
+        --color-gray-50: #f9fafb;
+        --color-gray-100: #f3f4f6;
+        --color-gray-200: #e5e7eb;
+        --color-gray-300: #d1d5db;
+        --color-gray-600: #4b5563;
+        --color-gray-700: #374151;
+        --color-gray-900: #111827;
+        --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    * {
+        box-sizing: border-box;
+    }
+
+    .create-user-container {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 48px 20px;
+        background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+        min-height: 100vh;
+    }
+
+    /* Header Card */
+    .header-card {
+        background: linear-gradient(135deg, var(--color-crimson) 0%, var(--color-crimson-dark) 100%);
+        color: white;
+        padding: 40px 48px;
+        border-radius: 20px;
+        margin-bottom: 40px;
+        box-shadow: 0 20px 40px rgba(153, 0, 0, 0.2);
+        position: relative;
+        overflow: hidden;
+        animation: slideDown 0.6s ease-out;
+    }
+
+    @keyframes slideDown {
+        from {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .header-card::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -15%;
+        width: 400px;
+        height: 400px;
+        background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+        border-radius: 50%;
+        pointer-events: none;
+    }
+
+    .header-card::after {
+        content: '';
+        position: absolute;
+        bottom: -30%;
+        left: -10%;
+        width: 300px;
+        height: 300px;
+        background: radial-gradient(circle, rgba(255, 255, 255, 0.05) 0%, transparent 70%);
+        border-radius: 50%;
+        pointer-events: none;
+    }
+
+    .header-card h1 {
+        margin: 0 0 16px 0;
+        font-size: 36px;
+        font-weight: 900;
+        letter-spacing: -1px;
+        position: relative;
+        z-index: 1;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .header-card p {
+        margin: 0;
+        font-size: 16px;
+        line-height: 1.7;
+        opacity: 0.95;
+        position: relative;
+        z-index: 1;
+        max-width: 600px;
+    }
+
+    /* Form Card */
+    .form-card {
+        background: white;
+        border-radius: 20px;
+        padding: 56px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+        border: 1px solid var(--color-gray-100);
+        animation: fadeIn 0.6s ease-out 0.2s backwards;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .form-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, var(--color-crimson) 0%, var(--color-crimson-light) 100%);
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .form-card h2 {
+        color: var(--color-crimson);
+        margin: 0 0 12px 0;
+        font-size: 26px;
+        font-weight: 800;
+        letter-spacing: -0.5px;
+    }
+
+    .form-card > p {
+        color: var(--color-gray-600);
+        margin: 0 0 32px 0;
+        font-size: 15px;
+        line-height: 1.6;
+    }
+
+    /* Form Groups */
+    .form-group {
+        margin-bottom: 28px;
+    }
+
+    .form-group label {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        color: var(--color-gray-900);
+        font-weight: 600;
+        margin-bottom: 10px;
+        font-size: 14px;
+        letter-spacing: 0.3px;
+    }
+
+    .form-group label .required {
+        color: var(--color-crimson);
+        font-size: 16px;
+        margin-left: 2px;
+    }
+
+    .form-group input[type="text"],
+    .form-group input[type="email"],
+    .form-group input[type="password"],
+    .form-group select {
+        width: 100%;
+        padding: 14px 18px;
+        border: 2px solid var(--color-gray-200);
+        border-radius: 12px;
+        font-size: 15px;
+        font-family: inherit;
+        color: var(--color-gray-900);
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        background: var(--color-gray-50);
+        font-weight: 500;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus {
+        outline: none;
+        border-color: var(--color-crimson);
+        box-shadow: 0 0 0 4px rgba(153, 0, 0, 0.12);
+        background: white;
+        transform: translateY(-1px);
+    }
+
+    .form-group .help-text {
+        font-size: 13px;
+        color: var(--color-gray-600);
+        margin-top: 8px;
+        line-height: 1.5;
+    }
+
+    /* Role Info Box */
+    .role-info {
+        background: linear-gradient(135deg, #fafbfc 0%, #f0f2f5 100%);
+        border: 2px solid var(--color-gray-200);
+        border-left: 5px solid var(--color-crimson);
+        padding: 32px;
+        margin: 40px 0;
+        border-radius: 16px;
+        transition: var(--transition);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+    }
+
+    .role-info:hover {
+        border-color: var(--color-crimson);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+        transform: translateY(-3px);
+        border-left-color: var(--color-crimson-light);
+    }
+
+    .role-info h3 {
+        margin: 0 0 20px 0;
+        font-size: 18px;
+        color: var(--color-crimson);
+        font-weight: 800;
+        letter-spacing: 0.3px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .role-info ul {
+        margin: 0;
+        padding-left: 20px;
+        list-style: none;
+    }
+
+    .role-info li {
+        margin: 14px 0;
+        font-size: 14px;
+        color: var(--color-gray-700);
+        line-height: 1.7;
+        padding-left: 24px;
+        position: relative;
+    }
+
+    .role-info li::before {
+        content: '→';
+        position: absolute;
+        left: 0;
+        color: var(--color-crimson);
+        font-weight: 800;
+        font-size: 16px;
+    }
+
+    .role-info li strong {
+        color: var(--color-crimson);
+        font-weight: 700;
+    }
+
+    /* Form Actions */
+    .form-actions {
+        display: flex;
+        gap: 16px;
+        margin-top: 40px;
+        padding-top: 32px;
+        border-top: 2px solid var(--color-gray-200);
+    }
+
+    .btn-submit,
+    .btn-cancel {
+        padding: 16px 40px;
+        border-radius: 12px;
+        font-size: 15px;
+        font-weight: 800;
+        cursor: pointer;
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        text-decoration: none;
+        text-align: center;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: none;
+        letter-spacing: 0.5px;
+    }
+
+    .btn-submit {
+        flex: 1;
+        background: linear-gradient(135deg, var(--color-crimson) 0%, var(--color-crimson-dark) 100%);
+        color: white;
+        box-shadow: 0 4px 12px rgba(153, 0, 0, 0.25);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .btn-submit::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.2);
+        transform: translate(-50%, -50%);
+        transition: width 0.6s, height 0.6s;
+    }
+
+    .btn-submit:hover::before {
+        width: 300px;
+        height: 300px;
+    }
+
+    .btn-submit:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 24px rgba(153, 0, 0, 0.35);
+    }
+
+    .btn-submit:active {
+        transform: translateY(-1px);
+    }
+
+    .btn-submit:disabled {
+        background: var(--color-gray-300);
+        cursor: not-allowed;
+        transform: none;
+        opacity: 0.6;
+    }
+
+    .btn-cancel {
+        flex: 1;
+        background: white;
+        color: var(--color-crimson);
+        border: 2px solid var(--color-crimson);
+        box-shadow: var(--shadow-sm);
+    }
+
+    .btn-cancel:hover {
+        background: linear-gradient(135deg, #fff5f5 0%, #ffe5e5 100%);
+        transform: translateY(-3px);
+        box-shadow: 0 6px 20px rgba(153, 0, 0, 0.15);
+        border-color: var(--color-crimson-dark);
+    }
+
+    .btn-cancel:active {
+        transform: translateY(-1px);
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .create-user-container {
+            padding: 24px 16px;
+        }
+
+        .form-card {
+            padding: 28px 20px;
+        }
+
+        .form-card h2 {
+            font-size: 20px;
+        }
+
+        .header-card {
+            padding: 24px 20px;
+        }
+
+        .header-card h1 {
+            font-size: 26px;
+        }
+
+        .form-actions {
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .btn-submit,
+        .btn-cancel {
+            padding: 14px 24px;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .create-user-container {
+            padding: 16px 12px;
+        }
+
+        .form-card {
+            padding: 20px 16px;
+        }
+
+        .header-card {
+            padding: 20px 16px;
+        }
+
+        .header-card h1 {
+            font-size: 22px;
+        }
+
+        .form-card h2 {
+            font-size: 18px;
+        }
+
+        .role-info {
+            padding: 18px 20px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="create-user-container">
+    <!-- Header Card -->
+    <div class="header-card">
+        <h1>👤 Create User Account</h1>
+        <p>Create new staff or admin accounts. Student accounts should register through the public registration page.</p>
+    </div>
+
+    <!-- Form Card -->
+    <div class="form-card">
+        <h2>Account Details</h2>
+        <p>Fill in the information below to create a new user account. Required fields are marked with an asterisk (*).</p>
+
+        <form method="POST" action="{{ url_for('admin.create_user') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+            <div class="form-group">
+                <label for="username">Username <span class="required">*</span></label>
+                <input type="text" id="username" name="username" required minlength="3" placeholder="e.g., john_staff">
+                <div class="help-text">Minimum 3 characters. Used for login.</div>
+            </div>
+
+            <div class="form-group">
+                <label for="email">Email Address <span class="required">*</span></label>
+                <input type="email" id="email" name="email" required placeholder="e.g., john@iu.edu">
+                <div class="help-text">Must be a valid email address.</div>
+            </div>
+
+            <div class="form-group">
+                <label for="full_name">Full Name <span class="required">*</span></label>
+                <input type="text" id="full_name" name="full_name" required placeholder="e.g., John Smith">
+            </div>
+
+            <div class="form-group">
+                <label for="department">Department</label>
+                <input type="text" id="department" name="department" placeholder="e.g., Library Services, IT, Facilities">
+                <div class="help-text">Optional. Helps identify staff members.</div>
+            </div>
+
+            <div class="form-group">
+                <label for="role">Role <span class="required">*</span></label>
+                <select id="role" name="role" required>
+                    <option value="">-- Select Role --</option>
+                    <option value="staff">Staff</option>
+                    <option value="admin">Admin</option>
+                    <option value="student">Student</option>
+                </select>
+            </div>
+
+            <div class="role-info">
+                <h3>🔐 Role Permissions</h3>
+                <ul>
+                    <li><strong>Staff:</strong> Can create resources, manage their resources, view bookings, approve bookings, respond to messages</li>
+                    <li><strong>Admin:</strong> Full access - manage all resources, bookings, users, view analytics, moderate content</li>
+                    <li><strong>Student:</strong> Can browse resources, make bookings, send messages, leave reviews</li>
+                </ul>
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password <span class="required">*</span></label>
+                <input type="password" id="password" name="password" required minlength="6" placeholder="Minimum 6 characters">
+                <div class="help-text">User can change this after first login.</div>
+            </div>
+
+            <div class="form-group">
+                <label for="confirm_password">Confirm Password <span class="required">*</span></label>
+                <input type="password" id="confirm_password" name="confirm_password" required minlength="6" placeholder="Re-enter password">
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn-submit">✓ Create Account</button>
+                <a href="{{ url_for('admin.dashboard') }}" class="btn-cancel">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

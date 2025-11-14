@@ -1,0 +1,521 @@
+{% extends "base.html" %}
+
+{% block title %}Staff Dashboard - Campus Resource Hub{% endblock %}
+
+{% block head %}
+<style>
+    /* Staff Dashboard Styles v2.0 - Updated 2025-11-13 */
+    :root {
+        --color-primary: #990000;
+        --color-primary-dark: #7d0000;
+        --color-primary-light: #cc0000;
+        --color-success: #28a745;
+        --color-success-light: #34ce57;
+        --color-warning: #ffc107;
+        --color-info: #17a2b8;
+        --color-gray-50: #f9fafb;
+        --color-gray-100: #f3f4f6;
+        --color-gray-200: #e5e7eb;
+        --color-gray-700: #374151;
+        --color-gray-900: #111827;
+    }
+
+    .dashboard-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 28px;
+    }
+
+    .dashboard-header {
+        background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+        color: white;
+        padding: 48px 56px;
+        border-radius: 24px;
+        margin-bottom: 40px;
+        box-shadow: 0 12px 40px rgba(153, 0, 0, 0.25);
+        position: relative;
+        overflow: hidden;
+    }
+
+    /* Force header text to white to ensure full-line readability */
+    .dashboard-header,
+    .dashboard-header h1,
+    .dashboard-header p,
+    .dashboard-header .dashboard-username {
+        color: #ffffff !important;
+    }
+
+    .dashboard-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -10%;
+        width: 400px;
+        height: 400px;
+        background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+        animation: float 6s ease-in-out infinite;
+    }
+
+    @keyframes float {
+        0%, 100% { transform: translateY(0px); }
+        50% { transform: translateY(-20px); }
+    }
+
+    .dashboard-header h1 {
+        margin: 0 0 12px 0;
+        font-size: 42px;
+        font-weight: 900;
+        position: relative;
+        letter-spacing: -0.5px;
+    }
+
+    /* Ensure username stands out as white text on the crimson header */
+    .dashboard-username {
+        color: #ffffff !important;
+        background: transparent;
+        padding: 2px 6px;
+        border-radius: 6px;
+        font-weight: 900;
+        box-decoration-break: clone;
+    }
+
+    .dashboard-header p {
+        margin: 0;
+        opacity: 0.95;
+        font-size: 18px;
+        position: relative;
+        font-weight: 500;
+    }
+
+    .action-buttons {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 16px;
+        margin-bottom: 40px;
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 24px;
+        margin-bottom: 40px;
+    }
+
+    .stat-card {
+        background: white;
+        padding: 32px;
+        border-radius: 20px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+        border-top: 5px solid var(--color-primary);
+    }
+
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 120px;
+        height: 120px;
+        background: radial-gradient(circle, rgba(153, 0, 0, 0.05) 0%, transparent 70%);
+    }
+
+    .stat-card:hover {
+        transform: translateY(-8px) scale(1.02);
+        box-shadow: 0 16px 40px rgba(0, 0, 0, 0.15);
+    }
+
+    .stat-card .stat-label {
+        font-size: 14px;
+        color: var(--color-gray-700);
+        margin-bottom: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        position: relative;
+    }
+
+    .stat-card .stat-value {
+        font-size: 48px;
+        font-weight: 900;
+        background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 8px;
+        position: relative;
+    }
+
+    .stat-card .stat-sublabel {
+        font-size: 14px;
+        color: var(--color-gray-700);
+        font-weight: 600;
+        position: relative;
+    }
+
+    .content-grid {
+        display: grid;
+        grid-template-columns: 1.5fr 1fr;
+        gap: 28px;
+        margin-bottom: 40px;
+    }
+
+    .section-card {
+        background: white;
+        padding: 32px;
+        border-radius: 20px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+        transition: box-shadow 0.3s;
+    }
+
+    .section-card:hover {
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
+    }
+
+    .section-card h2 {
+        margin: 0 0 24px 0;
+        font-size: 24px;
+        font-weight: 900;
+        color: var(--color-gray-900);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding-bottom: 16px;
+        border-bottom: 3px solid var(--color-gray-100);
+    }
+
+    .btn {
+        padding: 14px 28px;
+        border-radius: 12px;
+        font-weight: 800;
+        font-size: 15px;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        border: none;
+        cursor: pointer;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+        color: white;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(153, 0, 0, 0.3);
+    }
+
+    .btn-success {
+        background: linear-gradient(135deg, var(--color-success) 0%, var(--color-success-light) 100%);
+        color: white;
+    }
+
+    .btn-success:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(40, 167, 69, 0.3);
+    }
+
+    .btn-outline {
+        background: white;
+        color: var(--color-primary);
+        border: 2px solid var(--color-primary);
+    }
+
+    .btn-outline:hover {
+        background: var(--color-primary);
+        color: white;
+        transform: translateY(-3px);
+    }
+
+    .resource-item, .booking-item, .message-item {
+        padding: 20px;
+        border-left: 4px solid var(--color-primary);
+        margin-bottom: 16px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, #f9fafb 0%, #ffffff 100%);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    }
+
+    .resource-item:hover, .booking-item:hover, .message-item:hover {
+        border-left-width: 6px;
+        background: white;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        transform: translateX(4px);
+    }
+
+    .resource-item h3, .booking-item h3, .message-item h3 {
+        margin: 0 0 10px 0;
+        font-size: 17px;
+        font-weight: 800;
+        color: var(--color-gray-900);
+    }
+
+    .resource-item p, .booking-item p, .message-item p {
+        margin: 0 0 6px 0;
+        font-size: 14px;
+        color: var(--color-gray-700);
+        line-height: 1.6;
+    }
+
+    .item-meta {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-top: 12px;
+        flex-wrap: wrap;
+    }
+
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: 0.5px;
+    }
+
+    .status-pending {
+        background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+        color: #856404;
+        box-shadow: 0 2px 8px rgba(133, 100, 4, 0.2);
+    }
+
+    .status-confirmed {
+        background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+        color: #155724;
+        box-shadow: 0 2px 8px rgba(21, 87, 36, 0.2);
+    }
+
+    .status-available {
+        background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+        color: #155724;
+        box-shadow: 0 2px 8px rgba(21, 87, 36, 0.2);
+    }
+
+    .status-unavailable {
+        background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+        color: #721c24;
+        box-shadow: 0 2px 8px rgba(114, 28, 36, 0.2);
+    }
+
+    .view-link {
+        font-size: 14px;
+        color: var(--color-primary);
+        font-weight: 800;
+        text-decoration: none;
+        transition: all 0.2s;
+    }
+
+    .view-link:hover {
+        color: var(--color-primary-light);
+        transform: translateX(4px);
+        display: inline-block;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 60px 30px;
+        color: var(--color-gray-700);
+        background: linear-gradient(135deg, #f9fafb 0%, #ffffff 100%);
+        border-radius: 16px;
+    }
+
+    .empty-state-icon {
+        font-size: 64px;
+        margin-bottom: 20px;
+        opacity: 0.4;
+        filter: grayscale(1);
+    }
+
+    .empty-state p {
+        font-size: 16px;
+        font-weight: 600;
+    }
+
+    @media (max-width: 968px) {
+        .content-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 640px) {
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .dashboard-header {
+            padding: 36px 28px;
+        }
+        
+        .dashboard-header h1 {
+            font-size: 32px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="dashboard-header">
+        <h1>👋 Welcome, <span class="dashboard-username">{{ current_user.full_name }}</span>!</h1>
+        <p>Staff Dashboard - Manage your resources and bookings</p>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="action-buttons">
+        <a href="{{ url_for('resources.create_resource') }}" class="btn btn-success">
+            ➕ Create New Resource
+        </a>
+        <a href="{{ url_for('staff.my_resources') }}" class="btn btn-primary">
+            📦 View All My Resources
+        </a>
+        <a href="{{ url_for('staff.my_bookings') }}" class="btn btn-outline">
+            📅 View All Bookings
+        </a>
+        <a href="{{ url_for('staff.my_messages') }}" class="btn btn-outline">
+            💬 View Messages
+        </a>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-label">My Resources</div>
+            <div class="stat-value">{{ my_resources|length }}</div>
+            <div class="stat-sublabel">{{ active_resources_count }} active</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Pending Approvals</div>
+            <div class="stat-value">{{ pending_bookings|length }}</div>
+            <div class="stat-sublabel">Require your action</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Total Bookings</div>
+            <div class="stat-value">{{ total_bookings_count }}</div>
+            <div class="stat-sublabel">Last 30 days</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Unread Messages</div>
+            <div class="stat-value">{{ unread_messages_count }}</div>
+            <div class="stat-sublabel">From students</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Average Rating</div>
+            <div class="stat-value">{{ avg_rating }}</div>
+            <div class="stat-sublabel">⭐ Out of 5.0</div>
+        </div>
+    </div>
+
+    <!-- Main Content Grid -->
+    <div class="content-grid">
+        <!-- Left Column -->
+        <div>
+            <!-- My Resources -->
+            <div class="section-card" style="margin-bottom: 28px;">
+                <h2>📦 My Resources (Latest 5)</h2>
+                {% if my_resources[:5] %}
+                    {% for resource in my_resources[:5] %}
+                    <div class="resource-item">
+                        <h3>{{ resource.name }}</h3>
+                        <p>{{ resource.description[:120] }}{% if resource.description|length > 120 %}...{% endif %}</p>
+                        <div class="item-meta">
+                            <span class="status-badge {% if resource.is_available %}status-available{% else %}status-unavailable{% endif %}">
+                                {% if resource.is_available %}✓ Available{% else %}✗ Unavailable{% endif %}
+                            </span>
+                            <a href="{{ url_for('resources.detail_resource', resource_id=resource.id) }}" class="view-link">View Details →</a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📦</div>
+                        <p>You haven't created any resources yet.</p>
+                        <a href="{{ url_for('resources.create_resource') }}" class="btn btn-success" style="margin-top: 16px;">Create Your First Resource</a>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Pending Bookings -->
+            <div class="section-card">
+                <h2>⏳ Pending Approvals</h2>
+                {% if pending_bookings %}
+                    {% for booking in pending_bookings %}
+                    <div class="booking-item">
+                        <h3>{{ booking.resource.name }}</h3>
+                        <p><strong>Student:</strong> {{ booking.user.full_name }}</p>
+                        <p><strong>Time:</strong> {{ booking.start_time.strftime('%b %d, %Y at %I:%M %p') }}</p>
+                        <div class="item-meta">
+                            <span class="status-badge status-pending">⏳ Pending Approval</span>
+                            <a href="{{ url_for('bookings.get_booking', booking_id=booking.id) }}" class="view-link">Review →</a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="empty-state">
+                        <div class="empty-state-icon">✅</div>
+                        <p>No pending approvals at the moment.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Right Column -->
+        <div>
+            <!-- Recent Messages -->
+            <div class="section-card" style="margin-bottom: 28px;">
+                <h2>💬 Recent Messages</h2>
+                {% if recent_messages %}
+                    {% for message in recent_messages[:5] %}
+                    <div class="message-item">
+                        <h3>👤 {{ message.sender.full_name }}</h3>
+                        <p>{{ message.content[:100] }}{% if message.content|length > 100 %}...{% endif %}</p>
+                        <p style="font-size: 13px; color: var(--color-gray-700); margin-top: 10px; font-weight: 600;">
+                            🕐 {{ message.created_at.strftime('%b %d at %I:%M %p') }}
+                        </p>
+                    </div>
+                    {% endfor %}
+                    <a href="{{ url_for('staff.my_messages') }}" class="btn btn-outline" style="margin-top: 16px; width: 100%;">View All Messages</a>
+                {% else %}
+                    <div class="empty-state">
+                        <div class="empty-state-icon">💬</div>
+                        <p>No messages yet.</p>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Recent Reviews -->
+            <div class="section-card">
+                <h2>⭐ Recent Reviews</h2>
+                {% if recent_reviews %}
+                    {% for review in recent_reviews %}
+                    <div class="message-item">
+                        <h3>📦 {{ review.resource.name }}</h3>
+                        <p style="font-size: 16px; margin: 8px 0;">{{ '⭐' * review.rating }} <strong>({{ review.rating }}/5)</strong></p>
+                        {% if review.comment %}
+                        <p style="margin-top: 10px; font-style: italic; color: var(--color-gray-700);">
+                            "{{ review.comment[:80] }}{% if review.comment|length > 80 %}...{% endif %}"
+                        </p>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="empty-state">
+                        <div class="empty-state-icon">⭐</div>
+                        <p>No reviews yet.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

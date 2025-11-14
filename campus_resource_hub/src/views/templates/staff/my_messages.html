@@ -1,0 +1,289 @@
+{% extends "base.html" %}
+
+{% block title %}My Messages - Staff Dashboard{% endblock %}
+
+{% block head %}
+<style>
+    :root {
+        --color-crimson: #990000;
+        --color-crimson-dark: #7d0000;
+        --color-crimson-light: #cc0000;
+    }
+
+    .messages-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 24px;
+    }
+
+    .page-header {
+        background: linear-gradient(135deg, var(--color-crimson) 0%, var(--color-crimson-dark) 100%);
+        color: white;
+        padding: 40px 48px;
+        border-radius: 20px;
+        margin-bottom: 32px;
+        box-shadow: 0 10px 30px rgba(153, 0, 0, 0.2);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .page-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -15%;
+        width: 400px;
+        height: 400px;
+        background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+        border-radius: 50%;
+    }
+
+    /* Force header text to white in case global styles override it */
+    .page-header, .page-header h1, .page-header p {
+        color: #ffffff !important;
+    }
+
+    .page-header h1 {
+        margin: 0 0 12px 0;
+        font-size: 36px;
+        font-weight: 900;
+        position: relative;
+        z-index: 1;
+    }
+
+    .page-header p {
+        margin: 0;
+        opacity: 0.95;
+        font-size: 16px;
+        position: relative;
+        z-index: 1;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 32px;
+        flex-wrap: wrap;
+    }
+
+    .btn {
+        padding: 14px 28px;
+        border-radius: 12px;
+        font-weight: 800;
+        font-size: 15px;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        border: none;
+        letter-spacing: 0.3px;
+    }
+
+    .btn-back {
+        background: white;
+        color: var(--color-crimson);
+        border: 2px solid var(--color-crimson);
+    }
+
+    .btn-back:hover {
+        background: var(--color-crimson);
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(153, 0, 0, 0.2);
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, var(--color-crimson) 0%, var(--color-crimson-dark) 100%);
+        color: white;
+        box-shadow: 0 4px 12px rgba(153, 0, 0, 0.25);
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(153, 0, 0, 0.35);
+    }
+
+    .message-card {
+        background: white;
+        padding: 28px;
+        margin-bottom: 20px;
+        border-radius: 16px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        border-left: 5px solid #e5e7eb;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .message-card.unread {
+        border-left-color: var(--color-crimson);
+        background: linear-gradient(to right, #fff5f5 0%, white 100%);
+    }
+
+    .message-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    }
+
+    .message-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: start;
+        margin-bottom: 16px;
+        gap: 16px;
+    }
+
+    .message-sender {
+        margin: 0;
+        font-size: 20px;
+        font-weight: 800;
+        color: #111827;
+    }
+
+    .badge-new {
+        padding: 6px 16px;
+        background: linear-gradient(135deg, var(--color-crimson) 0%, var(--color-crimson-dark) 100%);
+        color: white;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: 0.5px;
+        box-shadow: 0 2px 8px rgba(153, 0, 0, 0.3);
+        flex-shrink: 0;
+    }
+
+    .message-email {
+        margin: 0 0 16px 0;
+        color: #6b7280;
+        font-size: 14px;
+        font-weight: 600;
+    }
+
+    .message-content {
+        margin: 0 0 16px 0;
+        color: #374151;
+        line-height: 1.7;
+        font-size: 15px;
+        padding: 16px;
+        background: #f9fafb;
+        border-radius: 8px;
+        border-left: 3px solid var(--color-crimson);
+    }
+
+    .message-meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-top: 16px;
+        border-top: 2px solid #f3f4f6;
+        gap: 16px;
+        flex-wrap: wrap;
+    }
+
+    .message-time {
+        margin: 0;
+        font-size: 13px;
+        color: #9ca3af;
+        font-weight: 600;
+    }
+
+    .message-resource {
+        margin: 0;
+        font-size: 14px;
+        color: var(--color-crimson);
+        font-weight: 700;
+        padding: 6px 12px;
+        background: #fff5f5;
+        border-radius: 8px;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 80px 40px;
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    .empty-state-icon {
+        font-size: 80px;
+        margin-bottom: 24px;
+        opacity: 0.4;
+    }
+
+    .empty-state h3 {
+        margin: 0 0 12px 0;
+        font-size: 24px;
+        font-weight: 800;
+        color: #111827;
+    }
+
+    .empty-state p {
+        margin: 0;
+        font-size: 16px;
+        color: #6b7280;
+    }
+
+    @media (max-width: 640px) {
+        .page-header {
+            padding: 32px 24px;
+        }
+
+        .page-header h1 {
+            font-size: 28px;
+        }
+
+        .message-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .message-meta {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="messages-container">
+    <div class="page-header">
+        <h1>💬 My Messages</h1>
+        <p>Messages from students about your resources</p>
+    </div>
+
+    <div class="action-buttons">
+        <a href="{{ url_for('staff.dashboard') }}" class="btn btn-back">← Back to Dashboard</a>
+        <a href="{{ url_for('messages.list_messages') }}" class="btn btn-primary">📬 View Full Inbox</a>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+        <div class="message-card {% if not message.is_read %}unread{% endif %}">
+            <div class="message-header">
+                <h3 class="message-sender">{{ message.sender.full_name }}</h3>
+                {% if not message.is_read %}
+                <span class="badge-new">NEW</span>
+                {% endif %}
+            </div>
+            <p class="message-email">📧 {{ message.sender.email }}</p>
+            <div class="message-content">{{ message.body or message.content }}</div>
+            <div class="message-meta">
+                <p class="message-time">🕐 {{ message.created_at.strftime('%B %d, %Y at %I:%M %p') }}</p>
+                {% if message.resource %}
+                <p class="message-resource">📦 {{ message.resource.name }}</p>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="empty-state">
+            <div class="empty-state-icon">💬</div>
+            <h3>No messages yet</h3>
+            <p>Messages from students will appear here.</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

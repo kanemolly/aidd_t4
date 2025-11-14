@@ -2,7 +2,7 @@
 Admin blueprint - administrative functions and dashboard.
 """
 
-from flask import Blueprint, request, jsonify, render_template
+from flask import Blueprint, request, jsonify, render_template, flash, redirect, url_for
 from flask_login import login_required, current_user
 from src.models import User, Resource, Booking, Review
 from src.extensions import db
@@ -19,8 +19,8 @@ bp = Blueprint('admin', __name__, url_prefix='/admin')
 def dashboard():
     """Unified admin dashboard with bookings, analytics, and moderation."""
     try:
-        # Check admin permission
-        if not current_user.is_admin():
+        # Check admin or staff permission
+        if not (current_user.is_admin() or current_user.is_staff()):
             return jsonify({"error": "Unauthorized"}), 403
         
         from datetime import datetime, timedelta
@@ -259,8 +259,8 @@ def pending_bookings():
     try:
         from src.data_access.booking_dal import BookingDAL
         
-        # Check admin permission
-        if not current_user.is_admin():
+        # Check admin or staff permission
+        if not (current_user.is_admin() or current_user.is_staff()):
             return jsonify({'error': 'Unauthorized'}), 403
         
         # Get all pending bookings for resources that require approval
@@ -285,6 +285,83 @@ def pending_bookings():
 def list_users():
     """List all users."""
     return jsonify({"message": "List users endpoint ready"}), 200
+
+
+@bp.route('/users/create', methods=['GET', 'POST'])
+@login_required
+def create_user():
+    """Admin-only: Create new staff or admin accounts."""
+    if not current_user.is_admin():
+        flash('Unauthorized access.', 'error')
+        return redirect(url_for('admin.dashboard'))
+    
+    if request.method == 'POST':
+        from src.data_access.user_dal import UserDAL
+        
+        username = request.form.get('username', '').strip()
+        email = request.form.get('email', '').strip()
+        full_name = request.form.get('full_name', '').strip()
+        password = request.form.get('password', '')
+        confirm_password = request.form.get('confirm_password', '')
+        role = request.form.get('role', 'student')
+        department = request.form.get('department', '').strip() or None
+        
+        # Validation
+        if not all([username, email, full_name, password, role]):
+            flash('All required fields must be filled.', 'error')
+            return redirect(url_for('admin.create_user'))
+        
+        if len(username) < 3:
+            flash('Username must be at least 3 characters.', 'error')
+            return redirect(url_for('admin.create_user'))
+        
+        if len(password) < 6:
+            flash('Password must be at least 6 characters.', 'error')
+            return redirect(url_for('admin.create_user'))
+        
+        if password != confirm_password:
+            flash('Passwords do not match.', 'error')
+            return redirect(url_for('admin.create_user'))
+        
+        if role not in ['student', 'staff', 'admin']:
+            flash('Invalid role selected.', 'error')
+            return redirect(url_for('admin.create_user'))
+        
+        if '@' not in email or '.' not in email:
+            flash('Please enter a valid email address.', 'error')
+            return redirect(url_for('admin.create_user'))
+        
+        try:
+            # Check if user already exists
+            existing_user = UserDAL.get_user_by_username(username)
+            if existing_user:
+                flash('Username already taken. Please choose another.', 'error')
+                return redirect(url_for('admin.create_user'))
+            
+            existing_email = UserDAL.get_user_by_email(email)
+            if existing_email:
+                flash('Email already registered. Please use another email.', 'error')
+                return redirect(url_for('admin.create_user'))
+            
+            # Create new user
+            user = UserDAL.create_user(
+                username=username,
+                email=email,
+                full_name=full_name,
+                password=password,
+                role=role,
+                department=department
+            )
+            
+            flash(f'{role.capitalize()} account created successfully! Username: {user.username}', 'success')
+            return redirect(url_for('admin.dashboard'))
+        
+        except Exception as e:
+            flash(f'Error creating account: {str(e)}', 'error')
+            return redirect(url_for('admin.create_user'))
+    
+    # GET request - show form
+    return render_template('admin/create_user.html')
 
 
 @bp.route('/summary_report', methods=['GET', 'POST'])

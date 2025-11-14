@@ -622,9 +622,12 @@
     <div class="dashboard-header">
         <h1>📊 Admin Command Center</h1>
         <p>Unified dashboard for bookings, analytics & moderation</p>
-        <div style="margin-top: 20px;">
+        <div style="margin-top: 20px; display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
             <a href="{{ url_for('admin.summary_report') }}" class="btn btn-primary" style="display: inline-block; padding: 8px 16px; text-decoration: none; background-color: #990000; color: white; border-radius: 6px; font-weight: 600;">
                 📄 View Weekly Report
+            </a>
+            <a href="{{ url_for('admin.create_user') }}" class="btn btn-primary" style="display: inline-block; padding: 8px 16px; text-decoration: none; background-color: #28a745; color: white; border-radius: 6px; font-weight: 600;">
+                👤 Create Staff/Admin Account
             </a>
         </div>
     </div>

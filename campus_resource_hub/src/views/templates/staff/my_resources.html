@@ -1,0 +1,300 @@
+{% extends "base.html" %}
+
+{% block title %}My Resources - Staff Dashboard{% endblock %}
+
+{% block head %}
+<style>
+    :root {
+        --color-crimson: #990000;
+        --color-crimson-dark: #7d0000;
+    }
+
+    .resources-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 24px;
+    }
+
+    .page-header {
+        background: linear-gradient(135deg, var(--color-crimson) 0%, var(--color-crimson-dark) 100%);
+        color: white;
+        padding: 40px 48px;
+        border-radius: 20px;
+        margin-bottom: 32px;
+        box-shadow: 0 10px 30px rgba(153, 0, 0, 0.2);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .page-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -10%;
+        width: 300px;
+        height: 300px;
+        background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+    }
+
+    /* Force header text to white in case global styles override it */
+    .page-header, .page-header h1, .page-header p {
+        color: #ffffff !important;
+    }
+    .page-header h1 {
+        margin: 0 0 12px 0;
+        font-size: 36px;
+        font-weight: 900;
+        position: relative;
+    }
+
+    .page-header p {
+        margin: 0;
+        opacity: 0.95;
+        font-size: 16px;
+        position: relative;
+    }
+
+    .action-bar {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 32px;
+        flex-wrap: wrap;
+    }
+
+    .resources-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+        gap: 28px;
+    }
+
+    .resource-card {
+        background: white;
+        padding: 28px;
+        border-radius: 16px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        border-top: 5px solid var(--color-crimson);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .resource-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 120px;
+        height: 120px;
+        background: radial-gradient(circle, rgba(153, 0, 0, 0.05) 0%, transparent 70%);
+    }
+
+    .resource-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 12px 28px rgba(0, 0, 0, 0.16);
+    }
+
+    .resource-icon {
+        font-size: 36px;
+        margin-bottom: 12px;
+    }
+
+    .resource-card h3 {
+        margin: 0 0 12px 0;
+        font-size: 22px;
+        font-weight: 900;
+        color: #111827;
+        position: relative;
+    }
+
+    .resource-card p {
+        margin: 0 0 20px 0;
+        color: #6b7280;
+        font-size: 15px;
+        line-height: 1.65;
+        min-height: 60px;
+    }
+
+    .resource-meta {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+    }
+
+    .badge {
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: 0.5px;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .badge-success {
+        background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+        color: #155724;
+        box-shadow: 0 2px 8px rgba(21, 87, 36, 0.2);
+    }
+
+    .badge-danger {
+        background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+        color: #721c24;
+        box-shadow: 0 2px 8px rgba(114, 28, 36, 0.2);
+    }
+
+    .badge-info {
+        background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%);
+        color: #0c5460;
+        box-shadow: 0 2px 8px rgba(12, 84, 96, 0.2);
+    }
+
+    .badge-warning {
+        background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+        color: #856404;
+        box-shadow: 0 2px 8px rgba(133, 100, 4, 0.2);
+    }
+
+    .resource-actions {
+        display: flex;
+        gap: 10px;
+        padding-top: 20px;
+        border-top: 2px solid #f3f4f6;
+    }
+
+    .btn {
+        padding: 12px 20px;
+        border-radius: 10px;
+        font-weight: 800;
+        font-size: 14px;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        transition: all 0.25s;
+        flex: 1;
+        border: none;
+        cursor: pointer;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, var(--color-crimson) 0%, var(--color-crimson-dark) 100%);
+        color: white;
+        box-shadow: 0 4px 12px rgba(153, 0, 0, 0.25);
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(153, 0, 0, 0.35);
+    }
+
+    .btn-secondary {
+        background: #f3f4f6;
+        color: #374151;
+        border: 2px solid #e5e7eb;
+    }
+
+    .btn-secondary:hover {
+        background: #e5e7eb;
+        border-color: #d1d5db;
+    }
+
+    .btn-create {
+        background: linear-gradient(135deg, var(--color-crimson) 0%, var(--color-crimson-dark) 100%);
+        color: white;
+        padding: 14px 28px;
+        box-shadow: 0 4px 12px rgba(153, 0, 0, 0.25);
+    }
+
+    .btn-create:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(153, 0, 0, 0.35);
+    }
+
+    .btn-back {
+        background: white;
+        color: var(--color-crimson);
+        border: 2px solid var(--color-crimson);
+        padding: 14px 28px;
+    }
+
+    .btn-back:hover {
+        background: var(--color-crimson);
+        color: white;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 80px 40px;
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    .empty-state-icon {
+        font-size: 80px;
+        margin-bottom: 24px;
+        opacity: 0.4;
+    }
+
+    @media (max-width: 768px) {
+        .resources-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .action-bar {
+            flex-direction: column;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="resources-container">
+    <div class="page-header">
+        <h1>📦 My Resources</h1>
+        <p>Manage all resources you've created</p>
+    </div>
+
+    <div class="action-bar">
+        <a href="{{ url_for('resources.create_resource') }}" class="btn btn-create">➕ Create New Resource</a>
+        <a href="{{ url_for('staff.dashboard') }}" class="btn btn-back">← Back to Dashboard</a>
+    </div>
+
+    {% if resources %}
+        <div class="resources-grid">
+            {% for resource in resources %}
+            <div class="resource-card">
+                <div class="resource-icon">📦</div>
+                <h3>{{ resource.name }}</h3>
+                <p>{{ resource.description[:140] }}{% if resource.description|length > 140 %}...{% endif %}</p>
+                
+                <div class="resource-meta">
+                    <span class="badge {% if resource.is_available %}badge-success{% else %}badge-danger{% endif %}">
+                        {% if resource.is_available %}✓ Available{% else %}✗ Unavailable{% endif %}
+                    </span>
+                    <span class="badge badge-info">🏷️ {{ resource.category }}</span>
+                    {% if resource.requires_approval %}
+                    <span class="badge badge-warning">⏳ Requires Approval</span>
+                    {% endif %}
+                </div>
+
+                <div class="resource-actions">
+                    <a href="{{ url_for('resources.detail_resource', resource_id=resource.id) }}" class="btn btn-primary">View →</a>
+                    <a href="{{ url_for('resources.edit_resource', resource_id=resource.id) }}" class="btn btn-secondary">✏️ Edit</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <div class="empty-state-icon">📦</div>
+            <h3 style="margin: 0 0 12px 0; font-size: 24px; font-weight: 800;">No resources yet</h3>
+            <p style="margin: 0 0 24px 0; font-size: 16px; color: #6b7280;">Create your first resource to get started!</p>
+            <a href="{{ url_for('resources.create_resource') }}" class="btn btn-create">➕ Create Resource</a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

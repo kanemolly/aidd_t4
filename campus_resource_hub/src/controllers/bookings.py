@@ -1145,8 +1145,8 @@ def get_resource_availability(resource_id):
         for booking in bookings:
             events.append({
                 'id': booking.id,
-                'start': booking.start_datetime.isoformat(),
-                'end': booking.end_datetime.isoformat(),
+                'start': booking.start_time.isoformat(),
+                'end': booking.end_time.isoformat(),
                 'title': f'Booked by {booking.user.username if booking.user else "Unknown"}',
                 'status': booking.status
             })

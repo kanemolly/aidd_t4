@@ -1,0 +1,284 @@
+{% extends "base.html" %}
+
+{% block title %}My Bookings - Staff Dashboard{% endblock %}
+
+{% block head %}
+<style>
+    :root {
+        --color-crimson: #990000;
+        --color-crimson-dark: #7d0000;
+    }
+
+    .bookings-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 24px;
+    }
+
+    .page-header {
+        background: linear-gradient(135deg, var(--color-crimson) 0%, var(--color-crimson-dark) 100%);
+        color: white;
+        padding: 40px 48px;
+        border-radius: 20px;
+        margin-bottom: 32px;
+        box-shadow: 0 10px 30px rgba(153, 0, 0, 0.2);
+    }
+
+    /* Force header text to white in case global styles override it */
+    .page-header, .page-header h1, .page-header p {
+        color: #ffffff !important;
+    }
+
+    .page-header h1 {
+        margin: 0 0 12px 0;
+        font-size: 36px;
+        font-weight: 900;
+    }
+
+    .bookings-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+        gap: 24px;
+    }
+
+    .booking-card {
+        background: white;
+        padding: 28px;
+        border-radius: 16px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        border-top: 4px solid var(--color-crimson);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .booking-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 100px;
+        height: 100px;
+        background: radial-gradient(circle, rgba(153, 0, 0, 0.05) 0%, transparent 70%);
+    }
+
+    .booking-card:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 12px 28px rgba(0, 0, 0, 0.15);
+    }
+
+    .booking-resource {
+        margin: 0 0 20px 0;
+        font-size: 22px;
+        font-weight: 900;
+        color: #111827;
+        position: relative;
+    }
+
+    .booking-info {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        margin-bottom: 20px;
+    }
+
+    .info-row {
+        display: flex;
+        align-items: start;
+        gap: 12px;
+        padding: 12px;
+        background: #f9fafb;
+        border-radius: 8px;
+    }
+
+    .info-icon {
+        font-size: 18px;
+        flex-shrink: 0;
+    }
+
+    .info-content {
+        flex: 1;
+    }
+
+    .info-label {
+        font-weight: 700;
+        color: #6b7280;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 4px;
+    }
+
+    .info-value {
+        color: #111827;
+        font-size: 15px;
+        font-weight: 600;
+    }
+
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-size: 13px;
+        font-weight: 800;
+        letter-spacing: 0.5px;
+        margin-top: 4px;
+    }
+
+    .status-confirmed {
+        background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+        color: #155724;
+        box-shadow: 0 2px 8px rgba(21, 87, 36, 0.2);
+    }
+
+    .status-pending {
+        background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+        color: #856404;
+        box-shadow: 0 2px 8px rgba(133, 100, 4, 0.2);
+    }
+
+    .status-cancelled {
+        background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+        color: #721c24;
+        box-shadow: 0 2px 8px rgba(114, 28, 36, 0.2);
+    }
+
+    .booking-actions {
+        display: flex;
+        gap: 12px;
+        padding-top: 20px;
+        border-top: 2px solid #f3f4f6;
+    }
+
+    .btn {
+        padding: 12px 24px;
+        border-radius: 10px;
+        font-weight: 800;
+        font-size: 14px;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        transition: all 0.25s;
+        flex: 1;
+    }
+
+    .btn-view {
+        background: linear-gradient(135deg, var(--color-crimson) 0%, var(--color-crimson-dark) 100%);
+        color: white;
+        box-shadow: 0 4px 12px rgba(153, 0, 0, 0.25);
+    }
+
+    .btn-view:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(153, 0, 0, 0.35);
+    }
+
+    .btn-back {
+        padding: 14px 28px;
+        background: white;
+        color: var(--color-crimson);
+        border: 2px solid var(--color-crimson);
+        border-radius: 12px;
+        font-weight: 800;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 32px;
+        transition: all 0.25s;
+    }
+
+    .btn-back:hover {
+        background: var(--color-crimson);
+        color: white;
+        transform: translateY(-2px);
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 80px 40px;
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    .empty-state-icon {
+        font-size: 80px;
+        margin-bottom: 24px;
+        opacity: 0.4;
+    }
+
+    @media (max-width: 768px) {
+        .bookings-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="bookings-container">
+    <div class="page-header">
+        <h1>📅 My Resource Bookings</h1>
+        <p style="margin: 0; opacity: 0.95; font-size: 16px;">View all bookings for your resources</p>
+    </div>
+
+    <a href="{{ url_for('staff.dashboard') }}" class="btn-back">← Back to Dashboard</a>
+
+    {% if bookings %}
+        <div class="bookings-grid">
+            {% for booking in bookings %}
+            <div class="booking-card">
+                <h3 class="booking-resource">📦 {{ booking.resource.name }}</h3>
+                
+                <div class="booking-info">
+                    <div class="info-row">
+                        <span class="info-icon">👤</span>
+                        <div class="info-content">
+                            <div class="info-label">Student</div>
+                            <div class="info-value">{{ booking.user.full_name }}</div>
+                            <div style="font-size: 13px; color: #9ca3af; margin-top: 2px;">{{ booking.user.email }}</div>
+                        </div>
+                    </div>
+
+                    <div class="info-row">
+                        <span class="info-icon">🕐</span>
+                        <div class="info-content">
+                            <div class="info-label">Date & Time</div>
+                            <div class="info-value">{{ booking.start_time.strftime('%B %d, %Y') }}</div>
+                            <div style="font-size: 13px; color: #9ca3af; margin-top: 2px;">{{ booking.start_time.strftime('%I:%M %p') }} - {{ booking.end_time.strftime('%I:%M %p') }}</div>
+                        </div>
+                    </div>
+
+                    <div class="info-row">
+                        <span class="info-icon">📊</span>
+                        <div class="info-content">
+                            <div class="info-label">Status</div>
+                            <span class="status-badge status-{{ booking.status }}">
+                                {% if booking.status == 'confirmed' %}✓{% elif booking.status == 'pending' %}⏳{% else %}✗{% endif %}
+                                {{ booking.status|title }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="booking-actions">
+                    <a href="{{ url_for('bookings.get_booking', booking_id=booking.id) }}" class="btn btn-view">
+                        View Details →
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <div class="empty-state-icon">📅</div>
+            <h3 style="margin: 0 0 12px 0; font-size: 24px; font-weight: 800;">No bookings yet</h3>
+            <p style="margin: 0; font-size: 16px; color: #6b7280;">Bookings for your resources will appear here.</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

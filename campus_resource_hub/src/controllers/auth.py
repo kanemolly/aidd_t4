@@ -135,9 +135,11 @@ def login():
                     if next_page and next_page.startswith('/'):
                         return redirect(next_page)
                     
-                    # Admins and staff go to unified admin dashboard, students to resources
-                    if user.is_admin() or user.is_staff():
+                    # Route users to role-specific dashboards
+                    if user.is_admin():
                         return redirect(url_for('admin.dashboard'))
+                    elif user.is_staff():
+                        return redirect(url_for('staff.dashboard'))
                     return redirect(url_for('resources.list_resources'))
             
             flash('Invalid username or password.', 'error')

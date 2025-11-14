@@ -16,12 +16,12 @@
         {% if current_user.is_authenticated %}
         <div class="concierge-user-profile">
             <div class="user-avatar">
-                {% if current_user.profile_picture %}
-                    <img src="{{ url_for('static', filename='uploads/profiles/' + current_user.profile_picture) }}" 
+                {% if current_user.profile_image %}
+                    <img src="{{ url_for('static', filename=current_user.profile_image) }}" 
                          alt="{{ current_user.full_name }}"
                          title="{{ current_user.full_name }}">
                 {% else %}
-                    <div class="avatar-initials">{{ current_user.full_name[0].upper() if current_user.full_name else 'U' }}</div>
+                    <div class="avatar-initials">{{ (current_user.full_name[0]|upper) if current_user.full_name else 'U' }}</div>
                 {% endif %}
             </div>
             <div class="user-info">
