@@ -118,8 +118,12 @@ def _register_error_handlers(app):
     @app.errorhandler(404)
     def not_found_error(error):
         """Handle 404 errors."""
-        # Return HTML for browser requests, JSON for API requests
-        if request.path.startswith('/api/') or request.accept_mimetypes.accept_json and not request.accept_mimetypes.accept_html:
+        # Return JSON for API, fetch, and JSON-expecting requests; HTML otherwise
+        is_json_request = request.accept_mimetypes.accept_json and not request.accept_mimetypes.accept_html
+        is_api_request = request.path.startswith('/api/')
+        is_fetch_request = request.headers.get('Content-Type', '').startswith('application/json')
+        
+        if is_json_request or is_api_request or is_fetch_request:
             return {"error": "Resource not found", "path": request.path}, 404
         # For regular page requests, show a proper error page
         return render_template('error.html', error=f"Page not found: {request.path}"), 404
@@ -128,7 +132,12 @@ def _register_error_handlers(app):
     def internal_error(error):
         """Handle 500 errors."""
         db.session.rollback()
-        if request.path.startswith('/api/') or request.accept_mimetypes.accept_json and not request.accept_mimetypes.accept_html:
+        # Return JSON for API, fetch, and JSON-expecting requests; HTML otherwise
+        is_json_request = request.accept_mimetypes.accept_json and not request.accept_mimetypes.accept_html
+        is_api_request = request.path.startswith('/api/')
+        is_fetch_request = request.headers.get('Content-Type', '').startswith('application/json')
+        
+        if is_json_request or is_api_request or is_fetch_request:
             return {"error": "Internal server error"}, 500
         return render_template('error.html', error="Internal server error occurred"), 500
 

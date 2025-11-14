@@ -503,8 +503,10 @@ function submitDeny() {
         return;
     }
     
+    // Save bookingId before closing modal (which sets it to null)
+    const bookingId = currentBookingIdForDeny;
     closeDenyModal();
-    denyBookingWithReason(currentBookingIdForDeny, reason);
+    denyBookingWithReason(bookingId, reason);
 }
 
 function approveBooking(bookingId) {

@@ -269,7 +269,7 @@
                 {% endif %}
             </div>
             <p class="message-email">📧 {{ message.sender.email }}</p>
-            <div class="message-content">{{ message.body or message.content }}</div>
+            <div class="message-content">{{ message.body }}</div>
             <div class="message-meta">
                 <p class="message-time">🕐 {{ message.created_at.strftime('%B %d, %Y at %I:%M %p') }}</p>
                 {% if message.resource %}

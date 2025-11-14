@@ -678,10 +678,15 @@ def cancel_booking_with_reason(booking_id):
         404: Booking not found
     """
     try:
-        print(f"[DEBUG] POST /bookings/{booking_id}/cancel endpoint hit")
-        print(f"[DEBUG] Request headers: {dict(request.headers)}")
-        print(f"[DEBUG] Request method: {request.method}")
-        print(f"[DEBUG] X-CSRFToken header: {request.headers.get('X-CSRFToken', 'NOT FOUND')}")
+        print(f"\n{'='*60}")
+        print(f"[DENY] POST /bookings/{booking_id}/cancel endpoint hit")
+        print(f"[DENY] Current User: {current_user.username if current_user else 'NOT AUTHENTICATED'}")
+        print(f"[DENY] Current User ID: {current_user.id if current_user else 'N/A'}")
+        print(f"[DENY] Request Content-Type: {request.content_type}")
+        print(f"[DENY] Request Headers: {dict(request.headers)}")
+        print(f"[DENY] Request method: {request.method}")
+        print(f"[DENY] X-CSRFToken header: {request.headers.get('X-CSRFToken', 'NOT FOUND')}")
+        print(f"{'='*60}\n")
         
         booking = BookingDAL.get_booking_by_id(booking_id)
         if not booking:

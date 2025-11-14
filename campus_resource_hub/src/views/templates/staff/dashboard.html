@@ -478,7 +478,7 @@
                     {% for message in recent_messages[:5] %}
                     <div class="message-item">
                         <h3>👤 {{ message.sender.full_name }}</h3>
-                        <p>{{ message.content[:100] }}{% if message.content|length > 100 %}...{% endif %}</p>
+                        <p>{{ message.body[:100] }}{% if message.body|length > 100 %}...{% endif %}</p>
                         <p style="font-size: 13px; color: var(--color-gray-700); margin-top: 10px; font-weight: 600;">
                             🕐 {{ message.created_at.strftime('%b %d at %I:%M %p') }}
                         </p>

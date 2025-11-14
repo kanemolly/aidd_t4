@@ -1235,7 +1235,9 @@ function showErrorToast(message) {
 }
 
 function denyBooking(bookingId, userName, resourceName, dateTime) {
+    console.log('[DENY_OPEN] denyBooking called with:', { bookingId, userName, resourceName, dateTime });
     currentBookingId = bookingId;
+    console.log('[DENY_OPEN] currentBookingId set to:', currentBookingId);
     
     // Populate modal with booking details
     document.getElementById('denyResourceName').textContent = resourceName;
@@ -1244,6 +1246,7 @@ function denyBooking(bookingId, userName, resourceName, dateTime) {
     document.getElementById('denyReason').value = '';
     
     document.getElementById('denyModal').style.display = 'flex';
+    console.log('[DENY_OPEN] Modal opened. currentBookingId is now:', currentBookingId);
 }
 
 function closeDenyModal() {
@@ -1252,7 +1255,14 @@ function closeDenyModal() {
 }
 
 function confirmDenyBooking() {
-    if (!currentBookingId) return;
+    console.log('[DENY_SUBMIT] confirmDenyBooking called');
+    console.log('[DENY_SUBMIT] currentBookingId:', currentBookingId);
+    
+    if (!currentBookingId) {
+        console.error('[DENY_SUBMIT] ERROR: currentBookingId is null or undefined!');
+        alert('Error: Booking ID not set. Please close and try again.');
+        return;
+    }
     
     const reason = document.getElementById('denyReason').value.trim();
     if (!reason) {

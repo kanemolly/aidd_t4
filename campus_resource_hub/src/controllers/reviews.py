@@ -337,6 +337,7 @@ def update_review(review_id):
 # ==================== DELETE REVIEW ====================
 
 @bp.route('/<int:review_id>', methods=['DELETE'])
+@csrf_protect.exempt
 @login_required
 def delete_review(review_id):
     """
