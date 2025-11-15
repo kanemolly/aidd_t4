@@ -291,3 +291,137 @@ To be determined
 ## Support
 
 For support, please contact the Campus Resource Hub team.
+
+
+AI Integration, Ethical Considerations & Technical Overview
+AI Integration Overview
+
+The Campus Resource Hub includes an AI Concierge chatbot that assists users by answering questions about Indiana University buildings, resource availability, accessibility accommodations, campus spaces, and general usage guidelines.
+The chatbot is powered by the Gemini API with a Retrieval-Augmented Generation (RAG) workflow to ensure factual accuracy and scoped responses.
+
+How the AI Concierge Works
+
+The system uses a custom RAG knowledge base containing verified IU data:
+
+Building hours and locations
+
+Accessibility notes
+
+Quiet study spaces vs. group collaboration spaces
+
+Campus policies related to resource reservations
+
+Instructions for using the Campus Resource Hub itself
+
+When a user asks a question:
+
+The query is embedded and matched against the RAG document.
+
+Relevant sections are retrieved and passed to the Gemini model.
+
+The model is instructed to respond only using provided data, preventing hallucination.
+
+User preferences (e.g., “quiet study areas”) are included to personalize suggestions.
+
+AI Use Cases in This System
+
+Answering campus-related questions grounded in IU data
+
+Helping students choose appropriate study spaces
+
+Providing building hours, directions, and accessibility details
+
+Offering resource usage guidance (how to book, approval steps, etc.)
+
+Summarizing administrative or usage information when requested
+
+The AI does not perform decision-making (e.g., it cannot approve bookings) and does not access personal or sensitive user data.
+
+Ethical and Managerial Considerations
+Data Accuracy & Minimizing Harm
+
+AI-generated responses are strictly grounded in the RAG knowledge base to avoid misinformation. The chatbot cannot answer questions outside its verified dataset.
+This ensures students receive accurate building hours, correct accessibility info, and safe campus directions.
+
+Transparency
+
+The system clearly communicates that:
+
+The Concierge is AI, not a human.
+
+Responses come from IU-provided or developer-curated sources.
+
+AI outputs should be used as guidance, not official policy.
+
+User Privacy
+
+The AI is not given access to private messages, personal data, or booking history.
+
+Only non-sensitive user preferences (e.g., preferred study environment) are used to personalize responses.
+
+All sensitive keys (Gemini API keys, SECRET_KEY) are stored using environment variables, not committed to source control.
+
+Responsible Development
+
+During development, AI tools were used as assistants (for brainstorming, code scaffolding, and documentation) but every output was manually validated, tested, and aligned with project requirements.
+This ensured code quality, security compliance, and correct functionality.
+
+Technical AI Architecture
+Core Components
+
+Gemini API client (google-generativeai)
+
+RAG document stored locally and loaded at runtime
+
+Retriever module:
+
+Splits knowledge content
+
+Computes semantic similarity
+
+Returns relevant sections
+
+Prompt template controlling model behavior:
+
+“Use only the provided RAG content.”
+
+“Do not invent IU policies.”
+
+“Provide concise, campus-appropriate responses.”
+
+Implementation Structure
+src/
+ ├── ai/
+ │    ├── concierge.py           # Chatbot logic + Gemini client
+ │    ├── rag_loader.py          # Loads and indexes RAG dataset
+ │    ├── retriever.py           # Semantic search over campus knowledge
+ │    └── prompts.py             # Safety + grounding prompts
+
+Performance & Safety Controls
+
+Token limits applied to prevent overly long outputs
+
+Content filtering enforced in prompts
+
+Guardrails ensure the AI cannot:
+
+Create new campus rules
+
+Generate building hours that don’t exist
+
+Give safety, medical, or emergency advice
+
+Summary
+
+The AI Concierge enhances the Campus Resource Hub by giving students and staff immediate, personalized access to IU-specific information in a grounded, safe, and transparent manner.
+All AI interactions are intentionally limited to verified content and designed to respect user privacy, accuracy requirements, and ethical development standards.
+
+Throughout this project, AI tools became an active part of my development workflow—not as replacements for my own design decisions or problem-solving, but as collaborative partners that accelerated my thinking and helped me explore solutions more efficiently. Using AI this way changed how I approached architecture, feature planning, and documentation, and it ultimately reshaped my expectations for what a single developer can accomplish in a short time.
+
+One of the biggest lessons I learned was how much value comes from giving AI clear, detailed context. Vague prompts produced vague solutions, but when I supplied structure—like my ERD, role definitions, and UI constraints—the AI responded with far more accurate, useful suggestions. This taught me that prompting is a critical skill, almost like writing requirements for another engineer on the team. AI thrives on direction.
+
+I also learned very quickly that AI-generated output absolutely must be verified. While it often produced clean code and convincing explanations, it sometimes introduced errors, skipped edge cases, or used patterns that weren’t idiomatic for Flask. To address this, I adopted a process of using AI for scaffolding and idea generation, then manually reviewing, rewriting, and testing every piece. That verification step was where I built real understanding—ensuring booking logic worked, role permissions were correct, and the RAG-based chatbot was fully grounded in IU data. In a way, AI pushed me to be more intentional about testing and validation than I might have been otherwise.
+
+Ethically, the project made me more aware of the responsibilities that come with integrating AI into real systems. I had to think carefully about transparency, avoiding hallucination, and protecting user privacy. For the AI Concierge, I realized it was essential to constrain outputs to verified data and to be explicit about what the system does and doesn’t know. This shaped not just the technical design but the tone and instructions used in the chatbot itself. The experience reminded me that AI is not just a tool—it introduces managerial and ethical considerations that affect users directly.
+
+Overall, collaborating with AI tools taught me that the role of a developer or technologist is shifting. The value is no longer in writing every line of code manually, but in shaping direction, validating correctness, and understanding the system deeply enough to judge when the AI is right—and when it isn’t. I left this project with a stronger sense of how to guide AI effectively, how to challenge its assumptions, and how to integrate it responsibly into a product. Those lessons will carry forward into my future work, regardless of the tools or technologies I use.
